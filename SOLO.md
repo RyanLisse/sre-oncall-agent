@@ -400,7 +400,8 @@ and then `FAIL bench`.
 
 ### Plan, then build
 
-Ask Claude Code to read `CLAUDE.md` and show a plan before it edits:
+Ask Claude Code to read `CLAUDE.md` and show a plan before it edits. Without
+Claude Code, write the plan yourself and make the same edit by hand:
 
 ```text
 Read CLAUDE.md. Make bench case recovered-deploy pass by changing offlineVerdict only; keep all other cases and tests green; show me the plan before you edit
