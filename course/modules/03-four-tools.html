@@ -2,19 +2,19 @@
   <div class="module-content">
     <header class="module-header animate-in">
       <span class="module-number">03</span>
-      <h1 class="module-title">Three Tools, No Levers</h1>
+      <h1 class="module-title">Four Tools, No Levers</h1>
       <p class="module-subtitle">The quality of an agent is the quality of its tools. Ours are deliberately few, deliberately read-only, and exposed through an in-process MCP server.</p>
     </header>
 
     <div class="module-body">
 
       <section class="screen animate-in">
-        <h2 class="screen-heading">search_logs · summarize_metrics · list_deploys</h2>
+        <h2 class="screen-heading">search_logs · summarize_metrics · list_deploys · get_diff</h2>
         <p>Each tool is a <span class="term" data-definition="A pure function returns the same output for the same input and changes nothing outside itself.">pure function</span> over a JSON fixture in <code>src/telemetry.ts</code>. <code>src/tools.ts</code> wraps them with <code>zod</code> schemas and <code>createSdkMcpServer</code>. Swapping the fixture for Grafana and a real log store changes <code>telemetry.ts</code> only. The kit calls that a <strong>capability binding</strong>.</p>
         <div class="translation-block animate-in">
           <div class="translation-code">
             <span class="translation-label">src/tools.ts</span>
-            <pre><code><span class="code-line"><span class="code-keyword">export const</span> TOOL_NAMES = [<span class="code-string">"search_logs"</span>, <span class="code-string">"summarize_metrics"</span>, <span class="code-string">"list_deploys"</span>] <span class="code-keyword">as const</span>;</span>
+            <pre><code><span class="code-line"><span class="code-keyword">export const</span> TOOL_NAMES = [<span class="code-string">"search_logs"</span>, <span class="code-string">"summarize_metrics"</span>, <span class="code-string">"list_deploys"</span>, <span class="code-string">"get_diff"</span>] <span class="code-keyword">as const</span>;</span>
 <span class="code-line"></span>
 <span class="code-line"><span class="code-comment">// There is deliberately no rollback, scale or set_flag tool.</span></span>
 <span class="code-line"><span class="code-comment">// If you ever add a mutating tool, build it as its own agent</span></span>
@@ -22,14 +22,14 @@
           </div>
           <div class="translation-english">
             <span class="translation-label">In plain words</span>
-            <p>The agent may only ask three questions: what did the metrics do, what shipped, what do the logs say. The SDK's <code>allowedTools</code> lists exactly these, and <code>permissionMode: "dontAsk"</code> denies everything else. The ban is configuration, not a request in the prompt.</p>
+            <p>The agent has four read-only tools. It checks metrics, then deploys, reads a matching deploy's diff when one lines up, and searches logs. The SDK's <code>allowedTools</code> lists these tools, and <code>permissionMode: "dontAsk"</code> denies everything else. The ban is configuration, not a request in the prompt.</p>
           </div>
         </div>
       </section>
 
       <section class="screen animate-in">
         <h2 class="screen-heading">The breakpoint finder</h2>
-        <p><code>summarize_metrics</code> does one piece of deterministic analysis so the model does not have to eyeball sixty numbers: it marks every point where <code>error_rate</code> or <code>p95</code> jumped ≥2× against the previous point, and records which version was live. That is the timeline. Correlating it with <code>list_deploys</code> is the agent's first job.</p>
+        <p><code>summarize_metrics</code> does one piece of deterministic analysis so the model does not have to eyeball sixty numbers: it marks every point where <code>error_rate</code> or <code>p95</code> jumped ≥2× against the previous point, and records which version was live. That is the timeline. The agent compares it with <code>list_deploys</code>, reads <code>get_diff</code> when a deploy lines up, then searches logs.</p>
         <div class="callout callout-warning">
           <div class="callout-icon">⚠️</div>
           <div class="callout-content">

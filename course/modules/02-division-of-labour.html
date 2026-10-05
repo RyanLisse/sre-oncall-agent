@@ -12,9 +12,9 @@
         <h2 class="screen-heading">Six rules, six places in the code</h2>
         <div class="step-cards">
           <div class="step-card"><div class="step-num">1</div><div><strong>Never the detector.</strong> Alerting stays deterministic and pages humans directly. The agent triages what fired. <code>fixtures/incidents/*.json</code> are alerts, not metrics the agent watches.</div></div>
-          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has three read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a fourth.</div></div>
-          <div class="step-card"><div class="step-num">3</div><div><strong>Every claim carries a reference.</strong> <code>parseVerdict</code> rejects a verdict without evidence; each line is <code>logs:</code>, <code>metrics:</code>, <code>deploys:</code> or <code>lessons:</code>.</div></div>
-          <div class="step-card"><div class="step-num">4</div><div><strong>Data before theory.</strong> The system prompt orders metrics → deploys → logs. <code>checkTrace</code> fails a verdict whose tools were never called.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has four read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a mutating tool.</div></div>
+          <div class="step-card"><div class="step-num">3</div><div><strong>Every claim carries a reference.</strong> <code>parseVerdict</code> rejects a verdict without evidence; each line is <code>logs:</code>, <code>metrics:</code>, <code>deploys:</code>, <code>diff:</code> or <code>lessons:</code>.</div></div>
+          <div class="step-card"><div class="step-num">4</div><div><strong>Data before theory.</strong> The order is metrics → deploys → <code>get_diff</code> when a deploy lines up → logs. <code>checkTrace</code> fails a verdict whose tools were never called.</div></div>
           <div class="step-card"><div class="step-num">5</div><div><strong>No unreviewed memory.</strong> The agent writes <code>lessons/proposed/</code>. A human promotes into <code>lessons.md</code> by PR.</div></div>
           <div class="step-card"><div class="step-num">6</div><div><strong>Humans close.</strong> <code>watch</code> says LANDED or NOT LANDED. Nothing marks resolved.</div></div>
         </div>
@@ -22,7 +22,7 @@
 
       <section class="screen animate-in">
         <h2 class="screen-heading">The gotcha Claude wrote about its author</h2>
-        <p>From Anthropic's blog: the on-call engineer theorised from a config file before checking the metrics. Claude appended to <code>lessons.md</code>: <em>"query the data first, then theorize. Config tells you what could go wrong; metrics tell you what did."</em> That sentence is now rule 5 of our system prompt and the order of the three tool calls.</p>
+        <p>From Anthropic's blog: the on-call engineer theorised from a config file before checking the metrics. Claude appended to <code>lessons.md</code>: <em>"query the data first, then theorize. Config tells you what could go wrong; metrics tell you what did."</em> That sentence is now rule 5 of our system prompt. Offline runs use four tool turns and one answer turn.</p>
         <div class="callout callout-accent">
           <div class="callout-icon">📏</div>
           <div class="callout-content">

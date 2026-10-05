@@ -47,9 +47,9 @@
         <div class="flow-animation" data-steps='[
           {"highlight":"flow-alert","label":"The alert arrives. The agent classifies it as #errors and loads only the lessons with that tag."},
           {"highlight":"flow-metrics","label":"summarize_metrics: one breakpoint at 03:45, error_rate 0.003 → 0.12, on v2.15.0.","packet":true,"from":"flow-alert","to":"flow-metrics"},
-          {"highlight":"flow-deploys","label":"list_deploys: d-4821 shipped v2.15.0 at 03:43. Two minutes before the breakpoint.","packet":true,"from":"flow-metrics","to":"flow-deploys"},
+          {"highlight":"flow-deploys","label":"list_deploys: d-4821 shipped v2.15.0 at 03:43. Two minutes before the breakpoint. get_diff reads the matching change.","packet":true,"from":"flow-metrics","to":"flow-deploys"},
           {"highlight":"flow-logs","label":"search_logs: PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET.","packet":true,"from":"flow-deploys","to":"flow-logs"},
-          {"highlight":"flow-verdict","label":"Verdict: rollback, high confidence, three evidence lines, severity page. Code checks every rule.","packet":true,"from":"flow-logs","to":"flow-verdict"},
+          {"highlight":"flow-verdict","label":"Verdict: rollback, high confidence, four evidence lines, severity page. Code checks every rule.","packet":true,"from":"flow-logs","to":"flow-verdict"},
           {"highlight":"flow-human","label":"A named human reads it, signs the approval (or rejects), and acts. The agent has no lever to pull.","packet":true,"from":"flow-verdict","to":"flow-human"},
           {"highlight":"flow-watch","label":"After the fix: three bounded checks. LANDED at 03:54, 03:56, 04:00. Only a human closes.","packet":true,"from":"flow-human","to":"flow-watch"}
         ]'>

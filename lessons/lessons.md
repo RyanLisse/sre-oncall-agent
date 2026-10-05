@@ -2,8 +2,8 @@
 
 Append-only, by PR. The agent READS entries whose `#tag` matches the alert
 class, and PROPOSES new entries into `proposed/`. A human moves them here.
-When one tag reaches three entries, promote the pattern into
-`references/<tag>.md` and link it from the entry.
+When one `#tag` reaches three entries, a human can promote the pattern into
+[`references/<tag>.md`](../references/README.md) and link it from the entries.
 
 Format per entry (Anthropic, "Claude on call"): what happened / root cause /
 fix / gotcha.

@@ -9,10 +9,10 @@ If you change the order below, say why in the lesson you propose.
 
 ## Order of operations
 
-1. Pull deploys for the hour before the alert. Do not open the log first.
-2. Line deploy timestamps up against `error_rate` / `p95_ms`. State the gap ("deploy 03:43, errors move 03:45").
-3. If a deploy lines up: pull the diff, read it. Check for the things below.
-4. Then grep the log to confirm. Do not grep to fish.
+1. Call `summarize_metrics` for the hour before the alert. Find the breakpoint.
+2. Call `list_deploys` for the same window. Line deploy times up against `error_rate` and `p95_ms`.
+3. If a deploy lines up, call `get_diff` and read it. Check for the things below.
+4. Call `search_logs` after the breakpoint. Find the confirming line. Do not grep to fish.
 5. No deploy lines up → check pool saturation and upstream status codes in the logs, then propose `scale` or `investigate-more`. Never `rollback` without a deploy.
 
 ## Things that have burned us

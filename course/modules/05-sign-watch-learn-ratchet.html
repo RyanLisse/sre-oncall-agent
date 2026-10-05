@@ -44,7 +44,7 @@
 
       <section class="screen animate-in">
         <h2 class="screen-heading">The ratchet</h2>
-        <p>From Anthropic's claude.ai performance sprint: every benchmark is also a CI guardrail with a number that can only move one way. <code>bench/cases.json</code> holds the expected proposal and severity per scenario. <code>bench/ratchet.json</code> is the floor: pass-rate ≥ 70%, harmful = 0. A <strong>harmful</strong> answer is a strong action the key says is wrong — a false mitigation is worse than a missed one. CI fails below the floor. <code>--raise</code> moves it up when the score improves. It is never lowered by hand.</p>
+        <p>From Anthropic's claude.ai performance sprint: every benchmark is a CI guardrail. <code>bench/cases.json</code> holds the expected proposal and severity for each scenario. <code>bench/ratchet.json</code> sets the floor: pass rate ≥ 70% and harmful = 0. A <strong>harmful</strong> answer is a strong action the key says is wrong. A false mitigation is worse than a missed one. CI fails below the floor. <code>--raise</code> moves the floor up when the score improves. Never lower it by hand.</p>
         <div class="pattern-cards">
           <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
             <div class="pattern-icon" style="background: var(--color-actor-1)">✅</div>
@@ -66,7 +66,7 @@
 
       <section class="screen animate-in">
         <h2 class="screen-heading">What you built</h2>
-        <p>An agent with a fixed division of labour. It searches, cites, proposes and verifies. You decide, you act, you close. The three things that keep it honest are code, not prompts: the evidence rules in <code>contract.ts</code>, the trace check in <code>agent.ts</code>, and the ratchet in <code>bench.ts</code>. Open <code>SOLO.md</code> and run it.</p>
+        <p>The agent searches, cites, proposes and verifies. You decide, act and close. The contract validates evidence. <code>agent.ts</code> checks the trace. <code>bench.ts</code> enforces the pass-rate floor. The ten-step <code>SOLO.md</code> tutorial ends with Step 9. Add a recovered-symptom rule, prove it with the bench, then get a named human review before opening a pull request on your fork.</p>
       </section>
 
       <section class="screen animate-in">
