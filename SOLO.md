@@ -37,6 +37,8 @@ npm run verify
 
 ## Step 1 — What the agent can see
 
+![The on-call loop](docs/diagrams/01-architecture.svg)
+
 **Explain:** The agent gets an alert and three tools. It cannot change the
 system. That is the whole design.
 
@@ -87,6 +89,8 @@ the last one is `low`, so the contract would have refused a strong proposal.
 ---
 
 ## Step 3 — Break the rules on purpose
+
+![The model proposes. Code checks.](docs/diagrams/02-contract.svg)
 
 **Explain:** The model proposes; code checks. Three rules live in
 `parseVerdict()` in `src/contract.ts`:
@@ -161,6 +165,8 @@ an approval.
 
 ## Step 5 — The lessons loop
 
+![The lessons loop](docs/diagrams/03-lessons.svg)
+
 **Explain:** The agent reads `lessons/lessons.md` filtered to the alert's
 `#tag`, never the whole file. It never appends. It writes a proposal to
 `lessons/proposed/` and a human promotes it by PR. When one tag has three
@@ -184,6 +190,8 @@ not the agent — the agent only knows what it proposed.
 ---
 
 ## Step 6 — The ratchet
+
+![The ratchet](docs/diagrams/04-ratchet.svg)
 
 **Explain:** `bench/cases.json` holds the expected proposal and severity for
 each scenario. `bench/ratchet.json` is the floor CI enforces: pass-rate ≥

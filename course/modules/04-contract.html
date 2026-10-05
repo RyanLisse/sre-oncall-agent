@@ -9,6 +9,10 @@
     <div class="module-body">
 
       <section class="screen animate-in">
+        <img src="../docs/diagrams/02-contract.svg" alt="The model proposes. Code checks." style="width:100%;max-width:860px;display:block;margin:0 auto;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+      </section>
+
+      <section class="screen animate-in">
         <h2 class="screen-heading">Three checks after the model answers</h2>
         <div class="step-cards">
           <div class="step-card"><div class="step-num">1</div><div><strong>Shape</strong> — <code>outputFormat: json_schema</code> makes the model answer in the verdict shape. <code>parseVerdict</code> checks it again, rejects unknown fields, and demands <code>draft_only: true</code>.</div></div>

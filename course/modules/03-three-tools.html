@@ -40,6 +40,10 @@
       </section>
 
       <section class="screen animate-in">
+        <img src="../docs/diagrams/03-lessons.svg" alt="The lessons loop" style="width:100%;max-width:860px;display:block;margin:0 auto;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+      </section>
+
+      <section class="screen animate-in">
         <h2 class="screen-heading">Lessons, read by tag</h2>
         <p><code>lessons.md</code> grows without bound by design. The agent never reads the whole file. <code>guessTag()</code> classifies the alert text (#bad-deploy, #latency, #errors, #noise) and <code>renderLessons()</code> injects only matching entries. A matching past incident is the first hypothesis: cheapest to confirm or kill. When one tag reaches three entries, <code>promotionCandidates()</code> says the pattern belongs in a playbook, not the log — in the migration kit's words, <em>recurring failures indict a rule</em>.</p>
       </section>

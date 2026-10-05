@@ -19,6 +19,14 @@ demonstrates the pipeline; it is not model evidence.
 Follow **[SOLO.md](SOLO.md)** for the step-by-step tutorial. This README is
 the reference.
 
+![The on-call loop: alert → investigation → recovery](docs/diagrams/01-architecture.svg)
+
+Four diagrams explain the design (`docs/diagrams/`, regenerate with
+`npm run diagrams`): the loop above, [the contract](docs/diagrams/02-contract.svg),
+[the lessons loop](docs/diagrams/03-lessons.svg) and [the ratchet](docs/diagrams/04-ratchet.svg).
+A five-minute narrated explainer is at `docs/video/explainer.mp4`
+(rebuild with `npm run video`).
+
 ## Set up
 
 ```
@@ -68,7 +76,11 @@ the loop.
 | write `lessons/proposed/<id>.md` | append to `lessons/lessons.md` |
 | draft `approvals/<id>.approval.json` as *pending* | sign it — `decided_by` must be a named human |
 
+![The lessons loop](docs/diagrams/03-lessons.svg)
+
 ## The contract (what code checks after the model answers)
+
+![The model proposes. Code checks.](docs/diagrams/02-contract.svg)
 
 - `evidence` has ≥1 line; each line is `logs:<ts>`, `metrics:<ts>`, `deploys:<id>` or `lessons:<id>`.
 - A strong proposal (`rollback`, `scale`, `flag-off`) needs **two sources**. One signal is a hunch.
@@ -97,6 +109,8 @@ fixtures/generate.mjs         deterministic telemetry for five scenarios
 fixtures/incidents/           the alerts, incl. adversarial + malformed
 bench/cases.json              expected proposal + severity per scenario
 bench/ratchet.json            the floor CI enforces (only goes up)
+docs/diagrams/                four SVG swimlane diagrams + the script that draws them
+docs/video/                   the explainer video + the script that renders it
 lessons/lessons.md            reviewed incident log (two seed entries)
 lessons/proposed/             where the agent writes; humans promote
 approvals/                    pending/approved/rejected records
@@ -105,16 +119,31 @@ course/                       interactive HTML course (open course/index.html)
 docs/sources.md               what each idea was taken from
 ```
 
-## Where the ideas come from
+## Resources
 
-- **Owain Lewis, "I Built A Claude DevOps Agent To Run My Software Factory"** — the framing: agents are superhuman at searching data for one specific problem; humans decide; watch a rollout for N minutes.
-- **`anthropics/oncall-kit` + "Claude on call" (claude.com)** — the rules: never the detector, no auto-mitigation, no unreviewed memory, every claim linked, `lessons.md` by tag, the diagnosis format, three bounded checks, shadow period, ≥70% / zero harmful validation gate.
-- **Claude Cookbook, "SRE incident responder"** — `request_approval` as a tool the *application* answers. We moved the gate one step further out: no mutating tool at all; the approval record is what an executor reads.
-- **"How we made claude.ai 3x faster"** — every benchmark is also a CI guardrail with a number that only ratchets one way. `bench/ratchet.json`.
-- **Google SRE, "AI in SRE"** — RCA is one of several areas; playbooks improve from incident usage; anomaly detection over static thresholds (the `noisy-alert` scenario).
-- **`anthropics/code-migration-kit`** — "you don't fix the code, you fix the process": recurring failures indict a rule → `promotionCandidates()`.
+Every idea in this repo has a primary source. Per-source "taken / deliberately not taken" is in [`docs/sources.md`](docs/sources.md).
 
-Details and what was deliberately *not* adopted: `docs/sources.md`.
+### The video that started it
+- Owain Lewis — [I Built A Claude DevOps Agent To Run My Software Factory](https://www.youtube.com/watch?v=l6GpUvPOVpM) (2026-10-05). The framing: agents are superhuman at searching data for one problem; humans decide; "watch the next deployment for N minutes".
+- DevOps Toolkit — [Claude Code: AI Agent for DevOps, SRE, and Platform Engineering](https://www.youtube.com/watch?v=h-6LP133o6w). The wish for an agent that *watches* and notifies; bounded here as `watch`.
+
+### Anthropic — the rules
+- [`anthropics/oncall-kit`](https://github.com/anthropics/oncall-kit) (Apache-2.0, reference implementation) — read [`skills/triage/SKILL.md`](https://github.com/anthropics/oncall-kit/blob/main/skills/triage/SKILL.md) and [`CLAUDE.md`](https://github.com/anthropics/oncall-kit/blob/main/CLAUDE.md), not just the README. Never the detector · no auto-mitigation · no unreviewed memory · every claim linked · lessons by tag · the six-line diagnosis · rule 5a · rule 9 (three checks) · ≥70% / zero harmful.
+- [Claude on call: how Claude Tag serves as Anthropic's first responder for CI/CD failures](https://claude.com/blog/ai-ci-cd-on-call) (2026-08-18) — `lessons.md` entry format; "query the data first, then theorize"; deterministic alerting, agentic triage.
+- [Claude Tag on-call webinar](https://www.anthropic.com/webinars/claude-tag-on-call-a-new-teammate-in-your-incident-channel) — companion to the blog.
+- [Claude Cookbook: Build an SRE incident response agent with Claude Managed Agents](https://platform.claude.com/cookbook/managed-agents-sre-incident-responder) ([notebook](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/sre_incident_responder.ipynb)) — `request_approval` as a custom tool the application answers; Skills for runbook conventions. Live session: [Cooking with Claude](https://www.anthropic.com/webinars/cooking-with-claude-how-to-build-an-sre-incident-response-agent) (2026-06-25).
+- [Agent SDK: the site-reliability agent](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/03_The_site_reliability_agent.ipynb) — the same problem on the local SDK (the runtime this repo uses).
+- [How we made claude.ai 3x faster in two weeks](https://claude.dev/blog/how-we-made-claude-ai-faster/) (2026-09-23) — every benchmark is a CI guardrail with a one-way ratchet; prove a proxy tracks the real metric before climbing it.
+- [`anthropics/code-migration-kit-with-claude-code`](https://github.com/anthropics/code-migration-kit-with-claude-code) — "you don't fix the code, you fix the process"; recurring failures indict a rule; ban by configuration, not by request.
+- [Claude Agent SDK](https://docs.claude.com/en/docs/agent-sdk/overview) · [TypeScript SDK](https://github.com/anthropics/claude-agent-sdk-typescript) · [MCP in the SDK](https://code.claude.com/docs/en/mcp).
+
+### Google SRE
+- [AI in SRE: where and how Google is deploying agentic AI to improve operations](https://cloud.google.com/blog/products/devops-sre/how-google-sre-is-using-agentic-ai-to-improve-operations) (2026-05-28) and the whitepaper [AI in SRE Practice](https://goo.gle/4uUxy4y) — RCA is one area of several; playbooks improve from use; anomaly detection over static thresholds (→ the `noisy-alert` scenario).
+- [SRE book](https://sre.google/sre-book/table-of-contents/) · [SRE workbook](https://sre.google/workbook/table-of-contents/) — the discipline the agent slots into.
+
+### Base repo and writing
+- [`RyanLisse/aetherlink-day5-n8n-to-agent`](https://github.com/RyanLisse/aetherlink-day5-n8n-to-agent) — the shape: contract → runtime port → trace → validate → route → memory; `Result` over `throw`; the SOLO.md format; the HTML course build.
+- [ASD-STE100](https://www.asd-ste100.org/) — the controlled-language spec the prompts, `SOLO.md` and the narration aim at (~80%): short sentences, one instruction each, one term per thing.
 
 ## Safety
 

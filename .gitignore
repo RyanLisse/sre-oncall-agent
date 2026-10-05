@@ -7,3 +7,4 @@ approvals/*.approval.json
 lessons/proposed/*.md
 .claude/settings.local.json
 coverage/
+docs/video/build/

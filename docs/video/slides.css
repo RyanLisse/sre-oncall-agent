@@ -1,0 +1,33 @@
+html, body { margin: 0; padding: 0; width: 1920px; height: 1080px; background: #F7F4EE; overflow: hidden; }
+* { box-sizing: border-box; }
+.slide {
+  position: relative; width: 1920px; height: 1080px; padding: 60px 120px 90px;
+  font-family: -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; color: #1F1D1A;
+  display: flex; flex-direction: column; gap: 28px;
+}
+.kicker { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 22px; letter-spacing: 4px; color: #6E675E; text-transform: uppercase; }
+h1 { font-size: 72px; line-height: 1.08; margin: 0; font-weight: 800; letter-spacing: -0.5px; max-width: 1500px; }
+h1.big { font-size: 96px; }
+h2 { font-size: 44px; margin: 0; font-weight: 700; }
+p.lead { font-size: 36px; line-height: 1.4; color: #3E3933; margin: 0; max-width: 1500px; }
+.muted { color: #6E675E; }
+.accent { color: #D94F30; }
+.green { color: #2F6B46; }
+.diagram { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.diagram img { max-height: 860px; max-width: 1680px; width: auto; height: auto; object-fit: contain; transform-origin: top center; border-radius: 14px; box-shadow: 0 8px 40px rgba(0,0,0,.08); }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 12px; }
+.cards.two { grid-template-columns: repeat(2, 1fr); }
+.card { background: #fff; border: 1.5px solid #D9D3C7; border-radius: 12px; padding: 36px 40px; }
+.card.warm { background: #F3EBE2; border-color: #8C6A4A; }
+.card.green { background: #E6F0E8; border-color: #2F6B46; }
+.card.red { background: #FDEEE9; border-color: #D94F30; }
+.card h3 { margin: 0 0 14px; font-size: 34px; }
+.card.green h3 { color: #2F6B46; }
+.card p { margin: 0; font-size: 26px; line-height: 1.4; color: #6E675E; }
+.card code, p code, li code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; background: rgba(0,0,0,.05); padding: 2px 8px; border-radius: 6px; }
+pre { background: #1F1D1A; color: #F7F4EE; border-radius: 14px; padding: 36px 44px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 24px; white-space: pre-wrap; line-height: 1.55; margin: 0; overflow: hidden; }
+pre .k { color: #E8836C; } pre .g { color: #7FC08F; } pre .m { color: #A39C90; }
+ul.big { font-size: 34px; line-height: 1.55; margin: 0; padding-left: 44px; color: #3E3933; }
+ul.big li { margin-bottom: 10px; }
+.footer { position: absolute; left: 120px; right: 120px; bottom: 40px; display: flex; justify-content: space-between; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 20px; color: #A39C90; letter-spacing: 1px; }
+.rule { height: 4px; width: 160px; background: #D94F30; border-radius: 2px; }

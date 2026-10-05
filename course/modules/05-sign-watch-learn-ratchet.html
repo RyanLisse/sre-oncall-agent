@@ -39,6 +39,10 @@
       </section>
 
       <section class="screen animate-in">
+        <img src="../docs/diagrams/04-ratchet.svg" alt="The ratchet" style="width:100%;max-width:860px;display:block;margin:0 auto;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+      </section>
+
+      <section class="screen animate-in">
         <h2 class="screen-heading">The ratchet</h2>
         <p>From Anthropic's claude.ai performance sprint: every benchmark is also a CI guardrail with a number that can only move one way. <code>bench/cases.json</code> holds the expected proposal and severity per scenario. <code>bench/ratchet.json</code> is the floor: pass-rate ≥ 70%, harmful = 0. A <strong>harmful</strong> answer is a strong action the key says is wrong — a false mitigation is worse than a missed one. CI fails below the floor. <code>--raise</code> moves it up when the score improves. It is never lowered by hand.</p>
         <div class="pattern-cards">
