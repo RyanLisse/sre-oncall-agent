@@ -206,6 +206,15 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
   };
 };
 
+type HandlerInputs = {
+  [Name in ToolName]: Parameters<ReturnType<typeof handlers>[Name]>[0];
+};
+
+type OfflineInputs = Record<ToolName, unknown> &
+  Omit<HandlerInputs, "get_diff"> & {
+    get_diff: HandlerInputs["get_diff"] | { deploy?: never };
+  };
+
 /** Replays the system prompt's method as tool events, then emits the verdict. */
 export const offlineQuery =
   (t: Telemetry): QueryFn =>
@@ -221,19 +230,30 @@ export const offlineQuery =
     }
     const h = handlers(t);
     const since = incident.fired_at ? minus(incident.fired_at, 60) : undefined;
-    const bp0 = h.summarize_metrics({ since, until: incident.fired_at }).breakpoints[0];
+    const inputs: OfflineInputs = {
+      summarize_metrics: { since, until: incident.fired_at },
+      list_deploys: { since, until: incident.fired_at },
+      get_diff: {},
+      search_logs: { level: "error", since, until: incident.fired_at, limit: 5 },
+    };
+    const metrics = h.summarize_metrics(inputs.summarize_metrics);
+    const bp0 = metrics.breakpoints[0];
     const behind = bp0 ? deployBehind(t, bp0.ts) : undefined;
+    if (behind) inputs.get_diff = { deploy: behind.id };
     const outputs: Record<ToolName, unknown> = {
-      summarize_metrics: h.summarize_metrics({ since, until: incident.fired_at }),
-      list_deploys: h.list_deploys({ since, until: incident.fired_at }),
-      get_diff: behind ? h.get_diff({ deploy: behind.id }) : { error: "no deploy lines up with the breakpoint — not called in anger" },
-      search_logs: h.search_logs({ level: "error", since, until: incident.fired_at, limit: 5 }),
+      summarize_metrics: metrics,
+      list_deploys: h.list_deploys(inputs.list_deploys),
+      get_diff:
+        inputs.get_diff.deploy === undefined
+          ? { error: "no deploy lines up with the breakpoint — not called in anger" }
+          : h.get_diff(inputs.get_diff),
+      search_logs: h.search_logs(inputs.search_logs),
     };
     for (const name of steps) {
       yield {
         type: "assistant",
         parent_tool_use_id: null,
-        message: { content: [{ type: "tool_use", id: `offline-${name}`, name: qualified(name), input: { since, until: incident.fired_at } }] },
+        message: { content: [{ type: "tool_use", id: `offline-${name}`, name: qualified(name), input: inputs[name] }] },
       };
       yield {
         type: "user",

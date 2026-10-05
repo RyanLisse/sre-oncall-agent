@@ -115,6 +115,31 @@ test("the loop calls metrics, deploys, logs and proposes a lesson", async () => 
   assert.match(lesson, /fix \(human fills in\):\*\* OPEN/);
 });
 
+test("offline tool_use inputs match the handler arguments", async () => {
+  const t = await load("bad-deploy");
+  const toolInputs = new Map<string, unknown>();
+  const query: QueryFn = async function* (args) {
+    for await (const event of offlineQuery(t)(args)) {
+      if (event.type === "assistant") {
+        for (const block of event.message.content) {
+          if (block.type === "tool_use" && block.name) toolInputs.set(block.name, block.input);
+        }
+      }
+      yield event;
+    }
+  };
+
+  await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), await deps(t, query));
+
+  assert.deepEqual(toolInputs.get("mcp__telemetry__get_diff"), { deploy: "d-4821" });
+  assert.deepEqual(toolInputs.get("mcp__telemetry__search_logs"), {
+    level: "error",
+    since: "2026-10-05T02:50:00.000Z",
+    until: "2026-10-05T03:50:00Z",
+    limit: 5,
+  });
+});
+
 test("dry run proposes no lesson", async () => {
   const t = await load("bad-deploy");
   const run = await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), await deps(t, offlineQuery(t), { proposeLessons: false }));
