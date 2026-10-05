@@ -1,0 +1,97 @@
+<section class="module" id="module-1" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">4 a.m.</h1>
+      <p class="module-subtitle">An alert fires at 03:50. Someone has to pull the logs, read the dashboards, find the deploy and decide. The first part is search. The last part is judgment. This course builds an agent that does the first part and refuses to do the last.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Meet INC-1001</h2>
+        <p>The checkout service is returning errors. The alert says <strong>Error rate 12% for 5 min (threshold 2%)</strong>. Somewhere in an hour of logs, sixty metric points and three deploys is the answer. A human at 4 a.m. finds it in forty minutes. An <span class="term" data-definition="An AI agent is a program where a language model can decide to use tools in a loop until it has an answer.">agent</span> finds it in forty seconds. Then it must stop.</p>
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🚨</div>
+            <h4 class="pattern-title">The alert</h4>
+            <p class="pattern-desc">"Error rate 12% for 5 min on checkout." That text is data. It is never an instruction.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🔎</div>
+            <h4 class="pattern-title">The evidence</h4>
+            <p class="pattern-desc">Metrics jump at 03:45. Deploy d-4821 landed at 03:43. Logs say <code>PaymentConfigError: missing key</code>.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🙋</div>
+            <h4 class="pattern-title">The decision</h4>
+            <p class="pattern-desc">Roll back? Scale? Wait? That is a human's call. The agent writes a proposal and an owner. Nothing more.</p>
+          </div>
+        </div>
+        <div class="callout callout-info">
+          <div class="callout-icon">🧭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The one rule of this repo</strong>
+            <p>The agent gathers evidence, proposes, verifies and communicates. <strong>Humans decide what to mitigate and when.</strong> This line comes from Anthropic's own on-call kit, and every file in <code>src/</code> enforces it in code, not in a prompt.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Follow the alert through the loop</h2>
+        <p>Click through one investigation. Watch where the agent stops and the human starts.</p>
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-alert","label":"The alert arrives. The agent classifies it as #errors and loads only the lessons with that tag."},
+          {"highlight":"flow-metrics","label":"summarize_metrics: one breakpoint at 03:45, error_rate 0.003 → 0.12, on v2.15.0.","packet":true,"from":"flow-alert","to":"flow-metrics"},
+          {"highlight":"flow-deploys","label":"list_deploys: d-4821 shipped v2.15.0 at 03:43. Two minutes before the breakpoint.","packet":true,"from":"flow-metrics","to":"flow-deploys"},
+          {"highlight":"flow-logs","label":"search_logs: PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET.","packet":true,"from":"flow-deploys","to":"flow-logs"},
+          {"highlight":"flow-verdict","label":"Verdict: rollback, high confidence, three evidence lines, severity page. Code checks every rule.","packet":true,"from":"flow-logs","to":"flow-verdict"},
+          {"highlight":"flow-human","label":"A named human reads it, signs the approval (or rejects), and acts. The agent has no lever to pull.","packet":true,"from":"flow-verdict","to":"flow-human"},
+          {"highlight":"flow-watch","label":"After the fix: three bounded checks. LANDED at 03:54, 03:56, 04:00. Only a human closes.","packet":true,"from":"flow-human","to":"flow-watch"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-alert"><div class="flow-actor-icon">🚨</div><span>Alert</span></div>
+            <div class="flow-actor" id="flow-metrics"><div class="flow-actor-icon">📈</div><span>Metrics</span></div>
+            <div class="flow-actor" id="flow-deploys"><div class="flow-actor-icon">🚀</div><span>Deploys</span></div>
+            <div class="flow-actor" id="flow-logs"><div class="flow-actor-icon">📜</div><span>Logs</span></div>
+            <div class="flow-actor" id="flow-verdict"><div class="flow-actor-icon">🧾</div><span>Verdict</span></div>
+            <div class="flow-actor" id="flow-human"><div class="flow-actor-icon">🙋</div><span>Human</span></div>
+            <div class="flow-actor" id="flow-watch"><div class="flow-actor-icon">👀</div><span>Watch</span></div>
+          </div>
+          <div class="flow-packet"></div>
+          <div class="flow-step-label">Click "Next Step" to begin</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Why the stop matters</h2>
+        <p>Agents are superhuman at searching a large amount of data for one specific problem. They are also known to <strong>over-index on one signal</strong> and jump to a conclusion. The first property makes them the ideal first responder. The second is why the mitigation stays with a person. In the source video the same agent that diagnosed also rolled back behind a button. Anthropic's kit says: <em>no auto-mitigation, period</em>. If you want automated mitigation, build it as its own system with its own owner. This course follows the kit.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module1">
+          <div class="quiz-question-block" data-correct="b" data-explanation-right="The agent proposes; the division of labour is fixed in code and the mitigation is a human act." data-explanation-wrong="The agent has no tool that changes the system. It writes a proposal and an owner; a named human decides.">
+            <h3 class="quiz-question">At the end of an investigation, what does the agent do about the bad deploy?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Rolls it back, because the evidence is clear</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Proposes a rollback with an owner and waits for a human</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Pages everyone and waits</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

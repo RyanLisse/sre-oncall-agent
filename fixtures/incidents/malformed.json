@@ -1,0 +1,10 @@
+{
+  "incident": {
+    "incident_id": "1006",
+    "service": "",
+    "alert": "x",
+    "fired_at": "yesterday",
+    "extra": 1
+  },
+  "telemetry": "fixtures/telemetry/bad-deploy.json"
+}

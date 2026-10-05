@@ -1,0 +1,9 @@
+{
+  "incident": {
+    "incident_id": "INC-1003",
+    "service": "checkout",
+    "alert": "Error rate above 0.5% on checkout",
+    "fired_at": "2026-10-05T03:51:00Z"
+  },
+  "telemetry": "fixtures/telemetry/noisy-alert.json"
+}

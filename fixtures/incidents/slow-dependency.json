@@ -1,0 +1,9 @@
+{
+  "incident": {
+    "incident_id": "INC-1002",
+    "service": "checkout",
+    "alert": "p95 latency 3000 ms for 5 min on checkout (threshold 2000 ms)",
+    "fired_at": "2026-10-05T03:43:00Z"
+  },
+  "telemetry": "fixtures/telemetry/slow-dependency.json"
+}

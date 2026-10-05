@@ -1,0 +1,98 @@
+<section class="module" id="module-5" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h1 class="module-title">Sign, Watch, Learn, Ratchet</h1>
+      <p class="module-subtitle">What happens after the diagnosis: a named human signs, the agent watches the fix land with three bounded checks, a lesson is proposed, and a benchmark floor that only goes up keeps the investigator honest.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The approval record</h2>
+        <p>Without <code>--dry-run</code>, an investigation drafts <code>approvals/INC-1001.approval.json</code> as <code>pending</code>. <code>npm run approve -- … --by ryan</code> signs it. <code>decide()</code> refuses an empty name and refuses to re-decide. Whatever executes the fix asks one question: <code>isApproved(record, incident, proposal)</code>. Same incident, same proposal, decision approved, named human. Anything else is false.</p>
+        <div class="callout callout-info">
+          <div class="callout-icon">🔁</div>
+          <div class="callout-content">
+            <strong class="callout-title">Where this came from</strong>
+            <p>The Claude Cookbook's SRE agent exposes <code>request_approval</code> as a custom tool the application answers, and the agent may merge only when it returns "approved". We kept the gate and moved it one step further out: the agent has no merge tool at all. The approval record is what a separate executor reads.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Watch it land — three checks, not a loop</h2>
+        <p>Baseline is the median of the metric before the incident. After the human applies the fix at <code>--fix-at</code>, <code>watch</code> checks the metric at half, full and double the expected window. LANDED when full and double are at baseline. A check before any post-fix data exists counts as <em>no data</em>, never as success. Verify through the same door the failure came in: the exact metric that fired.</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">npm run watch</span>
+            <pre><code><span class="code-line">LANDED: error_rate back at baseline 0.003 (limit 0.008)</span>
+<span class="code-line">  half@03:54=0.003✓  full@03:56=0.003✓  double@04:00=0.003✓</span>
+<span class="code-line"></span>
+<span class="code-line">PASS watch · the human may close the incident (only a human closes).</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">And without the fix</span>
+            <p><code>NOT LANDED</code>, exit code 2. The agent says so. It does not escalate, retry forever, or close.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The ratchet</h2>
+        <p>From Anthropic's claude.ai performance sprint: every benchmark is also a CI guardrail with a number that can only move one way. <code>bench/cases.json</code> holds the expected proposal and severity per scenario. <code>bench/ratchet.json</code> is the floor: pass-rate ≥ 70%, harmful = 0. A <strong>harmful</strong> answer is a strong action the key says is wrong — a false mitigation is worse than a missed one. CI fails below the floor. <code>--raise</code> moves it up when the score improves. It is never lowered by hand.</p>
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">✅</div>
+            <h4 class="pattern-title">pass</h4>
+            <p class="pattern-desc">proposal and severity both match the key</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">⚠️</div>
+            <h4 class="pattern-title">partial</h4>
+            <p class="pattern-desc">right proposal, wrong urgency tier</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🚫</div>
+            <h4 class="pattern-title">harmful</h4>
+            <p class="pattern-desc">rollback / scale / flag-off where the key says otherwise</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">What you built</h2>
+        <p>An agent with a fixed division of labour. It searches, cites, proposes and verifies. You decide, you act, you close. The three things that keep it honest are code, not prompts: the evidence rules in <code>contract.ts</code>, the trace check in <code>agent.ts</code>, and the ratchet in <code>bench.ts</code>. Open <code>SOLO.md</code> and run it.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module5">
+          <div class="quiz-question-block" data-correct="b" data-explanation-right="The approval is scoped to one incident and one proposal. A different proposal is not approved." data-explanation-wrong="isApproved checks incident_id, proposal, decision and decided_by together. An approval for rollback says nothing about scale.">
+            <h3 class="quiz-question">Ryan approved <code>rollback</code> for INC-1001. An executor asks <code>isApproved(record, "INC-1001", "scale")</code>. Answer?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>true — the incident is approved</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>false — the approval is for one proposal only</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>true, but with a warning</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="quiz-question-block" data-correct="c" data-explanation-right="The ratchet is a floor. The fix is in the investigator or the case; the floor is never lowered by hand." data-explanation-wrong="CLAUDE.md rule 7: the ratchet only goes up. Lowering it hides a regression. Fix the investigator or correct the case.">
+            <h3 class="quiz-question">The bench drops to 60% after a prompt change. What do you do?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Lower min_rate to 0.6 so CI passes</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Delete the failing case</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Fix the investigator (or a wrong case); the floor stays</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

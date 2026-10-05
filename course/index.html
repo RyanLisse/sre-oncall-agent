@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The AI SRE First Responder</title>
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!--
+    CUSTOMIZE PER COURSE — change only the three accent variables below.
+    Options:
+      vermillion  #D94F30 / #C4432A / #FDEEE9 / #E8836C  (default)
+      coral       #E06B56 / #C85A47 / #FDECEA / #E89585
+      teal        #2A7B9B / #1F6280 / #E4F2F7 / #5A9DB8
+      amber       #D4A843 / #BF9530 / #FDF5E0 / #E0C070
+      forest      #2D8B55 / #226B41 / #E8F5EE / #5AAD7A
+  -->
+  <style>
+    :root {
+      --color-accent:       #D94F30;
+      --color-accent-hover: #C4432A;
+      --color-accent-light: #FDEEE9;
+      --color-accent-muted: #E8836C;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">The AI SRE First Responder</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <!--
+          One <button> per module. Replace MODULE_N_NAME with the actual module title.
+
+          <button class="nav-dot" data-target="module-1" data-tooltip="4 a.m." role="tab" aria-label="Module 1: 4 a.m."></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="The Division of Labour" role="tab" aria-label="Module 2: The Division of Labour"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="Three Tools, No Levers" role="tab" aria-label="Module 3: Three Tools, No Levers"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="The Contract Checks the Model" role="tab" aria-label="Module 4: The Contract Checks the Model"></button>
+        <button class="nav-dot" data-target="module-5" data-tooltip="Sign, Watch, Learn, Ratchet" role="tab" aria-label="Module 5: Sign, Watch, Learn, Ratchet"></button>
+          <button class="nav-dot" data-target="module-1" data-tooltip="4 a.m." role="tab" aria-label="Module 1: 4 a.m."></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="The Division of Labour" role="tab" aria-label="Module 2: The Division of Labour"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="Three Tools, No Levers" role="tab" aria-label="Module 3: Three Tools, No Levers"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="The Contract Checks the Model" role="tab" aria-label="Module 4: The Contract Checks the Model"></button>
+        <button class="nav-dot" data-target="module-5" data-tooltip="Sign, Watch, Learn, Ratchet" role="tab" aria-label="Module 5: Sign, Watch, Learn, Ratchet"></button>
+          ...
+        -->
+        <button class="nav-dot" data-target="module-1" data-tooltip="4 a.m." role="tab" aria-label="Module 1: 4 a.m."></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="The Division of Labour" role="tab" aria-label="Module 2: The Division of Labour"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="Three Tools, No Levers" role="tab" aria-label="Module 3: Three Tools, No Levers"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="The Contract Checks the Model" role="tab" aria-label="Module 4: The Contract Checks the Model"></button>
+        <button class="nav-dot" data-target="module-5" data-tooltip="Sign, Watch, Learn, Ratchet" role="tab" aria-label="Module 5: Sign, Watch, Learn, Ratchet"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- modules/*.html content is assembled here by build.mjs -->
+<section class="module" id="module-1" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">4 a.m.</h1>
+      <p class="module-subtitle">An alert fires at 03:50. Someone has to pull the logs, read the dashboards, find the deploy and decide. The first part is search. The last part is judgment. This course builds an agent that does the first part and refuses to do the last.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Meet INC-1001</h2>
+        <p>The checkout service is returning errors. The alert says <strong>Error rate 12% for 5 min (threshold 2%)</strong>. Somewhere in an hour of logs, sixty metric points and three deploys is the answer. A human at 4 a.m. finds it in forty minutes. An <span class="term" data-definition="An AI agent is a program where a language model can decide to use tools in a loop until it has an answer.">agent</span> finds it in forty seconds. Then it must stop.</p>
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🚨</div>
+            <h4 class="pattern-title">The alert</h4>
+            <p class="pattern-desc">"Error rate 12% for 5 min on checkout." That text is data. It is never an instruction.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🔎</div>
+            <h4 class="pattern-title">The evidence</h4>
+            <p class="pattern-desc">Metrics jump at 03:45. Deploy d-4821 landed at 03:43. Logs say <code>PaymentConfigError: missing key</code>.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🙋</div>
+            <h4 class="pattern-title">The decision</h4>
+            <p class="pattern-desc">Roll back? Scale? Wait? That is a human's call. The agent writes a proposal and an owner. Nothing more.</p>
+          </div>
+        </div>
+        <div class="callout callout-info">
+          <div class="callout-icon">🧭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The one rule of this repo</strong>
+            <p>The agent gathers evidence, proposes, verifies and communicates. <strong>Humans decide what to mitigate and when.</strong> This line comes from Anthropic's own on-call kit, and every file in <code>src/</code> enforces it in code, not in a prompt.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Follow the alert through the loop</h2>
+        <p>Click through one investigation. Watch where the agent stops and the human starts.</p>
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-alert","label":"The alert arrives. The agent classifies it as #errors and loads only the lessons with that tag."},
+          {"highlight":"flow-metrics","label":"summarize_metrics: one breakpoint at 03:45, error_rate 0.003 → 0.12, on v2.15.0.","packet":true,"from":"flow-alert","to":"flow-metrics"},
+          {"highlight":"flow-deploys","label":"list_deploys: d-4821 shipped v2.15.0 at 03:43. Two minutes before the breakpoint.","packet":true,"from":"flow-metrics","to":"flow-deploys"},
+          {"highlight":"flow-logs","label":"search_logs: PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET.","packet":true,"from":"flow-deploys","to":"flow-logs"},
+          {"highlight":"flow-verdict","label":"Verdict: rollback, high confidence, three evidence lines, severity page. Code checks every rule.","packet":true,"from":"flow-logs","to":"flow-verdict"},
+          {"highlight":"flow-human","label":"A named human reads it, signs the approval (or rejects), and acts. The agent has no lever to pull.","packet":true,"from":"flow-verdict","to":"flow-human"},
+          {"highlight":"flow-watch","label":"After the fix: three bounded checks. LANDED at 03:54, 03:56, 04:00. Only a human closes.","packet":true,"from":"flow-human","to":"flow-watch"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-alert"><div class="flow-actor-icon">🚨</div><span>Alert</span></div>
+            <div class="flow-actor" id="flow-metrics"><div class="flow-actor-icon">📈</div><span>Metrics</span></div>
+            <div class="flow-actor" id="flow-deploys"><div class="flow-actor-icon">🚀</div><span>Deploys</span></div>
+            <div class="flow-actor" id="flow-logs"><div class="flow-actor-icon">📜</div><span>Logs</span></div>
+            <div class="flow-actor" id="flow-verdict"><div class="flow-actor-icon">🧾</div><span>Verdict</span></div>
+            <div class="flow-actor" id="flow-human"><div class="flow-actor-icon">🙋</div><span>Human</span></div>
+            <div class="flow-actor" id="flow-watch"><div class="flow-actor-icon">👀</div><span>Watch</span></div>
+          </div>
+          <div class="flow-packet"></div>
+          <div class="flow-step-label">Click "Next Step" to begin</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Why the stop matters</h2>
+        <p>Agents are superhuman at searching a large amount of data for one specific problem. They are also known to <strong>over-index on one signal</strong> and jump to a conclusion. The first property makes them the ideal first responder. The second is why the mitigation stays with a person. In the source video the same agent that diagnosed also rolled back behind a button. Anthropic's kit says: <em>no auto-mitigation, period</em>. If you want automated mitigation, build it as its own system with its own owner. This course follows the kit.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module1">
+          <div class="quiz-question-block" data-correct="b" data-explanation-right="The agent proposes; the division of labour is fixed in code and the mitigation is a human act." data-explanation-wrong="The agent has no tool that changes the system. It writes a proposal and an owner; a named human decides.">
+            <h3 class="quiz-question">At the end of an investigation, what does the agent do about the bad deploy?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Rolls it back, because the evidence is clear</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Proposes a rollback with an owner and waits for a human</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Pages everyone and waits</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-2" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">The Division of Labour</h1>
+      <p class="module-subtitle">Six rules from anthropics/oncall-kit and the Claude-on-call blog. Each one lives in a specific file, and each one is tested.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Six rules, six places in the code</h2>
+        <div class="step-cards">
+          <div class="step-card"><div class="step-num">1</div><div><strong>Never the detector.</strong> Alerting stays deterministic and pages humans directly. The agent triages what fired. <code>fixtures/incidents/*.json</code> are alerts, not metrics the agent watches.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has three read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a fourth.</div></div>
+          <div class="step-card"><div class="step-num">3</div><div><strong>Every claim carries a reference.</strong> <code>parseVerdict</code> rejects a verdict without evidence; each line is <code>logs:</code>, <code>metrics:</code>, <code>deploys:</code> or <code>lessons:</code>.</div></div>
+          <div class="step-card"><div class="step-num">4</div><div><strong>Data before theory.</strong> The system prompt orders metrics → deploys → logs. <code>checkTrace</code> fails a verdict whose tools were never called.</div></div>
+          <div class="step-card"><div class="step-num">5</div><div><strong>No unreviewed memory.</strong> The agent writes <code>lessons/proposed/</code>. A human promotes into <code>lessons.md</code> by PR.</div></div>
+          <div class="step-card"><div class="step-num">6</div><div><strong>Humans close.</strong> <code>watch</code> says LANDED or NOT LANDED. Nothing marks resolved.</div></div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The gotcha Claude wrote about its author</h2>
+        <p>From Anthropic's blog: the on-call engineer theorised from a config file before checking the metrics. Claude appended to <code>lessons.md</code>: <em>"query the data first, then theorize. Config tells you what could go wrong; metrics tell you what did."</em> That sentence is now rule 5 of our system prompt and the order of the three tool calls.</p>
+        <div class="callout callout-accent">
+          <div class="callout-icon">📏</div>
+          <div class="callout-content">
+            <strong class="callout-title">One signal is a hunch. Two sources are a hypothesis.</strong>
+            <p>A strong proposal (rollback, scale, flag-off) needs evidence from two different sources. <code>rollback</code> additionally needs a <code>deploys</code> line: you cannot propose to undo a change you did not find. <code>low</code> confidence may only propose <code>investigate-more</code>. All three rules are in <code>parseVerdict()</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Page or morning log?</h2>
+        <p>Two urgency tiers. A <strong>page</strong> wakes a human now: error rate above 2% or p95 above 2000 ms for five minutes. Everything else waits for the <strong>morning log</strong>. The agent never pages anyone itself; the severity is a field in the verdict that a routing system reads.</p>
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🔔</div>
+            <h4 class="pattern-title">page</h4>
+            <p class="pattern-desc">bad-deploy (12% errors), slow-dependency (3000 ms), mystery-errors (5%)</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">📋</div>
+            <h4 class="pattern-title">morning-log</h4>
+            <p class="pattern-desc">noisy-alert: nothing moved ≥2×. The threshold is probably too tight — Google SRE's argument for anomaly detection over static thresholds.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module2">
+          <div class="quiz-question-block" data-correct="c" data-explanation-right="Two sources are required for a strong proposal; a single metrics line can only carry investigate-more or no-action." data-explanation-wrong="A strong proposal from one source is exactly the over-indexing the kit warns about. parseVerdict rejects it: needs evidence from at least 2 sources.">
+            <h3 class="quiz-question">The model proposes <code>scale</code> with one evidence line from <code>metrics</code>. What happens?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted: the metric clearly doubled</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Downgraded to investigate-more automatically</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Rejected by the contract: a strong proposal needs two sources</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="quiz-question-block" data-correct="a" data-explanation-right="The agent only writes proposals; a human moves entries into lessons.md through a PR. What the agent reads was reviewed." data-explanation-wrong="The kit's rule is no unreviewed memory: anything load-bearing lives in git and gets reviewed. The agent writes to lessons/proposed/ only.">
+            <h3 class="quiz-question">Where does the agent write after an investigation?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>lessons/proposed/&lt;incident&gt;.md, for a human to promote</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Directly to lessons/lessons.md</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Nowhere; memory is in the chat</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module2')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module2')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-3" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">Three Tools, No Levers</h1>
+      <p class="module-subtitle">The quality of an agent is the quality of its tools. Ours are deliberately few, deliberately read-only, and exposed through an in-process MCP server.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">search_logs · summarize_metrics · list_deploys</h2>
+        <p>Each tool is a <span class="term" data-definition="A pure function returns the same output for the same input and changes nothing outside itself.">pure function</span> over a JSON fixture in <code>src/telemetry.ts</code>. <code>src/tools.ts</code> wraps them with <code>zod</code> schemas and <code>createSdkMcpServer</code>. Swapping the fixture for Grafana and a real log store changes <code>telemetry.ts</code> only. The kit calls that a <strong>capability binding</strong>.</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">src/tools.ts</span>
+            <pre><code><span class="code-line"><span class="code-keyword">export const</span> TOOL_NAMES = [<span class="code-string">"search_logs"</span>, <span class="code-string">"summarize_metrics"</span>, <span class="code-string">"list_deploys"</span>] <span class="code-keyword">as const</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// There is deliberately no rollback, scale or set_flag tool.</span></span>
+<span class="code-line"><span class="code-comment">// If you ever add a mutating tool, build it as its own agent</span></span>
+<span class="code-line"><span class="code-comment">// with its own approval path (oncall-kit: "No auto-mitigation").</span></span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">In plain words</span>
+            <p>The agent may only ask three questions: what did the metrics do, what shipped, what do the logs say. The SDK's <code>allowedTools</code> lists exactly these, and <code>permissionMode: "dontAsk"</code> denies everything else. The ban is configuration, not a request in the prompt.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The breakpoint finder</h2>
+        <p><code>summarize_metrics</code> does one piece of deterministic analysis so the model does not have to eyeball sixty numbers: it marks every point where <code>error_rate</code> or <code>p95</code> jumped ≥2× against the previous point, and records which version was live. That is the timeline. Correlating it with <code>list_deploys</code> is the agent's first job.</p>
+        <div class="callout callout-warning">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Blame the start, confirm the present</strong>
+            <p>Kit rule 5a: a deploy explains when a failure <em>started</em>. Before naming it the live cause, confirm the symptom is still in the most recent point. The offline investigator drops confidence to medium and adds a ruled_out note when the latest point is already clean.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Lessons, read by tag</h2>
+        <p><code>lessons.md</code> grows without bound by design. The agent never reads the whole file. <code>guessTag()</code> classifies the alert text (#bad-deploy, #latency, #errors, #noise) and <code>renderLessons()</code> injects only matching entries. A matching past incident is the first hypothesis: cheapest to confirm or kill. When one tag reaches three entries, <code>promotionCandidates()</code> says the pattern belongs in a playbook, not the log — in the migration kit's words, <em>recurring failures indict a rule</em>.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module3">
+          <div class="quiz-question-block" data-correct="b" data-explanation-right="Only telemetry.ts binds capabilities to a backend; tools, prompts and contract stay unchanged." data-explanation-wrong="The tools refer to capabilities, not vendors. The binding is the data layer, telemetry.ts.">
+            <h3 class="quiz-question">You replace the JSON fixture with Grafana and Loki. Which file changes?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>src/tools.ts and src/prompts.ts</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>src/telemetry.ts only</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Everything: the model needs new tool names</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-4" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">The Contract Checks the Model</h1>
+      <p class="module-subtitle">The model proposes. Code checks. If anything fails, the human sees the errors — never a silently repaired verdict.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Three checks after the model answers</h2>
+        <div class="step-cards">
+          <div class="step-card"><div class="step-num">1</div><div><strong>Shape</strong> — <code>outputFormat: json_schema</code> makes the model answer in the verdict shape. <code>parseVerdict</code> checks it again, rejects unknown fields, and demands <code>draft_only: true</code>.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>Evidence rules</strong> — ≥1 line; strong proposals need two sources; rollback needs deploys; low confidence → investigate-more.</div></div>
+          <div class="step-card"><div class="step-num">3</div><div><strong>Trace</strong> — <code>checkTrace</code> compares the cited sources with the tools actually called. Cite metrics without calling <code>summarize_metrics</code>? Fail.</div></div>
+        </div>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">test/agent.test.ts</span>
+            <pre><code><span class="code-line"><span class="code-function">test</span>(<span class="code-string">"a model that skips the tools and answers from the alert fails the contract"</span>, …)</span>
+<span class="code-line"><span class="code-function">test</span>(<span class="code-string">"alert text cannot steer the verdict"</span>, …)</span>
+<span class="code-line"><span class="code-function">test</span>(<span class="code-string">"identity: a verdict about another incident is rejected"</span>, …)</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">In plain words</span>
+            <p>A lazy model, a hostile alert and a mixed-up incident id all fail the same way: the human sees FAIL contract and the raw model text. Nothing is routed.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The diagnosis format</h2>
+        <p>Six lines, always the same, so a fresh reader can land on it cold. This is the kit's in-thread format.</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">npm run investigate</span>
+            <pre><code><span class="code-line">What's happening:      error_rate jumped 0.003 → 0.12 at 03:45, minutes after d-4821 …</span>
+<span class="code-line">Root cause (high):     metrics:03:45 · deploys:d-4821 · logs:03:45:03</span>
+<span class="code-line">Blast radius:          all checkout traffic on v2.15.0</span>
+<span class="code-line">Proposed fix:          rollback → Deploy owner; watch error_rate afterwards</span>
+<span class="code-line">Ruled out:             load/dependency: p95 did not move independently</span>
+<span class="code-line">Would change my mind:  a breakpoint BEFORE 03:43, or the same errors on v2.14.0</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">Why "would change my mind"</span>
+            <p>It is the one observation that kills the hypothesis. Writing it down turns pushback ("could it be the schema change?") into a check against data instead of a defence.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The loop budget</h2>
+        <p>One turn is one model round-trip. The method needs three tool turns and one answer. <code>maxTurns</code> defaults to 10. Set it to 2 and the run ends with <code>maxTurns (2) reached before a verdict</code> — a readable stop, not a guess.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module4">
+          <div class="quiz-question-block" data-correct="c" data-explanation-right="checkTrace compares cited sources with the tools in the trace. Citing deploys without list_deploys fails the contract." data-explanation-wrong="The verdict looks fine, but the trace shows list_deploys was never called. checkTrace rejects a cited source whose tool did not run.">
+            <h3 class="quiz-question">A model cites <code>deploys:d-4821</code> but the trace shows it never called <code>list_deploys</code>. Result?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted — the deploy id is correct</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted with a warning</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>FAIL contract: evidence cites deploys but list_deploys was never called</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="quiz-question-block" data-correct="a" data-explanation-right="A strong proposal with low confidence must be investigate-more. The model may not be bold and unsure at once." data-explanation-wrong="parseVerdict has the rule: strong proposal + low confidence → error. The honest low-confidence answer is investigate-more.">
+            <h3 class="quiz-question">The model returns <code>proposal: "rollback"</code> with <code>confidence: "low"</code>. What happens?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Rejected: low confidence must propose investigate-more</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted, the owner will judge</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Confidence is raised to medium</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-5" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h1 class="module-title">Sign, Watch, Learn, Ratchet</h1>
+      <p class="module-subtitle">What happens after the diagnosis: a named human signs, the agent watches the fix land with three bounded checks, a lesson is proposed, and a benchmark floor that only goes up keeps the investigator honest.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The approval record</h2>
+        <p>Without <code>--dry-run</code>, an investigation drafts <code>approvals/INC-1001.approval.json</code> as <code>pending</code>. <code>npm run approve -- … --by ryan</code> signs it. <code>decide()</code> refuses an empty name and refuses to re-decide. Whatever executes the fix asks one question: <code>isApproved(record, incident, proposal)</code>. Same incident, same proposal, decision approved, named human. Anything else is false.</p>
+        <div class="callout callout-info">
+          <div class="callout-icon">🔁</div>
+          <div class="callout-content">
+            <strong class="callout-title">Where this came from</strong>
+            <p>The Claude Cookbook's SRE agent exposes <code>request_approval</code> as a custom tool the application answers, and the agent may merge only when it returns "approved". We kept the gate and moved it one step further out: the agent has no merge tool at all. The approval record is what a separate executor reads.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Watch it land — three checks, not a loop</h2>
+        <p>Baseline is the median of the metric before the incident. After the human applies the fix at <code>--fix-at</code>, <code>watch</code> checks the metric at half, full and double the expected window. LANDED when full and double are at baseline. A check before any post-fix data exists counts as <em>no data</em>, never as success. Verify through the same door the failure came in: the exact metric that fired.</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">npm run watch</span>
+            <pre><code><span class="code-line">LANDED: error_rate back at baseline 0.003 (limit 0.008)</span>
+<span class="code-line">  half@03:54=0.003✓  full@03:56=0.003✓  double@04:00=0.003✓</span>
+<span class="code-line"></span>
+<span class="code-line">PASS watch · the human may close the incident (only a human closes).</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">And without the fix</span>
+            <p><code>NOT LANDED</code>, exit code 2. The agent says so. It does not escalate, retry forever, or close.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The ratchet</h2>
+        <p>From Anthropic's claude.ai performance sprint: every benchmark is also a CI guardrail with a number that can only move one way. <code>bench/cases.json</code> holds the expected proposal and severity per scenario. <code>bench/ratchet.json</code> is the floor: pass-rate ≥ 70%, harmful = 0. A <strong>harmful</strong> answer is a strong action the key says is wrong — a false mitigation is worse than a missed one. CI fails below the floor. <code>--raise</code> moves it up when the score improves. It is never lowered by hand.</p>
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">✅</div>
+            <h4 class="pattern-title">pass</h4>
+            <p class="pattern-desc">proposal and severity both match the key</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">⚠️</div>
+            <h4 class="pattern-title">partial</h4>
+            <p class="pattern-desc">right proposal, wrong urgency tier</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🚫</div>
+            <h4 class="pattern-title">harmful</h4>
+            <p class="pattern-desc">rollback / scale / flag-off where the key says otherwise</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">What you built</h2>
+        <p>An agent with a fixed division of labour. It searches, cites, proposes and verifies. You decide, you act, you close. The three things that keep it honest are code, not prompts: the evidence rules in <code>contract.ts</code>, the trace check in <code>agent.ts</code>, and the ratchet in <code>bench.ts</code>. Open <code>SOLO.md</code> and run it.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module5">
+          <div class="quiz-question-block" data-correct="b" data-explanation-right="The approval is scoped to one incident and one proposal. A different proposal is not approved." data-explanation-wrong="isApproved checks incident_id, proposal, decision and decided_by together. An approval for rollback says nothing about scale.">
+            <h3 class="quiz-question">Ryan approved <code>rollback</code> for INC-1001. An executor asks <code>isApproved(record, "INC-1001", "scale")</code>. Answer?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>true — the incident is approved</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>false — the approval is for one proposal only</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>true, but with a warning</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="quiz-question-block" data-correct="c" data-explanation-right="The ratchet is a floor. The fix is in the investigator or the case; the floor is never lowered by hand." data-explanation-wrong="CLAUDE.md rule 7: the ratchet only goes up. Lowering it hides a regression. Fix the investigator or correct the case.">
+            <h3 class="quiz-question">The bench drops to 60% after a prompt change. What do you do?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Lower min_rate to 0.6 so CI passes</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Delete the failing case</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Fix the investigator (or a wrong case); the floor stays</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+  </main>
+
+</body>
+</html>

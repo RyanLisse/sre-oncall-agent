@@ -1,0 +1,68 @@
+<section class="module" id="module-3" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">Three Tools, No Levers</h1>
+      <p class="module-subtitle">The quality of an agent is the quality of its tools. Ours are deliberately few, deliberately read-only, and exposed through an in-process MCP server.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">search_logs · summarize_metrics · list_deploys</h2>
+        <p>Each tool is a <span class="term" data-definition="A pure function returns the same output for the same input and changes nothing outside itself.">pure function</span> over a JSON fixture in <code>src/telemetry.ts</code>. <code>src/tools.ts</code> wraps them with <code>zod</code> schemas and <code>createSdkMcpServer</code>. Swapping the fixture for Grafana and a real log store changes <code>telemetry.ts</code> only. The kit calls that a <strong>capability binding</strong>.</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">src/tools.ts</span>
+            <pre><code><span class="code-line"><span class="code-keyword">export const</span> TOOL_NAMES = [<span class="code-string">"search_logs"</span>, <span class="code-string">"summarize_metrics"</span>, <span class="code-string">"list_deploys"</span>] <span class="code-keyword">as const</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// There is deliberately no rollback, scale or set_flag tool.</span></span>
+<span class="code-line"><span class="code-comment">// If you ever add a mutating tool, build it as its own agent</span></span>
+<span class="code-line"><span class="code-comment">// with its own approval path (oncall-kit: "No auto-mitigation").</span></span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">In plain words</span>
+            <p>The agent may only ask three questions: what did the metrics do, what shipped, what do the logs say. The SDK's <code>allowedTools</code> lists exactly these, and <code>permissionMode: "dontAsk"</code> denies everything else. The ban is configuration, not a request in the prompt.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The breakpoint finder</h2>
+        <p><code>summarize_metrics</code> does one piece of deterministic analysis so the model does not have to eyeball sixty numbers: it marks every point where <code>error_rate</code> or <code>p95</code> jumped ≥2× against the previous point, and records which version was live. That is the timeline. Correlating it with <code>list_deploys</code> is the agent's first job.</p>
+        <div class="callout callout-warning">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Blame the start, confirm the present</strong>
+            <p>Kit rule 5a: a deploy explains when a failure <em>started</em>. Before naming it the live cause, confirm the symptom is still in the most recent point. The offline investigator drops confidence to medium and adds a ruled_out note when the latest point is already clean.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Lessons, read by tag</h2>
+        <p><code>lessons.md</code> grows without bound by design. The agent never reads the whole file. <code>guessTag()</code> classifies the alert text (#bad-deploy, #latency, #errors, #noise) and <code>renderLessons()</code> injects only matching entries. A matching past incident is the first hypothesis: cheapest to confirm or kill. When one tag reaches three entries, <code>promotionCandidates()</code> says the pattern belongs in a playbook, not the log — in the migration kit's words, <em>recurring failures indict a rule</em>.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module3">
+          <div class="quiz-question-block" data-correct="b" data-explanation-right="Only telemetry.ts binds capabilities to a backend; tools, prompts and contract stay unchanged." data-explanation-wrong="The tools refer to capabilities, not vendors. The binding is the data layer, telemetry.ts.">
+            <h3 class="quiz-question">You replace the JSON fixture with Grafana and Loki. Which file changes?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>src/tools.ts and src/prompts.ts</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>src/telemetry.ts only</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Everything: the model needs new tool names</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

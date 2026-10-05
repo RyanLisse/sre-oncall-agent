@@ -1,0 +1,9 @@
+{
+  "incident": {
+    "incident_id": "INC-1001",
+    "service": "checkout",
+    "alert": "Error rate 12% for 5 min on checkout (threshold 2%)",
+    "fired_at": "2026-10-05T03:50:00Z"
+  },
+  "telemetry": "fixtures/telemetry/bad-deploy.json"
+}

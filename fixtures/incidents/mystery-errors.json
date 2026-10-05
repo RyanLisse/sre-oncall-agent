@@ -1,0 +1,9 @@
+{
+  "incident": {
+    "incident_id": "INC-1004",
+    "service": "checkout",
+    "alert": "Error rate 5% for 5 min on checkout (threshold 2%)",
+    "fired_at": "2026-10-05T03:55:00Z"
+  },
+  "telemetry": "fixtures/telemetry/mystery-errors.json"
+}

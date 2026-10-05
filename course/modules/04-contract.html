@@ -1,0 +1,87 @@
+<section class="module" id="module-4" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">The Contract Checks the Model</h1>
+      <p class="module-subtitle">The model proposes. Code checks. If anything fails, the human sees the errors — never a silently repaired verdict.</p>
+    </header>
+
+    <div class="module-body">
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Three checks after the model answers</h2>
+        <div class="step-cards">
+          <div class="step-card"><div class="step-num">1</div><div><strong>Shape</strong> — <code>outputFormat: json_schema</code> makes the model answer in the verdict shape. <code>parseVerdict</code> checks it again, rejects unknown fields, and demands <code>draft_only: true</code>.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>Evidence rules</strong> — ≥1 line; strong proposals need two sources; rollback needs deploys; low confidence → investigate-more.</div></div>
+          <div class="step-card"><div class="step-num">3</div><div><strong>Trace</strong> — <code>checkTrace</code> compares the cited sources with the tools actually called. Cite metrics without calling <code>summarize_metrics</code>? Fail.</div></div>
+        </div>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">test/agent.test.ts</span>
+            <pre><code><span class="code-line"><span class="code-function">test</span>(<span class="code-string">"a model that skips the tools and answers from the alert fails the contract"</span>, …)</span>
+<span class="code-line"><span class="code-function">test</span>(<span class="code-string">"alert text cannot steer the verdict"</span>, …)</span>
+<span class="code-line"><span class="code-function">test</span>(<span class="code-string">"identity: a verdict about another incident is rejected"</span>, …)</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">In plain words</span>
+            <p>A lazy model, a hostile alert and a mixed-up incident id all fail the same way: the human sees FAIL contract and the raw model text. Nothing is routed.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The diagnosis format</h2>
+        <p>Six lines, always the same, so a fresh reader can land on it cold. This is the kit's in-thread format.</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">npm run investigate</span>
+            <pre><code><span class="code-line">What's happening:      error_rate jumped 0.003 → 0.12 at 03:45, minutes after d-4821 …</span>
+<span class="code-line">Root cause (high):     metrics:03:45 · deploys:d-4821 · logs:03:45:03</span>
+<span class="code-line">Blast radius:          all checkout traffic on v2.15.0</span>
+<span class="code-line">Proposed fix:          rollback → Deploy owner; watch error_rate afterwards</span>
+<span class="code-line">Ruled out:             load/dependency: p95 did not move independently</span>
+<span class="code-line">Would change my mind:  a breakpoint BEFORE 03:43, or the same errors on v2.14.0</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">Why "would change my mind"</span>
+            <p>It is the one observation that kills the hypothesis. Writing it down turns pushback ("could it be the schema change?") into a check against data instead of a defence.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The loop budget</h2>
+        <p>One turn is one model round-trip. The method needs three tool turns and one answer. <code>maxTurns</code> defaults to 10. Set it to 2 and the run ends with <code>maxTurns (2) reached before a verdict</code> — a readable stop, not a guess.</p>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Check your understanding</h2>
+        <div class="quiz-container" id="quiz-module4">
+          <div class="quiz-question-block" data-correct="c" data-explanation-right="checkTrace compares cited sources with the tools in the trace. Citing deploys without list_deploys fails the contract." data-explanation-wrong="The verdict looks fine, but the trace shows list_deploys was never called. checkTrace rejects a cited source whose tool did not run.">
+            <h3 class="quiz-question">A model cites <code>deploys:d-4821</code> but the trace shows it never called <code>list_deploys</code>. Result?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted — the deploy id is correct</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted with a warning</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>FAIL contract: evidence cites deploys but list_deploys was never called</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="quiz-question-block" data-correct="a" data-explanation-right="A strong proposal with low confidence must be investigate-more. The model may not be bold and unsure at once." data-explanation-wrong="parseVerdict has the rule: strong proposal + low confidence → error. The honest low-confidence answer is investigate-more.">
+            <h3 class="quiz-question">The model returns <code>proposal: "rollback"</code> with <code>confidence: "low"</code>. What happens?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Rejected: low confidence must propose investigate-more</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Accepted, the owner will judge</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Confidence is raised to medium</span></button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <div class="flow-controls">
+            <button class="btn btn-primary quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check answers</button>
+            <button class="btn quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Reset</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

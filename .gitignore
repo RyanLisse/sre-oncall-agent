@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+# run artefacts: approvals are signed per environment, proposals are promoted by PR
+approvals/*.approval.json
+lessons/proposed/*.md
+.claude/settings.local.json
+coverage/
