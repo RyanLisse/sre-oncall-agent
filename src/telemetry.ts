@@ -23,7 +23,17 @@ export interface MetricPoint {
   readonly error_rate: number; // 0..1
   readonly p95_ms: number;
   readonly version: string;
+  /** Requests in the bucket. Optional for hand-written fixtures; live telemetry sets it. */
+  readonly n?: number;
 }
+
+/**
+ * Breakpoint thresholds. A "≥2× jump" on three requests is noise, so a point
+ * only counts when (a) the bucket has enough samples, (b) the jump is ≥2× AND
+ * (c) clears an absolute floor. The floor is what stops a 0.3% → 0.7% wobble
+ * from being called an incident.
+ */
+export const BREAK = { minSamples: 20, errorRateFloor: 0.02, p95Floor: 1000 } as const;
 
 export interface Deploy {
   readonly id: string;
@@ -105,9 +115,10 @@ export const summarizeMetrics = (t: Telemetry, since?: string, until?: string): 
     const prev = pts[i - 1];
     if (!prev) return [];
     const out: { ts: string; what: string; from: number; to: number; version: string }[] = [];
-    if (m.error_rate >= Math.max(0.01, prev.error_rate * 2))
+    if ((m.n ?? Infinity) < BREAK.minSamples) return [];
+    if (m.error_rate >= Math.max(BREAK.errorRateFloor, prev.error_rate * 2))
       out.push({ ts: m.ts, what: "error_rate", from: prev.error_rate, to: m.error_rate, version: m.version });
-    if (m.p95_ms >= prev.p95_ms * 2)
+    if (m.p95_ms >= Math.max(BREAK.p95Floor, prev.p95_ms * 2))
       out.push({ ts: m.ts, what: "p95_ms", from: prev.p95_ms, to: m.p95_ms, version: m.version });
     return out;
   });
@@ -123,6 +134,25 @@ export const summarizeMetrics = (t: Telemetry, since?: string, until?: string): 
     versions: [...new Set(pts.map((p) => p.version))],
     breakpoints,
   };
+};
+
+/** Bucket length in ms, inferred from the two closest metric points (fixtures: 60 s; live shop: 10 s). */
+export const bucketMs = (t: Telemetry): number => {
+  const ts = [...new Set(t.metrics.map((m) => Date.parse(m.ts)))].sort((a, b) => a - b);
+  let min = Infinity;
+  for (let i = 1; i < ts.length; i++) min = Math.min(min, (ts[i] as number) - (ts[i - 1] as number));
+  return Number.isFinite(min) && min > 0 ? min : 60_000;
+};
+
+/**
+ * The deploy that explains a breakpoint: landed within `lookbackMin` before the
+ * breakpoint's bucket, up to the END of that bucket (a metric point stamped
+ * 03:45:00 covers 03:45:00–03:45:59, so a deploy at 03:45:01 is inside it).
+ */
+export const deployBehind = (t: Telemetry, bpTs: string, lookbackMin = 15): Deploy | undefined => {
+  const end = new Date(Date.parse(bpTs) + bucketMs(t)).toISOString();
+  const start = new Date(Date.parse(bpTs) - lookbackMin * 60_000).toISOString();
+  return listDeploys(t, start, end)[0]; // newest first → the closest deploy
 };
 
 /** Deploys in a window, newest first. */

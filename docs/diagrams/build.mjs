@@ -126,7 +126,7 @@ export const DIAGRAMS = {
     caption: "The agent owns the middle lane only. Detection stays with your alerting; mitigation stays with a human.",
     lanes: [
       { label: "ALERT INTAKE", cards: [
-        { title: "Your alerting", desc: "Detects a failure. Page-worthy alerts page a human directly." },
+        { title: "Your alerting · or a deployment watch", desc: "Detects a failure. Page-worthy alerts page a human. The watch has a fixed policy and no rollback." },
         { title: "Queue", desc: "Delivers the alert as one JSON incident." },
         { title: "Lessons by #tag", desc: "Loads only past incidents of this failure class." },
       ]},
@@ -137,7 +137,7 @@ export const DIAGRAMS = {
       ]},
       { label: "RECOVERY", cards: [
         { title: "Named human", desc: "Signs or rejects the exact proposal. Nothing else is approved.", accent: "warm" },
-        { title: "Separate executor", desc: "Reads isApproved(). Applies the permitted change. Not this repo." },
+        { title: "Separate executor", desc: "Reads isApproved(). Recomputes the target from telemetry. Rolls back, then collects fresh checkout evidence." },
         { title: "Watch it land", desc: "Three bounded checks on the metric that fired. Only a human closes.", accent: "green" },
       ]},
     ],

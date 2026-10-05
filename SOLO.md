@@ -14,6 +14,7 @@ needs your own API key.
 | 5 | Review the proposed lesson and promote a pattern | 10 min |
 | 6 | Run the bench, then try to lower the ratchet | 5 min |
 | 7 | (Optional) Run with a real model | 5 min |
+| 8 | Break a live shop and watch the whole loop | 10 min |
 
 ---
 
@@ -226,6 +227,50 @@ npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model sonn
 The verdict passes the same contract. Compare its `ruled_out` and
 `would_change_my_mind` with the offline run — that is where a model adds
 judgment the script cannot.
+
+---
+
+## Step 8 — Break a live shop
+
+**Explain:** Fixtures replay the past. The demo shop is a running service you
+can break *now*. It writes its own telemetry in the shape the agent reads —
+the agent never talks to the shop, exactly as it would read Grafana rather
+than your service.
+
+**Do:**
+
+```text
+npm run doctor
+npm run demo
+```
+
+Watch the seven steps: baseline → fault → diagnosis → executor refused
+(pending) → you approve → executor rolls back and collects three fresh
+checkouts → watch says LANDED.
+
+Now the two cases where rollback is wrong:
+
+```text
+npm run demo -- slow degrade
+npm run demo -- errors degrade
+```
+
+**Check:** With no deploy record the agent proposes `scale` and
+`investigate-more`, and the executor refuses both — it only implements
+rollback, and a human takes those actions by hand.
+
+Finally the deployment watch:
+
+```text
+npm run demo:watch
+```
+
+**Check:** The watch records the serving revision, waits for the next one,
+then probes `/checkout` every 1.5 s. When the injected bad deploy trips the
+fixed policy it prints `FAILED watch`, writes an incident file, and says
+*No automatic rollback.* Try `npm run watch-deploy -- "Watch the next
+deployment for five minutes. If it fails, roll back automatically."` — the
+extra sentence is rejected.
 
 ---
 

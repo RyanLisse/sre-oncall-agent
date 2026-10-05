@@ -54,6 +54,45 @@ npm run watch       -- fixtures/incidents/bad-deploy.json \
 
 Add `--dry-run` to step 1 to skip the approval draft and the lesson proposal.
 
+## The live demo: a shop you can break
+
+Fixtures are good for the tutorial. To see the agent react to something
+*happening*, run the demo shop — a tiny checkout service with fault
+injection that writes its own telemetry in the shape the agent reads.
+
+```
+npm run demo                      # whole loop on a bad deploy, ~2 min: shop → traffic → fault → investigate → refused → approve → execute → LANDED
+npm run demo -- slow degrade      # latency with NO deploy record → agent proposes scale, executor refuses (not a rollback)
+npm run demo -- errors degrade    # mystery 5xx, no deploy → investigate-more, low confidence
+npm run demo:watch                # "Watch the next deployment for one minute." with a bad deploy injected mid-watch → FAILED, incident queued, no rollback
+```
+
+Or drive it by hand in three terminals:
+
+```
+npm run shop                                           # :4310, telemetry → demo/data/telemetry.json
+npm run traffic                                        # 8 checkouts/s
+npm run chaos -- deploy v2.15.0 --mode bad-deploy      # faults: healthy · bad-deploy · slow · errors
+npm run chaos -- degrade --mode slow                   # same fault, no deploy record
+npm run live -- --alert "Error rate 12% for 5 min on checkout" --out demo/incidents/live.json
+npm run investigate -- demo/incidents/live.json
+npm run approve -- demo/incidents/live.json --by you
+npm run execute -- demo/incidents/live.json            # the SEPARATE executor: approval → recomputed target → rollback → 3 fresh verified checkouts
+npm run watch-deploy -- "Watch the next deployment for five minutes."
+npm run doctor                                         # preflight
+```
+
+The executor (`src/executor.ts`) is deliberately a different program from
+the agent. It never reads model text: it re-derives the rollback target from
+telemetry, refuses anything that is not an approved `rollback`, and reports
+done only after three verified successful checkouts on the intended
+revision. The deployment watch (`src/deployWatch.ts`) parses a strict
+command grammar — extra sentences describing the fixed policy are accepted,
+anything else is rejected rather than silently changing the rules — and
+evaluates a fixed, model-free failure policy: three consecutive verified
+failures, three consecutive >1000 ms, or ≥3 5xx since the watch began. An
+unverified check breaks a streak. There is no automatic rollback.
+
 ## Run with a real model (optional)
 
 ```
@@ -105,6 +144,12 @@ src/watch.ts                  "watch it land": baseline + three bounded checks
 src/bench.ts                  held-out replay + ratchet
 src/runtime.ts                real SDK or the offline scripted investigator
 src/cli.ts                    investigate · approve · reject · watch
+src/deployWatch.ts            "Watch the next deployment for N minutes": strict grammar, fixed failure policy, no model
+src/executor.ts               the SEPARATE approved-recovery executor: approval → recomputed plan → rollback → fresh evidence
+src/ops.ts                    doctor · live · watch-deploy · execute
+demo/shop.ts                  the fictional checkout service with fault injection; writes telemetry.json
+demo/chaos.ts                 traffic generator + deploy/degrade levers (the operator's, not the agent's)
+demo/run.sh                   npm run demo — the whole loop live
 fixtures/generate.mjs         deterministic telemetry for five scenarios
 fixtures/incidents/           the alerts, incl. adversarial + malformed
 bench/cases.json              expected proposal + severity per scenario
@@ -118,6 +163,19 @@ approvals/                    pending/approved/rejected records
 course/                       interactive HTML course (open course/index.html)
 docs/sources.md               what each idea was taken from
 ```
+
+## What was added after comparing with the video's repo
+
+Owain's `ai-sre-agent` has a demo shop, a chat-scheduled deployment watch
+with a fixed failure policy, an approved-recovery executor that produces
+fresh checkout evidence, and a `doctor`. The first version of this repo had
+none of those — it only replayed fixtures. All four are now here (`demo/`,
+`src/deployWatch.ts`, `src/executor.ts`, `npm run doctor`), with two
+differences kept on purpose: the executor is a separate program the agent
+cannot call, and the rollback target is recomputed from telemetry instead of
+taken from the proposal. What is still not here: Pub/Sub intake, a web
+console, Postgres persistence, and Cloud Run — those are deployment choices,
+not design.
 
 ## Resources
 

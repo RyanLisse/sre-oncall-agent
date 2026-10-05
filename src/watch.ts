@@ -9,10 +9,12 @@
  * expected-resolution window, at full, at double. Verify through the same
  * door the failure came in: the exact metric that detected the incident.
  *
- * Baseline = median of the window BEFORE the incident. Landed = the point
- * at (or just before) the check time is within tolerance of baseline.
+ * Baseline = median of the metric BEFORE THE FIRST BREAKPOINT preceding the
+ * incident (not before the alert — alerts fire minutes after the regression
+ * starts, and a baseline that includes the regression is not a baseline).
+ * Landed = the point at (or just before) the check time is within tolerance.
  */
-import type { MetricPoint, Telemetry } from "./telemetry.js";
+import { summarizeMetrics, type MetricPoint, type Telemetry } from "./telemetry.js";
 
 export type WatchMetric = "error_rate" | "p95_ms";
 
@@ -59,7 +61,10 @@ export const watchMetric = (
   fixAt: string,
   windowMin = 4,
 ): WatchReport => {
-  const pre = t.metrics.filter((p) => p.ts < incidentStart).map((p) => pick(p, metric));
+  const since = new Date(Date.parse(incidentStart) - 60 * 60_000).toISOString();
+  const bp = summarizeMetrics(t, since, incidentStart).breakpoints[0];
+  const cutoff = bp?.ts ?? incidentStart;
+  const pre = t.metrics.filter((p) => p.ts < cutoff).map((p) => pick(p, metric));
   const baseline = median(pre);
   const floor = metric === "error_rate" ? 0.005 : 50;
   const limit = Math.max(baseline * 1.5, baseline + floor);

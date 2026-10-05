@@ -11,7 +11,7 @@
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import type { Incident, Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
-import { previousVersion, type Telemetry } from "./telemetry.js";
+import { deployBehind, previousVersion, type Telemetry } from "./telemetry.js";
 
 // ── Port: the slice of SDK messages the agent reads ──────────────────────
 export interface ContentBlock {
@@ -115,7 +115,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     };
   }
 
-  const deploy = deploys.find((d) => d.at <= bp.ts && d.at >= minus(bp.ts, 15));
+  const deploy = deployBehind(t, bp.ts);
   const logs = h.search_logs({ level: "error", since: minus(bp.ts, 2), until: incident.fired_at, limit: 3 });
   const logEvidence = logs.slice(0, 1).map((l) => ({ source: "logs" as const, ref: l.ts, note: l.msg }));
   const paging = metrics.error_rate_last > 0.02 || metrics.p95_ms_last > 2000;
