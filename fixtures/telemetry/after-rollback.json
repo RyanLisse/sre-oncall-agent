@@ -49,7 +49,7 @@
     {
       "ts": "2026-10-05T03:45:03.000Z",
       "level": "error",
-      "msg": "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET for provider=stripe-eu"
+      "msg": "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET_EU for provider=stripe-eu"
     },
     {
       "ts": "2026-10-05T03:45:04.000Z",
@@ -459,7 +459,8 @@
       "version": "v2.15.0",
       "at": "2026-10-05T03:43:00.000Z",
       "author": "sven",
-      "summary": "payments: switch EU traffic to new provider config"
+      "summary": "payments: switch EU traffic to new provider config",
+      "diff": "--- a/payments/provider.ts\n+++ b/payments/provider.ts\n@@ -12,9 +12,9 @@ export const providerFor = (region: string): Provider => {\n-  const secret = env(\"PAYMENT_PROVIDER_SECRET\");\n-  return region === \"eu\" ? stripeEU(secret) : stripeUS(secret);\n+  // EU traffic now goes through the new provider config; secret is read per region\n+  const secret = env(`PAYMENT_PROVIDER_SECRET_${region.toUpperCase()}`);\n+  return region === \"eu\" ? stripeEU(secret) : stripeUS(secret);\n };"
     },
     {
       "id": "d-4822",

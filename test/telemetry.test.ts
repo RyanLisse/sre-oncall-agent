@@ -27,6 +27,7 @@ test("search_logs is capped at 50 and filters by level", async () => {
   assert.ok(searchLogs(t, { limit: 500 }).length <= 50);
   assert.ok(searchLogs(t, { level: "error" }).every((l) => l.level === "error"));
   assert.equal(searchLogs(t, { pattern: "PAYMENTCONFIG" }).length, 4);
+  assert.equal(searchLogs(t, { pattern: "PAYMENT_PROVIDER_SECRET_EU" }).length, 1);
 });
 
 test("previousVersion finds what was live before a deploy", async () => {

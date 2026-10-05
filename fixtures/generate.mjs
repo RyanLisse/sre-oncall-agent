@@ -25,6 +25,26 @@ const baselineLogs = (from, to, version) => {
   return out;
 };
 
+const DIFFS = {
+  "bad-deploy": `--- a/payments/provider.ts
++++ b/payments/provider.ts
+@@ -12,9 +12,9 @@ export const providerFor = (region: string): Provider => {
+-  const secret = env("PAYMENT_PROVIDER_SECRET");
+-  return region === "eu" ? stripeEU(secret) : stripeUS(secret);
++  // EU traffic now goes through the new provider config; secret is read per region
++  const secret = env(\`PAYMENT_PROVIDER_SECRET_\${region.toUpperCase()}\`);
++  return region === "eu" ? stripeEU(secret) : stripeUS(secret);
+ };`,
+  slow: `--- a/checkout/reserve.ts
++++ b/checkout/reserve.ts
+@@ -20,6 +20,8 @@ export const reserveAll = async (items: Item[]) => {
+-  await inventory.reserveBatch(items.map((i) => i.sku));
++  for (const i of items) {
++    await inventory.reserve(i.sku); // TODO batch
++  }
+ };`,
+};
+
 const write = (name, data) => {
   mkdirSync("fixtures/telemetry", { recursive: true });
   writeFileSync(`fixtures/telemetry/${name}.json`, JSON.stringify(data, null, 2) + "\n");
@@ -43,7 +63,7 @@ const write = (name, data) => {
     ...baselineLogs(0, 45, "v2.14.0"),
     log(43, 2, "info", "deploy d-4821 started: v2.15.0 (payments: new provider config)"),
     log(43, 40, "info", "deploy d-4821 complete: 100% traffic on v2.15.0"),
-    log(45, 3, "error", "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET for provider=stripe-eu"),
+    log(45, 3, "error", "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET_EU for provider=stripe-eu"),
     log(45, 4, "error", "checkout failed order=ord-2045 status=500 cause=PaymentConfigError"),
     log(45, 9, "error", "checkout failed order=ord-2046 status=500 cause=PaymentConfigError"),
     log(46, 1, "error", "checkout failed order=ord-2047 status=500 cause=PaymentConfigError"),
@@ -52,7 +72,7 @@ const write = (name, data) => {
   const deploys = [
     { id: "d-4790", version: "v2.13.2", at: ts(-900), author: "mira", summary: "copy fix in receipt email" },
     { id: "d-4805", version: "v2.14.0", at: ts(-300), author: "jonas", summary: "checkout: address autocomplete" },
-    { id: "d-4821", version: "v2.15.0", at: ts(43), author: "sven", summary: "payments: switch EU traffic to new provider config" },
+    { id: "d-4821", version: "v2.15.0", at: ts(43), author: "sven", summary: "payments: switch EU traffic to new provider config", diff: DIFFS["bad-deploy"] },
   ];
   write("bad-deploy", { service: "checkout", logs, metrics, deploys });
 

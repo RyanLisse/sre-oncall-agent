@@ -49,7 +49,8 @@ test("the loop calls metrics, deploys, logs and proposes a lesson", async () => 
   const t = await load("bad-deploy");
   const d = await deps(t, offlineQuery(t));
   const run = await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), d);
-  assert.deepEqual(run.trace.map((x) => x.tool), ["summarize_metrics", "list_deploys", "search_logs"]);
+  assert.deepEqual(run.trace.map((x) => x.tool), ["summarize_metrics", "list_deploys", "get_diff", "search_logs"]);
+  assert.ok(run.result.ok && run.result.value.evidence.some((e) => e.source === "diff"), "the diff is cited");
   assert.equal(run.result.ok, true);
   assert.ok(run.lessonFile);
   const lesson = await readFile(run.lessonFile as string, "utf8");

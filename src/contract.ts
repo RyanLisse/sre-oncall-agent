@@ -44,7 +44,7 @@ export interface Incident {
 
 /** One line of evidence the agent cites. `ref` is a tool-local pointer (log line, panel, deploy id). */
 export interface EvidenceRef {
-  readonly source: "logs" | "metrics" | "deploys" | "lessons";
+  readonly source: "logs" | "metrics" | "deploys" | "diff" | "lessons";
   readonly ref: string;
   readonly note: string;
 }
@@ -110,7 +110,7 @@ export const VERDICT_SCHEMA = {
         additionalProperties: false,
         required: ["source", "ref", "note"],
         properties: {
-          source: { type: "string", enum: ["logs", "metrics", "deploys", "lessons"] },
+          source: { type: "string", enum: ["logs", "metrics", "deploys", "diff", "lessons"] },
           ref: { type: "string", minLength: 1 },
           note: { type: "string", minLength: 1 },
         },
@@ -177,7 +177,7 @@ export const parseIncident = (raw: unknown): Result<Incident> => {
 const parseEvidence = (raw: unknown, i: number): string[] => {
   if (!isObject(raw)) return [`evidence[${i}]: expected an object`];
   return [
-    ...oneOf(raw, "source", ["logs", "metrics", "deploys", "lessons"]),
+    ...oneOf(raw, "source", ["logs", "metrics", "deploys", "diff", "lessons"]),
     ...nonEmpty(raw, "ref"),
     ...nonEmpty(raw, "note"),
     ...onlyKeys(raw, ["source", "ref", "note"]),

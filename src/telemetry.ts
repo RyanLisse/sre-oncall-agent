@@ -41,6 +41,8 @@ export interface Deploy {
   readonly at: string;
   readonly author: string;
   readonly summary: string;
+  /** Unified diff of the change, when the code host exposes it. */
+  readonly diff?: string;
 }
 
 export interface Telemetry {
@@ -155,9 +157,20 @@ export const deployBehind = (t: Telemetry, bpTs: string, lookbackMin = 15): Depl
   return listDeploys(t, start, end)[0]; // newest first → the closest deploy
 };
 
-/** Deploys in a window, newest first. */
+/** The diff for a deploy id (or version). The agent reads the change, not just the record. */
+export const getDiff = (t: Telemetry, idOrVersion: string): { id: string; version: string; diff: string } | { error: string } => {
+  const d = t.deploys.find((x) => x.id === idOrVersion || x.version === idOrVersion);
+  if (!d) return { error: `no deploy ${idOrVersion}` };
+  if (!d.diff) return { error: `no diff recorded for ${d.id}` };
+  return { id: d.id, version: d.version, diff: d.diff };
+};
+
+/** Deploys in a window, newest first — without the diff body (call get_diff for that). */
 export const listDeploys = (t: Telemetry, since?: string, until?: string): readonly Deploy[] =>
-  [...t.deploys].filter((d) => inWindow(d.at, since, until)).sort((a, b) => (a.at < b.at ? 1 : -1));
+  [...t.deploys]
+    .filter((d) => inWindow(d.at, since, until))
+    .sort((a, b) => (a.at < b.at ? 1 : -1))
+    .map(({ diff: _diff, ...rest }) => ({ ...rest, ...(_diff ? { has_diff: true } : {}) }) as Deploy);
 
 /** The version that was live just before `deploy`, if any. Pure. */
 export const previousVersion = (t: Telemetry, deploy: Deploy): string | undefined =>

@@ -98,7 +98,14 @@ unverified check breaks a streak. There is no automatic rollback.
 ```
 export ANTHROPIC_API_KEY=sk-ant-...        # shell only, never in a file
 npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model sonnet
+npm run e2e                                # headless: 8 assertions on real model output, clean + adversarial (~$0.06)
 ```
+
+The team runbook lives in `skills/triage/SKILL.md` — a Skill-shaped file,
+loaded into the system prompt, editable like code, and uploadable unchanged
+as a Claude Code or Managed Agents skill. Its order of operations is the
+agent's method: deploys first, line them up with the metric, **read the
+diff**, then grep to confirm — "don't grep to fish".
 
 The model gets the same three read-only tools through an in-process MCP
 server, the same `lessons.md` slice, and the same JSON-schema output
@@ -109,7 +116,7 @@ the loop.
 
 | Can | Cannot |
 | --- | --- |
-| `search_logs`, `summarize_metrics`, `list_deploys` (read-only, capped) | call any tool that changes the system — none exists |
+| `search_logs`, `summarize_metrics`, `list_deploys`, `get_diff` (read-only, capped) | call any tool that changes the system — none exists |
 | read lessons for the matching `#tag` | read the whole `lessons.md` (grows unbounded by design) |
 | propose `rollback` / `scale` / `flag-off` / `investigate-more` / `no-action` | execute any of them |
 | write `lessons/proposed/<id>.md` | append to `lessons/lessons.md` |
@@ -135,7 +142,9 @@ SOLO.md                       step-by-step tutorial
 src/contract.ts               Incident · Verdict · Recommendation · schema · evidence rules
 src/telemetry.ts              the fictional production system: logs, metrics, deploys (pure queries)
 src/tools.ts                  the three read-only tools, as an in-process MCP server
-src/prompts.ts                standing orders (ASD-STE100-ish) and the per-incident prompt
+src/prompts.ts                standing orders (ASD-STE100-ish) + the runbook from skills/triage/SKILL.md
+skills/triage/SKILL.md        the team runbook as a Skill: order of operations, things that have burned us
+src/e2e.ts                    headless real-model check (npm run e2e)
 src/lessons.ts                lessons.md: read by #tag, propose-only writes, promotion candidates
 src/agent.ts                  the query() loop, trace extraction, trace ↔ evidence check
 src/router.ts                 parse → validate → attach owner
@@ -191,6 +200,7 @@ Every idea in this repo has a primary source. Per-source "taken / deliberately n
 - [Claude Tag on-call webinar](https://www.anthropic.com/webinars/claude-tag-on-call-a-new-teammate-in-your-incident-channel) — companion to the blog.
 - [Claude Cookbook: Build an SRE incident response agent with Claude Managed Agents](https://platform.claude.com/cookbook/managed-agents-sre-incident-responder) ([notebook](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/sre_incident_responder.ipynb)) — `request_approval` as a custom tool the application answers; Skills for runbook conventions. Live session: [Cooking with Claude](https://www.anthropic.com/webinars/cooking-with-claude-how-to-build-an-sre-incident-response-agent) (2026-06-25).
 - [Agent SDK: the site-reliability agent](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/03_The_site_reliability_agent.ipynb) — the same problem on the local SDK (the runtime this repo uses).
+- [cwc-workshops: ship your first managed agent](https://github.com/anthropics/cwc-workshops/tree/main/ship-your-first-managed-agent) (MIT, workshop sample) — the runbook-as-Skill with an explicit order of operations and a "things that have burned us" list; `get_diff` as a tool (read the change before you blame it); `e2e.py` as a headless real-model check; the incident dashboard with the agent in a side panel.
 - [How we made claude.ai 3x faster in two weeks](https://claude.dev/blog/how-we-made-claude-ai-faster/) (2026-09-23) — every benchmark is a CI guardrail with a one-way ratchet; prove a proxy tracks the real metric before climbing it.
 - [`anthropics/code-migration-kit-with-claude-code`](https://github.com/anthropics/code-migration-kit-with-claude-code) — "you don't fix the code, you fix the process"; recurring failures indict a rule; ban by configuration, not by request.
 - [Claude Agent SDK](https://docs.claude.com/en/docs/agent-sdk/overview) · [TypeScript SDK](https://github.com/anthropics/claude-agent-sdk-typescript) · [MCP in the SDK](https://code.claude.com/docs/en/mcp).

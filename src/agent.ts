@@ -99,7 +99,7 @@ export const extractTrace = (events: readonly AgentEvent[]): ToolTraceEntry[] =>
  */
 export const checkTrace = (trace: readonly ToolTraceEntry[], cited: readonly string[]): string[] => {
   const called = new Set(trace.map((t) => t.tool));
-  const bySource: Record<string, string> = { metrics: "summarize_metrics", deploys: "list_deploys", logs: "search_logs" };
+  const bySource: Record<string, string> = { metrics: "summarize_metrics", deploys: "list_deploys", logs: "search_logs", diff: "get_diff" };
   return [
     ...(["summarize_metrics", "list_deploys"] as const)
       .filter((t) => !called.has(t))

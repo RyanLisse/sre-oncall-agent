@@ -30,7 +30,8 @@
     "watch-deploy": "tsx src/ops.ts watch-deploy",
     "execute": "tsx src/ops.ts execute",
     "demo": "bash demo/run.sh",
-    "demo:watch": "bash demo/watch-demo.sh"
+    "demo:watch": "bash demo/watch-demo.sh",
+    "e2e": "tsx src/e2e.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.274",

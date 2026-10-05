@@ -38,7 +38,7 @@ const BUCKET_MS = 10_000;
 
 interface LogLine { ts: string; level: "info" | "warn" | "error"; msg: string }
 interface Bucket { ts: string; n: number; errors: number; lat: number[]; version: string }
-interface Deploy { id: string; version: string; at: string; author: string; summary: string }
+interface Deploy { id: string; version: string; at: string; author: string; summary: string; diff?: string }
 
 const state = {
   version: "v2.14.0",
@@ -123,15 +123,22 @@ const send = (res: ServerResponse, status: number, data: unknown) => {
 };
 
 /** Apply a "deploy": switch revision and fault mode, record it. Exported for the executor. */
+const DIFFS: Partial<Record<Mode, string>> = {
+  "bad-deploy": `--- a/payments/provider.ts\n+++ b/payments/provider.ts\n@@ -12,9 +12,9 @@\n-  const secret = env("PAYMENT_PROVIDER_SECRET");\n+  const secret = env(\`PAYMENT_PROVIDER_SECRET_\${region.toUpperCase()}\`);`,
+  slow: `--- a/checkout/reserve.ts\n+++ b/checkout/reserve.ts\n@@ -20,6 +20,8 @@\n-  await inventory.reserveBatch(items.map((i) => i.sku));\n+  for (const i of items) {\n+    await inventory.reserve(i.sku); // TODO batch\n+  }`,
+  errors: `--- a/gateway/upstream.ts\n+++ b/gateway/upstream.ts\n@@ -3,4 +3,4 @@\n-const UPSTREAM = "https://api.internal/v1";\n+const UPSTREAM = "https://api-v2.internal/v2"; // no timeout configured yet`,
+};
+
 export const applyDeploy = (version: string, mode: Mode, author: string, summary: string): Deploy => {
   state.deployCounter += 1;
-  const d: Deploy = { id: `d-${state.deployCounter}`, version, at: new Date().toISOString(), author, summary };
+  const diff = DIFFS[mode];
+  const d: Deploy = { id: `d-${state.deployCounter}`, version, at: new Date().toISOString(), author, summary, ...(diff ? { diff } : {}) };
   log("info", `deploy ${d.id} started: ${version}`);
   state.version = version;
   state.mode = mode;
   state.deploys.push(d);
   log("info", `deploy ${d.id} complete: 100% traffic on ${version}`);
-  if (mode === "bad-deploy") log("error", "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET for provider=stripe-eu");
+  if (mode === "bad-deploy") log("error", "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET_EU for provider=stripe-eu");
   flush();
   return d;
 };

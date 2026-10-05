@@ -11,10 +11,10 @@
  */
 import { createSdkMcpServer, tool, type McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import { listDeploys, searchLogs, summarizeMetrics, type Telemetry } from "./telemetry.js";
+import { getDiff, listDeploys, searchLogs, summarizeMetrics, type Telemetry } from "./telemetry.js";
 
 export const SERVER_NAME = "telemetry";
-export const TOOL_NAMES = ["search_logs", "summarize_metrics", "list_deploys"] as const;
+export const TOOL_NAMES = ["search_logs", "summarize_metrics", "list_deploys", "get_diff"] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
 
 /** Fully qualified names the SDK uses for MCP tools: `mcp__<server>__<tool>`. */
@@ -44,6 +44,7 @@ export const handlers = (t: Telemetry) => ({
     summarizeMetrics(t, args.since, args.until),
   list_deploys: (args: { since?: string | undefined; until?: string | undefined }) =>
     listDeploys(t, args.since, args.until),
+  get_diff: (args: { deploy: string }) => getDiff(t, args.deploy),
 });
 
 export const createTelemetryServer = (t: Telemetry): McpSdkServerConfigWithInstance => {
@@ -81,6 +82,12 @@ export const createTelemetryServer = (t: Telemetry): McpSdkServerConfigWithInsta
           until: z.string().optional(),
         },
         async (args) => text(h.list_deploys(args)),
+      ),
+      tool(
+        "get_diff",
+        "Unified diff for a deploy id or version. Read the change before you blame it. Cite as diff:<deploy id>.",
+        { deploy: z.string().describe("deploy id like d-4821, or a version like v2.15.0") },
+        async (args) => text(h.get_diff(args)),
       ),
     ],
   });

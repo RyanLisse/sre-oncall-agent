@@ -11,7 +11,7 @@
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import type { Incident, Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
-import { deployBehind, previousVersion, type Telemetry } from "./telemetry.js";
+import { deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
 
 // ── Port: the slice of SDK messages the agent reads ──────────────────────
 export interface ContentBlock {
@@ -122,6 +122,10 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
 
   if (deploy) {
     const prev = previousVersion(t, deploy);
+    const diff = getDiff(t, deploy.id);
+    const diffEvidence = "diff" in diff
+      ? [{ source: "diff" as const, ref: deploy.id, note: `changed: ${diff.diff.split("\n").filter((l) => l.startsWith("+") && !l.startsWith("+++")).slice(0, 2).map((l) => l.slice(1).trim()).join(" | ").slice(0, 140)}` }]
+      : [];
     return {
       ...base,
       tag: "bad-deploy",
@@ -131,6 +135,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       evidence: [
         { source: "metrics", ref: bp.ts, note: `${bp.what} ${bp.from} → ${bp.to} on ${bp.version}` },
         { source: "deploys", ref: deploy.id, note: `${deploy.version} at ${deploy.at}: ${deploy.summary}` },
+        ...diffEvidence,
         ...logEvidence,
       ],
       blast_radius: `all ${t.service} traffic on ${deploy.version}; error_rate now ${metrics.error_rate_last}`,
@@ -183,16 +188,19 @@ export const offlineQuery =
     const incident = extractIncident(prompt);
     const maxTurns = options.maxTurns ?? Number.POSITIVE_INFINITY;
     // The method takes 3 tool turns + 1 answer turn.
-    const steps: readonly ToolName[] = ["summarize_metrics", "list_deploys", "search_logs"];
+    const steps: readonly ToolName[] = ["summarize_metrics", "list_deploys", "get_diff", "search_logs"];
     if (maxTurns < steps.length + 1) {
       yield { type: "result", subtype: "error_max_turns", num_turns: Math.min(maxTurns, steps.length), total_cost_usd: 0 };
       return;
     }
     const h = handlers(t);
     const since = incident.fired_at ? minus(incident.fired_at, 60) : undefined;
+    const bp0 = h.summarize_metrics({ since, until: incident.fired_at }).breakpoints[0];
+    const behind = bp0 ? deployBehind(t, bp0.ts) : undefined;
     const outputs: Record<ToolName, unknown> = {
       summarize_metrics: h.summarize_metrics({ since, until: incident.fired_at }),
       list_deploys: h.list_deploys({ since, until: incident.fired_at }),
+      get_diff: behind ? h.get_diff({ deploy: behind.id }) : { error: "no deploy lines up with the breakpoint — not called in anger" },
       search_logs: h.search_logs({ level: "error", since, until: incident.fired_at, limit: 5 }),
     };
     for (const name of steps) {
