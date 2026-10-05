@@ -24,8 +24,9 @@ const shopHealth = async (): Promise<{ revision: string; mode: string } | undefi
 // ── doctor ───────────────────────────────────────────────────────────────
 const doctor = async (): Promise<number> => {
   const rows: [string, boolean, string][] = [];
-  const nodeMajor = Number(process.versions.node.split(".")[0]);
-  rows.push(["node ≥ 22", nodeMajor >= 22, process.versions.node]);
+  const [nodeMajor = 0, nodeMinor = 0] = process.versions.node.split(".").map(Number);
+  const supportedNode = nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 13);
+  rows.push(["node ≥ 22.13", supportedNode, process.versions.node]);
   rows.push(["@anthropic-ai/claude-agent-sdk installed", existsSync("node_modules/@anthropic-ai/claude-agent-sdk/package.json"), existsSync("node_modules/@anthropic-ai/claude-agent-sdk/package.json") ? (JSON.parse(readFileSync("node_modules/@anthropic-ai/claude-agent-sdk/package.json", "utf8")) as { version: string }).version : "run npm install"]);
   rows.push(["fixtures generated", existsSync("fixtures/telemetry/bad-deploy.json"), existsSync("fixtures/telemetry/bad-deploy.json") ? "fixtures/telemetry/*.json" : "run npm run fixtures"]);
   rows.push(["diagrams generated", existsSync("docs/diagrams/01-architecture.svg"), existsSync("docs/diagrams/01-architecture.svg") ? "docs/diagrams/*.svg" : "run npm run diagrams"]);

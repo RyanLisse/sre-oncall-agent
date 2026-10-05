@@ -1,8 +1,8 @@
 /**
  * tools.ts — the agent's read-only investigation tools
  * ---------------------------------------------------------------------------
- * Three tools, exposed to the SDK as an in-process MCP server:
- *   search_logs · summarize_metrics · list_deploys
+ * Four read-only tools, exposed to the SDK as an in-process MCP server:
+ *   search_logs · summarize_metrics · list_deploys · get_diff
  *
  * "The quality of your agent comes down to the quality of its tools."
  * There is deliberately no `rollback`, `scale` or `set_flag` tool. The agent
