@@ -54,6 +54,35 @@ npm run watch       -- fixtures/incidents/bad-deploy.json \
 
 Add `--dry-run` to step 1 to skip the approval draft and the lesson proposal.
 
+## The console: a local on-call desk with a chat
+
+```
+npm run shop && npm run traffic          # (two terminals) the demo service
+npm run console                           # http://localhost:4320 — offline investigator
+AGENT_MODEL=sonnet npm run console        # same console, real model behind the chat
+```
+
+![Console: incident view](docs/console-incident.png)
+
+Everything runs locally: Node `http`, `node:sqlite`, one HTML file, the
+Claude **Agent SDK** (not Managed Agents). The console is the three intake
+paths from Anthropic's figure landing in one triage loop:
+
+| Path | How it reaches the console |
+| --- | --- |
+| **Alert** | your alerting `POST /api/alerts {"alert": "…"}` — or the built-in **listener**: every 10 s it evaluates `oncall.md`-style criteria on the live telemetry (error_rate > 2% or p95 > 2000 ms, sustained, deploy-window aware) and opens an incident. Deterministic. The agent is never the detector. |
+| **Human report** | "+ New investigation", or type `Investigate: customers report checkout errors` |
+| **Deployment watch** | type `Watch the next deployment for five minutes.` — a failed watch opens an incident |
+
+The chat box is routed by a grammar before any model sees it
+(`src/chat.ts`): watch commands → the watcher; `Investigate: …` → the full
+loop; a free question → the investigator in read-only Q&A mode (no
+proposal); and **anything that sounds like a mutation — "roll back",
+"approve", "resolve" — is refused**: those are buttons a named human clicks.
+Incidents move through `active → stale → mitigated → resolved`; every arrow
+into a closed state is a button with a name field, and the agent may only
+flag *stale*.
+
 ## The live demo: a shop you can break
 
 Fixtures are good for the tutorial. To see the agent react to something
@@ -156,6 +185,10 @@ src/cli.ts                    investigate · approve · reject · watch
 src/deployWatch.ts            "Watch the next deployment for N minutes": strict grammar, fixed failure policy, no model
 src/executor.ts               the SEPARATE approved-recovery executor: approval → recomputed plan → rollback → fresh evidence
 src/ops.ts                    doctor · live · watch-deploy · execute
+src/chat.ts                   chat routing: grammar first, mutations refused, questions → read-only Q&A
+src/store.ts                  incidents + messages in node:sqlite; four states, human-only closing arrows
+console/server.ts             the local console: HTTP API, SSE, alert webhook, deterministic listener
+console/index.html            the UI: sidebar, overview, incident chat, approve/execute/resolve buttons
 demo/shop.ts                  the fictional checkout service with fault injection; writes telemetry.json
 demo/chaos.ts                 traffic generator + deploy/degrade levers (the operator's, not the agent's)
 demo/run.sh                   npm run demo — the whole loop live

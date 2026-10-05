@@ -30,3 +30,5 @@ The agent gathers evidence, proposes, verifies and communicates.
 - Strict types: no `any`, no non-null assertions in `src/`.
 - Never put credentials in files or commands. `ANTHROPIC_API_KEY` is exported in the shell only.
 - Write only under `src/`, `test/`, `docs/`, `fixtures/`, `bench/`, `lessons/proposed/`, `approvals/`, `course/`, and the markdown files at the root.
+11. **Chat is routed by a grammar, not by the model.** `routeMessage()` in `src/chat.ts` decides watch/investigate/question before any model call, and refuses mutations in chat. Approve, execute, mitigate and resolve are HTTP endpoints behind buttons that require a name.
+12. **The console detects deterministically.** The listener in `console/server.ts` evaluates fixed criteria on telemetry. Do not route detection through the model.
