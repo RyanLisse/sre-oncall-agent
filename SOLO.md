@@ -107,12 +107,14 @@ the last one is `low`, so the contract would have refused a strong proposal.
 
 ![The model proposes. Code checks.](docs/diagrams/02-contract.svg)
 
-**Explain:** The model proposes; code checks. Three rules live in
+**Explain:** The model proposes; code checks. Evidence rules in
 `parseVerdict()` in `src/contract.ts`:
 
+- every verdict needs at least one evidence line;
 - a strong proposal needs two evidence sources;
 - `rollback` needs a `deploys` line;
 - `low` confidence can only propose `investigate-more`.
+- `data_gaps` lists missing signals; high confidence is refused while gaps exist.
 
 And one in `checkTrace()` in `src/agent.ts`: a cited source whose tool was
 never called fails.
@@ -281,6 +283,9 @@ the script cannot.
 
 To use the model in the console, set `AGENT_MODEL` and start `npm run console`.
 Keep `ANTHROPIC_API_KEY` set in the same shell.
+The console lets a named human add resolution notes; they append to
+`lessons.md` with the incident id, date, and name. See
+[`docs/verification.md`](docs/verification.md) for the verified console flow.
 
 macOS or Linux:
 

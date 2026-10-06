@@ -16,7 +16,7 @@
         <h2 class="screen-heading">Three checks after the model answers</h2>
         <div class="step-cards">
           <div class="step-card"><div class="step-num">1</div><div><strong>Shape</strong> — <code>outputFormat: json_schema</code> makes the model answer in the verdict shape. <code>parseVerdict</code> checks it again, rejects unknown fields, and demands <code>draft_only: true</code>.</div></div>
-          <div class="step-card"><div class="step-num">2</div><div><strong>Evidence rules</strong> — ≥1 line; strong proposals need two sources; rollback needs deploys; low confidence → investigate-more.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>Evidence rules</strong> — ≥1 line; strong proposals need two sources; rollback needs deploys; low confidence → investigate-more. <code>data_gaps</code> records missing signals; high confidence is refused while gaps exist.</div></div>
           <div class="step-card"><div class="step-num">3</div><div><strong>Trace</strong> — <code>checkTrace</code> compares the cited sources with the tools actually called. Cite metrics without calling <code>summarize_metrics</code>? Fail.</div></div>
         </div>
         <div class="translation-block animate-in">

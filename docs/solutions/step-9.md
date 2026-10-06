@@ -44,6 +44,7 @@ verdict when the latest point is below both thresholds:
 +        proposal: "no-action",
 +        ruled_out: ["rollback: the symptom is below threshold in the latest point"],
 +        would_change_my_mind: "a new breakpoint or a latest point above threshold",
++        data_gaps: gaps,
 +        watch_metric: bp.what,
 +      };
 +    }

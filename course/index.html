@@ -183,7 +183,7 @@
           <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has four read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a mutating tool.</div></div>
           <div class="step-card"><div class="step-num">3</div><div><strong>Every claim carries a reference.</strong> <code>parseVerdict</code> rejects a verdict without evidence; each line is <code>logs:</code>, <code>metrics:</code>, <code>deploys:</code>, <code>diff:</code> or <code>lessons:</code>.</div></div>
           <div class="step-card"><div class="step-num">4</div><div><strong>Data before theory.</strong> The order is metrics → deploys → <code>get_diff</code> when a deploy lines up → logs. <code>checkTrace</code> fails a verdict whose tools were never called.</div></div>
-          <div class="step-card"><div class="step-num">5</div><div><strong>No unreviewed memory.</strong> The agent writes <code>lessons/proposed/</code>. A human promotes into <code>lessons.md</code> by PR.</div></div>
+          <div class="step-card"><div class="step-num">5</div><div><strong>No unreviewed memory.</strong> The agent writes <code>lessons/proposed/</code>. A human promotes proposals by PR; named console resolution notes append directly to <code>lessons.md</code> with incident, date, and name.</div></div>
           <div class="step-card"><div class="step-num">6</div><div><strong>Humans close.</strong> <code>watch</code> says LANDED or NOT LANDED. Nothing marks resolved.</div></div>
         </div>
       </section>
@@ -195,7 +195,7 @@
           <div class="callout-icon">📏</div>
           <div class="callout-content">
             <strong class="callout-title">One signal is a hunch. Two sources are a hypothesis.</strong>
-            <p>A strong proposal (rollback, scale, flag-off) needs evidence from two different sources. <code>rollback</code> additionally needs a <code>deploys</code> line: you cannot propose to undo a change you did not find. <code>low</code> confidence may only propose <code>investigate-more</code>. All three rules are in <code>parseVerdict()</code>.</p>
+            <p>A strong proposal (rollback, scale, flag-off) needs evidence from two different sources. <code>rollback</code> additionally needs a <code>deploys</code> line: you cannot propose to undo a change you did not find. <code>low</code> confidence may only propose <code>investigate-more</code>. <code>data_gaps</code> records missing signals, and high confidence is refused while gaps exist. These rules are in <code>parseVerdict()</code>.</p>
           </div>
         </div>
       </section>
@@ -229,7 +229,7 @@
             </div>
             <div class="quiz-feedback"></div>
           </div>
-          <div class="quiz-question-block" data-correct="a" data-explanation-right="The agent only writes proposals; a human moves entries into lessons.md through a PR. What the agent reads was reviewed." data-explanation-wrong="The kit's rule is no unreviewed memory: anything load-bearing lives in git and gets reviewed. The agent writes to lessons/proposed/ only.">
+          <div class="quiz-question-block" data-correct="a" data-explanation-right="The agent only writes proposals; a human reviews and promotes them by PR. Named console resolution notes are separate human-authored entries with provenance." data-explanation-wrong="The kit's rule is no unreviewed memory: anything load-bearing lives in git and gets reviewed. The agent writes to lessons/proposed/ only.">
             <h3 class="quiz-question">Where does the agent write after an investigation?</h3>
             <div class="quiz-options">
               <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>lessons/proposed/&lt;incident&gt;.md, for a human to promote</span></button>
@@ -338,7 +338,7 @@
         <h2 class="screen-heading">Three checks after the model answers</h2>
         <div class="step-cards">
           <div class="step-card"><div class="step-num">1</div><div><strong>Shape</strong> — <code>outputFormat: json_schema</code> makes the model answer in the verdict shape. <code>parseVerdict</code> checks it again, rejects unknown fields, and demands <code>draft_only: true</code>.</div></div>
-          <div class="step-card"><div class="step-num">2</div><div><strong>Evidence rules</strong> — ≥1 line; strong proposals need two sources; rollback needs deploys; low confidence → investigate-more.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>Evidence rules</strong> — ≥1 line; strong proposals need two sources; rollback needs deploys; low confidence → investigate-more. <code>data_gaps</code> records missing signals; high confidence is refused while gaps exist.</div></div>
           <div class="step-card"><div class="step-num">3</div><div><strong>Trace</strong> — <code>checkTrace</code> compares the cited sources with the tools actually called. Cite metrics without calling <code>summarize_metrics</code>? Fail.</div></div>
         </div>
         <div class="translation-block animate-in">

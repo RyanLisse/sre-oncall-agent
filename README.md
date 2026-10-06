@@ -38,6 +38,8 @@ npm run check
 
 `npm run check` runs typecheck, tests, the bench ratchet, the course check,
 and two offline investigations. It ends with `PASS check`.
+See [`docs/verification.md`](docs/verification.md) for dated check results and
+what remains unmeasured.
 
 ## Works on
 
@@ -103,7 +105,8 @@ proposal); and **anything that sounds like a mutation — "roll back",
 "approve", "resolve" — is refused**: those are buttons a named human clicks.
 Incidents move through `active → stale → mitigated → resolved`; every arrow
 into a closed state is a button with a name field, and the agent may only
-flag *stale*.
+flag *stale*. A named human can add resolution notes when resolving; the
+console appends them to `lessons.md` with the incident id, date, and name.
 
 ## The live demo: a shop you can break
 
@@ -204,6 +207,8 @@ costs a few cents. `--max-turns` and `--max-budget-usd` bound the loop.
 - A strong proposal (`rollback`, `scale`, `flag-off`) needs **two sources**. One signal is a hunch.
 - `rollback` needs a `deploys` line — you cannot undo a change you did not find.
 - `low` confidence may only propose `investigate-more`.
+- `data_gaps` lists empty or failed signals; `high` confidence is refused
+  while any gap exists because a missing signal is unknown, not healthy.
 - `summarize_metrics` and `list_deploys` must appear in the tool trace; a cited source whose tool was never called fails.
 - `incident_id` must match the input. `draft_only` and `human_approval_required` are the literal `true`.
 
