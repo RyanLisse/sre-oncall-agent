@@ -3,15 +3,15 @@
  * ---------------------------------------------------------------------------
  * AGENT_MODEL=offline (default, no key) or a real model name.
  *
- * The offline fake runs the SAME three tools against the SAME fixture, in the
- * order the system prompt prescribes, and derives a verdict with a fixed
- * rule. It is deterministic so the room can predict it. Its output is a
- * demonstration of the pipeline, never model evidence.
+ * The offline fake runs four tools against the same fixture in prompt order.
+ * It asks get_diff after deploys; a diff is returned only when one lines up
+ * with a breakpoint. It derives a verdict with a fixed rule. Its output
+ * demonstrates the pipeline, never model evidence.
  */
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import type { Incident, Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
-import { deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
+import { bucketMs, deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
 
 // ── Port: the slice of SDK messages the agent reads ──────────────────────
 export interface ContentBlock {
@@ -82,6 +82,32 @@ const extractIncident = (text: string): Partial<Incident> => {
 const minus = (iso: string, minutes: number): string =>
   new Date(Date.parse(iso) - minutes * 60_000).toISOString();
 
+const bucketLabel = (ms: number): string => {
+  if (ms % 60_000 === 0) return `${ms / 60_000}-minute`;
+  const seconds = ms / 1000;
+  return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)}-second`;
+};
+
+const gapLabel = (ms: number): string => {
+  const minutes = ms / 60_000;
+  if (minutes >= 1) {
+    const rounded = Math.round(minutes * 10) / 10;
+    return `${rounded} ${rounded === 1 ? "minute" : "minutes"}`;
+  }
+  const seconds = ms / 1000;
+  const rounded = Math.round(seconds * 10) / 10;
+  return `${rounded} ${rounded === 1 ? "second" : "seconds"}`;
+};
+
+const deployTiming = (t: Telemetry, bpTs: string, deployAt: string): string => {
+  const start = Date.parse(bpTs);
+  const at = Date.parse(deployAt);
+  const width = bucketMs(t);
+  return at >= start && at < start + width
+    ? `in the same ${bucketLabel(width)} window as`
+    : `${gapLabel(start - at)} after`;
+};
+
 /**
  * The fixed offline rule — simple on purpose:
  *   breakpoint AND a deploy ≤15 min before it          → rollback (high)
@@ -137,7 +163,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       tag: "bad-deploy",
       severity: paging ? "page" : "morning-log",
       confidence: stillPresent ? "high" : "medium",
-      hypothesis: `${bp.what} jumped from ${bp.from} to ${bp.to} at ${bp.ts}, minutes after deploy ${deploy.id} (${deploy.version}). Nothing else changed in the window. Rolling back to ${prev ?? "the previous version"} should restore the baseline.`,
+      hypothesis: `${bp.what} jumped from ${bp.from} to ${bp.to} at ${bp.ts}, ${deployTiming(t, bp.ts, deploy.at)} deploy ${deploy.id} (${deploy.version}). Nothing else changed in the window. Rolling back to ${prev ?? "the previous version"} should restore the baseline.`,
       evidence: [
         { source: "metrics", ref: bp.ts, note: `${bp.what} ${bp.from} → ${bp.to} on ${bp.version}` },
         { source: "deploys", ref: deploy.id, note: `${deploy.version} at ${deploy.at}: ${deploy.summary}` },
@@ -189,6 +215,15 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
   };
 };
 
+type HandlerInputs = {
+  [Name in ToolName]: Parameters<ReturnType<typeof handlers>[Name]>[0];
+};
+
+type OfflineInputs = Record<ToolName, unknown> &
+  Omit<HandlerInputs, "get_diff"> & {
+    get_diff: HandlerInputs["get_diff"] | { deploy?: never };
+  };
+
 /** Replays the system prompt's method as tool events, then emits the verdict. */
 export const offlineQuery =
   (t: Telemetry): QueryFn =>
@@ -196,7 +231,7 @@ export const offlineQuery =
     yield { type: "system", subtype: "init" };
     const incident = extractIncident(prompt);
     const maxTurns = options.maxTurns ?? Number.POSITIVE_INFINITY;
-    // The method takes 3 tool turns + 1 answer turn.
+    // The offline method takes 4 tool turns + 1 answer turn.
     const steps: readonly ToolName[] = ["summarize_metrics", "list_deploys", "get_diff", "search_logs"];
     if (maxTurns < steps.length + 1) {
       yield { type: "result", subtype: "error_max_turns", num_turns: Math.min(maxTurns, steps.length), total_cost_usd: 0 };
@@ -204,19 +239,30 @@ export const offlineQuery =
     }
     const h = handlers(t);
     const since = incident.fired_at ? minus(incident.fired_at, 60) : undefined;
-    const bp0 = h.summarize_metrics({ since, until: incident.fired_at }).breakpoints[0];
+    const inputs: OfflineInputs = {
+      summarize_metrics: { since, until: incident.fired_at },
+      list_deploys: { since, until: incident.fired_at },
+      get_diff: {},
+      search_logs: { level: "error", since, until: incident.fired_at, limit: 5 },
+    };
+    const metrics = h.summarize_metrics(inputs.summarize_metrics);
+    const bp0 = metrics.breakpoints[0];
     const behind = bp0 ? deployBehind(t, bp0.ts) : undefined;
+    if (behind) inputs.get_diff = { deploy: behind.id };
     const outputs: Record<ToolName, unknown> = {
-      summarize_metrics: h.summarize_metrics({ since, until: incident.fired_at }),
-      list_deploys: h.list_deploys({ since, until: incident.fired_at }),
-      get_diff: behind ? h.get_diff({ deploy: behind.id }) : { error: "no deploy lines up with the breakpoint — not called in anger" },
-      search_logs: h.search_logs({ level: "error", since, until: incident.fired_at, limit: 5 }),
+      summarize_metrics: metrics,
+      list_deploys: h.list_deploys(inputs.list_deploys),
+      get_diff:
+        inputs.get_diff.deploy === undefined
+          ? { error: "no deploy lines up with the breakpoint — not called in anger" }
+          : h.get_diff(inputs.get_diff),
+      search_logs: h.search_logs(inputs.search_logs),
     };
     for (const name of steps) {
       yield {
         type: "assistant",
         parent_tool_use_id: null,
-        message: { content: [{ type: "tool_use", id: `offline-${name}`, name: qualified(name), input: { since, until: incident.fired_at } }] },
+        message: { content: [{ type: "tool_use", id: `offline-${name}`, name: qualified(name), input: inputs[name] }] },
       };
       yield {
         type: "user",

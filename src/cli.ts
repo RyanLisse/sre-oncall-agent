@@ -49,6 +49,7 @@ const main = async (): Promise<number> => {
     allowPositionals: true,
     options: {
       "dry-run": { type: "boolean", default: false },
+      "show-lessons": { type: "boolean", default: false },
       out: { type: "string" },
       model: { type: "string" },
       "max-turns": { type: "string" },
@@ -159,6 +160,14 @@ const main = async (): Promise<number> => {
     lessons: lessonsStore(),
     proposeLessons: !values["dry-run"],
     onMessage: printMessage,
+    ...(values["show-lessons"]
+      ? {
+          onLessons: (rendered: string, candidates: ReturnType<typeof import("./lessons.js").promotionCandidates>) => {
+            console.log(`\n── lessons passed to model ──\n${rendered}`);
+            console.log(`\npromotionCandidates: ${JSON.stringify(candidates)}`);
+          },
+        }
+      : {}),
     ...(maxTurns !== undefined ? { maxTurns } : {}),
     ...(values["max-budget-usd"] ? { maxBudgetUsd: Number(values["max-budget-usd"]) } : {}),
   });

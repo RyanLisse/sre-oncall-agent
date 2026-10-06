@@ -6,12 +6,12 @@
  * reading what it concluded.
  */
 import { VERDICT_SCHEMA, fail, ok, type Incident, type Recommendation, type Result } from "./contract.js";
-import { guessTag, loadLessons, proposeLesson, renderLessons, type LessonsStore } from "./lessons.js";
+import { guessTag, loadLessons, promotionCandidates, proposeLesson, renderLessons, type LessonsStore } from "./lessons.js";
 import { ONCALL_SYSTEM, buildIncidentPrompt } from "./prompts.js";
 import { parseJson, routeVerdict, validateVerdict } from "./router.js";
 import type { AgentEvent, ContentBlock, QueryFn } from "./runtime.js";
 import { ALLOWED_TOOLS, SDK_INTERNAL_TOOLS, SERVER_NAME, createTelemetryServer } from "./tools.js";
-import type { Telemetry } from "./telemetry.js";
+import { deployBehind, summarizeMetrics, type Telemetry } from "./telemetry.js";
 
 export interface AgentDeps {
   readonly query: QueryFn;
@@ -23,6 +23,7 @@ export interface AgentDeps {
   /** false → do not write a lessons proposal (dry run). */
   readonly proposeLessons?: boolean;
   readonly onMessage?: (message: AgentEvent) => void;
+  readonly onLessons?: (rendered: string, candidates: ReturnType<typeof promotionCandidates>) => void;
   readonly maxTurns?: number;
   readonly maxBudgetUsd?: number;
 }
@@ -46,7 +47,7 @@ export interface AgentRun {
 }
 
 /**
- * THE LOOP BUDGET. Three tool calls + one structured answer is the normal
+ * THE LOOP BUDGET. Four tool calls + one structured answer is the normal
  * path; a real model that re-queries logs twice still fits in 10.
  */
 export const DEFAULT_MAX_TURNS = 10;
@@ -128,11 +129,15 @@ export const investigate = async (incident: Incident, deps: AgentDeps): Promise<
 
   // Memory (read): lessons a human reviewed — only the matching class, never the whole file.
   const lessons = await loadLessons(deps.lessons);
-  const tag = guessTag(incident.alert);
+  const since = new Date(Date.parse(incident.fired_at) - 60 * 60_000).toISOString();
+  const breakpoint = summarizeMetrics(deps.telemetry, since, incident.fired_at).breakpoints[0];
+  const tag = breakpoint && deployBehind(deps.telemetry, breakpoint.ts) ? "bad-deploy" : guessTag(incident.alert);
+  const renderedLessons = renderLessons(lessons, tag);
+  deps.onLessons?.(renderedLessons, promotionCandidates(lessons));
 
   const events = await collect(
     deps.query({
-      prompt: `${buildIncidentPrompt(incident)}\n\n${renderLessons(lessons, tag)}`,
+      prompt: `${buildIncidentPrompt(incident)}\n\n${renderedLessons}`,
       options: {
         systemPrompt: ONCALL_SYSTEM,
         mcpServers: { [SERVER_NAME]: createTelemetryServer(deps.telemetry) },

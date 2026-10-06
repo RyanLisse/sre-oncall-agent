@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -45,6 +45,63 @@ test("offline verdicts for the four scenarios", async () => {
   }
 });
 
+test("a deploy inside the breakpoint bucket is described in the same bucket", async () => {
+  const t = await load("bad-deploy");
+  const telemetry: Telemetry = {
+    ...t,
+    deploys: t.deploys.map((d) =>
+      d.id === "d-4821" ? { ...d, at: "2026-10-05T03:45:04.556Z" } : d,
+    ),
+  };
+  const verdict = offlineVerdict(incident("INC-1001", "2026-10-05T03:50:00Z"), telemetry);
+  assert.match(verdict.hypothesis, /same 1-minute window as deploy d-4821/);
+});
+
+test("the lesson preview is the exact matching section passed to the query", async () => {
+  const t = await load("bad-deploy");
+  const store = { dir: await mkdtemp(join(tmpdir(), "lessons-preview-")) };
+  await writeFile(
+    join(store.dir, "lessons.md"),
+    [
+      "## INC-0931 · seed · #bad-deploy",
+      "- fix: rollback",
+      "- gotcha: check the secret",
+      "",
+      "## INC-1001 · learner · #bad-deploy",
+      "- fix: restore the payment secret",
+      "- gotcha: verify the EU region",
+      "",
+      "## INC-1002 · learner · #bad-deploy",
+      "- fix: retry",
+      "- gotcha: inspect logs",
+      "",
+    ].join("\n"),
+  );
+  let prompt = "";
+  let preview = "";
+  let candidates: readonly { tag: string; count: number }[] = [];
+  const query: QueryFn = async function* (args) {
+    prompt = args.prompt;
+    yield* offlineQuery(t)(args);
+  };
+  const d = await deps(t, query, {
+    lessons: store,
+    proposeLessons: false,
+    onLessons: (rendered, promotionCandidates) => {
+      preview = rendered;
+      candidates = promotionCandidates;
+    },
+  });
+
+  await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), d);
+
+  assert.match(preview, /<lessons tag="#bad-deploy"/);
+  assert.match(preview, /INC-0931/);
+  assert.match(preview, /INC-1001/);
+  assert.deepEqual(candidates, [{ tag: "bad-deploy", count: 3 }]);
+  assert.ok(prompt.endsWith(`\n\n${preview}`));
+});
+
 test("the loop calls metrics, deploys, logs and proposes a lesson", async () => {
   const t = await load("bad-deploy");
   const d = await deps(t, offlineQuery(t));
@@ -56,6 +113,31 @@ test("the loop calls metrics, deploys, logs and proposes a lesson", async () => 
   const lesson = await readFile(run.lessonFile as string, "utf8");
   assert.match(lesson, /#bad-deploy/);
   assert.match(lesson, /fix \(human fills in\):\*\* OPEN/);
+});
+
+test("offline tool_use inputs match the handler arguments", async () => {
+  const t = await load("bad-deploy");
+  const toolInputs = new Map<string, unknown>();
+  const query: QueryFn = async function* (args) {
+    for await (const event of offlineQuery(t)(args)) {
+      if (event.type === "assistant") {
+        for (const block of event.message.content) {
+          if (block.type === "tool_use" && block.name) toolInputs.set(block.name, block.input);
+        }
+      }
+      yield event;
+    }
+  };
+
+  await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), await deps(t, query));
+
+  assert.deepEqual(toolInputs.get("mcp__telemetry__get_diff"), { deploy: "d-4821" });
+  assert.deepEqual(toolInputs.get("mcp__telemetry__search_logs"), {
+    level: "error",
+    since: "2026-10-05T02:50:00.000Z",
+    until: "2026-10-05T03:50:00Z",
+    limit: 5,
+  });
 });
 
 test("dry run proposes no lesson", async () => {

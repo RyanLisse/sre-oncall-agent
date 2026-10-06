@@ -132,7 +132,7 @@ export const DIAGRAMS = {
       ]},
       { label: "INVESTIGATION", cards: [
         { title: "Claude Agent SDK", desc: "Runs the loop: query() with a system prompt and a loop budget.", accent: "warm" },
-        { title: "Read-only MCP tools", desc: "summarize_metrics · list_deploys · search_logs. Nothing writes." },
+        { title: "Read-only MCP tools", desc: "summarize_metrics · list_deploys · get_diff · search_logs. Nothing writes." },
         { title: "Diagnosis", desc: "Six lines, every claim cited. One proposal, one owner." },
       ]},
       { label: "RECOVERY", cards: [

@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -18,6 +18,7 @@
     "watch": "tsx src/cli.ts --watch",
     "bench": "tsx src/bench.ts",
     "verify": "npm run typecheck && npm test && npm run bench",
+    "check": "node scripts/check.mjs",
     "course:build": "node course/build.mjs",
     "course:check": "node course/build.mjs --check",
     "diagrams": "node docs/diagrams/build.mjs",
@@ -29,8 +30,8 @@
     "live": "tsx src/ops.ts live",
     "watch-deploy": "tsx src/ops.ts watch-deploy",
     "execute": "tsx src/ops.ts execute",
-    "demo": "bash demo/run.sh",
-    "demo:watch": "bash demo/watch-demo.sh",
+    "demo": "tsx demo/run.ts",
+    "demo:watch": "tsx demo/watch-demo.ts",
     "e2e": "tsx src/e2e.ts",
     "console": "tsx console/server.ts"
   },

@@ -1,10 +1,10 @@
 # AI SRE first responder on the Claude Agent SDK
 
-An alert fires. The agent reads the lessons for that failure class, pulls the
-metrics, the deploy history and the logs, and posts one diagnosis with a
-reference behind every claim and ONE proposed next step. A human decides.
-After the human acts, the agent watches the metric land — and says so if it
-does not.
+An alert fires. The agent reads the lessons for that failure class, then calls
+`summarize_metrics`, `list_deploys`, `get_diff` when a deploy lines up, and
+`search_logs`. It posts one diagnosis with a reference behind every claim and
+one proposed next step. A human decides. After the human acts, the agent
+watches the metric and reports whether it returned to baseline.
 
 The agent **cannot** roll back, scale, flip a flag or page anyone. That is
 not a missing feature. It is the design, taken from
@@ -16,39 +16,43 @@ You can run the whole project offline. The offline runtime is a scripted
 investigator that runs the same tools against the same fixtures. Its output
 demonstrates the pipeline; it is not model evidence.
 
-Follow **[SOLO.md](SOLO.md)** for the step-by-step tutorial. This README is
-the reference.
+Follow **[SOLO.md](SOLO.md)** for the ten-step tutorial, numbered 0–9. This
+README is the reference.
 
 ![The on-call loop: alert → investigation → recovery](docs/diagrams/01-architecture.svg)
 
-Four diagrams explain the design (`docs/diagrams/`, regenerate with
-`npm run diagrams`): the loop above, [the contract](docs/diagrams/02-contract.svg),
-[the lessons loop](docs/diagrams/03-lessons.svg) and [the ratchet](docs/diagrams/04-ratchet.svg).
-A five-minute narrated explainer is at `docs/video/explainer.mp4`
-(rebuild with `npm run video`).
+Four diagrams explain the design. They live in `docs/diagrams/`. Rebuilding
+them with `npm run diagrams` is optional and not part of the tutorial.
+A five-minute narrated explainer is at `docs/video/explainer.mp4`.
+Rebuilding the video is optional. It needs `edge-tts` or macOS `say`.
 
 ## Set up
 
 ```
 git clone <this repo>
 cd sre-oncall-agent
-npm install
+npm ci
 npm run fixtures
-npm run verify
+npm run check
 ```
 
-`npm run verify` runs the type check, 35 tests and the bench ratchet. It
-ends with `PASS bench`.
+`npm run check` runs typecheck, tests, the bench ratchet, the course check,
+and two offline investigations. It ends with `PASS check`.
+See [`docs/verification.md`](docs/verification.md) for dated check results and
+what remains unmeasured.
+
+## Works on
+
+Use Node.js 22.13 or later. Node 22.13 includes unflagged `node:sqlite`.
+The commands work on macOS, Linux, Windows PowerShell, and Windows cmd.
 
 ## The loop, in five commands
 
 ```
 npm run investigate -- fixtures/incidents/bad-deploy.json          # 1 · diagnose, draft an approval, propose a lesson
-npm run approve     -- fixtures/incidents/bad-deploy.json --by you  # 2 · a NAMED human signs (or: npm run reject)
+npm run approve     -- fixtures/incidents/bad-deploy.json --by "Solo Learner"  # 2 · a NAMED human signs (or: npm run reject)
 #                                                                    # 3 · a human (or a separate gated system) applies the fix
-npm run watch       -- fixtures/incidents/bad-deploy.json \
-    --metric error_rate --fix-at 2026-10-05T03:52:00Z \
-    --after fixtures/telemetry/after-rollback.json                   # 4 · three bounded checks: LANDED or NOT LANDED
+npm run watch       -- fixtures/incidents/bad-deploy.json --metric error_rate --fix-at 2026-10-05T03:52:00Z --after fixtures/telemetry/after-rollback.json # 4 · three bounded checks
 #                                                                    # 5 · review lessons/proposed/INC-1001.md → PR into lessons/lessons.md
 ```
 
@@ -56,10 +60,30 @@ Add `--dry-run` to step 1 to skip the approval draft and the lesson proposal.
 
 ## The console: a local on-call desk with a chat
 
+Run `npm run shop` and `npm run traffic` in separate terminals. Then start
+`npm run console`. Open `http://localhost:4320` for the offline investigator.
+
+To use a real model, set `AGENT_MODEL` before starting the console.
+
+macOS or Linux:
+
+```sh
+export AGENT_MODEL=sonnet
+npm run console
 ```
-npm run shop && npm run traffic          # (two terminals) the demo service
-npm run console                           # http://localhost:4320 — offline investigator
-AGENT_MODEL=sonnet npm run console        # same console, real model behind the chat
+
+PowerShell:
+
+```powershell
+$env:AGENT_MODEL = "sonnet"
+npm run console
+```
+
+cmd:
+
+```bat
+set AGENT_MODEL=sonnet
+npm run console
 ```
 
 ![Console: incident view](docs/console-incident.png)
@@ -81,7 +105,8 @@ proposal); and **anything that sounds like a mutation — "roll back",
 "approve", "resolve" — is refused**: those are buttons a named human clicks.
 Incidents move through `active → stale → mitigated → resolved`; every arrow
 into a closed state is a button with a name field, and the agent may only
-flag *stale*.
+flag *stale*. A named human can add resolution notes when resolving; the
+console appends them to `lessons.md` with the incident id, date, and name.
 
 ## The live demo: a shop you can break
 
@@ -124,22 +149,43 @@ unverified check breaks a streak. There is no automatic rollback.
 
 ## Run with a real model (optional)
 
+Set the key in your shell only. Do not put it in a file.
+
+macOS or Linux:
+
+```sh
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
-export ANTHROPIC_API_KEY=sk-ant-...        # shell only, never in a file
+
+PowerShell:
+
+```powershell
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+```
+
+cmd:
+
+```bat
+set ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Then run:
+
+```text
 npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model sonnet
-npm run e2e                                # headless: 8 assertions on real model output, clean + adversarial (~$0.06)
+npm run e2e
 ```
 
 The team runbook lives in `skills/triage/SKILL.md` — a Skill-shaped file,
 loaded into the system prompt, editable like code, and uploadable unchanged
 as a Claude Code or Managed Agents skill. Its order of operations is the
-agent's method: deploys first, line them up with the metric, **read the
-diff**, then grep to confirm — "don't grep to fish".
+agent's method: read metrics, compare deploys with breakpoints, read
+`get_diff` when a deploy lines up, then search logs to confirm.
 
-The model gets the same three read-only tools through an in-process MCP
+The model gets the same four read-only tools through an in-process MCP
 server, the same `lessons.md` slice, and the same JSON-schema output
-contract. A run costs a few cents. `--max-turns` and `--max-budget-usd` bound
-the loop.
+contract. The offline run uses four tool turns and one answer turn. A run
+costs a few cents. `--max-turns` and `--max-budget-usd` bound the loop.
 
 ## What the model can and cannot do
 
@@ -157,10 +203,12 @@ the loop.
 
 ![The model proposes. Code checks.](docs/diagrams/02-contract.svg)
 
-- `evidence` has ≥1 line; each line is `logs:<ts>`, `metrics:<ts>`, `deploys:<id>` or `lessons:<id>`.
+- `evidence` has ≥1 line; each line is `logs:<ts>`, `metrics:<ts>`, `deploys:<id>`, `diff:<id>` or `lessons:<id>`.
 - A strong proposal (`rollback`, `scale`, `flag-off`) needs **two sources**. One signal is a hunch.
 - `rollback` needs a `deploys` line — you cannot undo a change you did not find.
 - `low` confidence may only propose `investigate-more`.
+- `data_gaps` lists empty or failed signals; `high` confidence is refused
+  while any gap exists because a missing signal is unknown, not healthy.
 - `summarize_metrics` and `list_deploys` must appear in the tool trace; a cited source whose tool was never called fails.
 - `incident_id` must match the input. `draft_only` and `human_approval_required` are the literal `true`.
 
@@ -170,7 +218,7 @@ the loop.
 SOLO.md                       step-by-step tutorial
 src/contract.ts               Incident · Verdict · Recommendation · schema · evidence rules
 src/telemetry.ts              the fictional production system: logs, metrics, deploys (pure queries)
-src/tools.ts                  the three read-only tools, as an in-process MCP server
+src/tools.ts                  the four read-only tools, as an in-process MCP server
 src/prompts.ts                standing orders (ASD-STE100-ish) + the runbook from skills/triage/SKILL.md
 skills/triage/SKILL.md        the team runbook as a Skill: order of operations, things that have burned us
 src/e2e.ts                    headless real-model check (npm run e2e)
@@ -191,11 +239,16 @@ console/server.ts             the local console: HTTP API, SSE, alert webhook, d
 console/index.html            the UI: sidebar, overview, incident chat, approve/execute/resolve buttons
 demo/shop.ts                  the fictional checkout service with fault injection; writes telemetry.json
 demo/chaos.ts                 traffic generator + deploy/degrade levers (the operator's, not the agent's)
-demo/run.sh                   npm run demo — the whole loop live
-fixtures/generate.mjs         deterministic telemetry for five scenarios
+demo/run.ts                   npm run demo — the whole loop live
+demo/watch-demo.ts            npm run demo:watch — the live deployment watch
+fixtures/generate.mjs         deterministic telemetry for six scenarios
 fixtures/incidents/           the alerts, incl. adversarial + malformed
 bench/cases.json              expected proposal + severity per scenario
 bench/ratchet.json            the floor CI enforces (only goes up)
+scripts/check.mjs             offline learner check
+references/README.md          human promotion path for recurring patterns
+docs/gate-step-9.md           named reviewer gate template for the tutorial
+docs/solutions/step-9.md      reference solution for the learner's fork
 docs/diagrams/                four SVG swimlane diagrams + the script that draws them
 docs/video/                   the explainer video + the script that renders it
 lessons/lessons.md            reviewed incident log (two seed entries)
@@ -252,5 +305,5 @@ Every idea in this repo has a primary source. Per-source "taken / deliberately n
 ## Safety
 
 All data is fictional. Nothing is sent, deployed, rolled back, scaled or
-paged. The agent has three read-only tools and no network. Every verdict has
+paged. The agent has four read-only tools and no network. Every verdict has
 `draft_only: true` and `human_approval_required: true`.

@@ -3,12 +3,13 @@
  * ---------------------------------------------------------------------------
  * node fixtures/generate.mjs   → writes fixtures/telemetry/*.json
  *
- * Four scenarios for the checkout service, one hour each, 1-minute points.
+ * Six scenarios for checkout, with one-minute points.
  *   bad-deploy        error_rate 0.3% → 12% two minutes after deploy d-4821
  *   slow-dependency   p95 180 ms → 3000 ms, no deploy, DB timeouts in logs
  *   noisy-alert       nothing happens; the alert threshold is just tight
  *   mystery-errors    error_rate jumps, no deploy, no useful log line
  *   after-rollback    bad-deploy, then rollback at :52 and recovery (for watch)
+ *   recovered-deploy  breakpoint after a deploy, then healthy before the alert
  * No randomness: every run writes byte-identical files.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -83,6 +84,33 @@ const write = (name, data) => {
     logs: [...logs, log(52, 0, "info", "rollback d-4822: v2.14.0 (approved by on-call)")].sort((a, b) => (a.ts < b.ts ? -1 : 1)),
     metrics: after,
     deploys: [...deploys, { id: "d-4822", version: "v2.14.0", at: ts(52), author: "on-call", summary: "rollback of d-4821" }],
+  });
+}
+
+// ── recovered-deploy ───────────────────────────────────────────────────
+{
+  const metrics = [];
+  for (let m = 0; m < 50; m++) {
+    const recovering = m >= 48;
+    const failing = m >= 45 && !recovering;
+    metrics.push(point(m, failing ? 0.12 : 0.003, failing ? 1100 : 180, m < 43 ? "v2.14.0" : "v2.16.0"));
+  }
+  const logs = [
+    ...baselineLogs(0, 45, "v2.14.0"),
+    log(43, 2, "info", "deploy d-4822 started: v2.16.0"),
+    log(43, 40, "info", "deploy d-4822 complete: 100% traffic on v2.16.0"),
+    log(45, 3, "error", "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET_EU for provider=stripe-eu"),
+    log(45, 4, "error", "checkout failed order=ord-2045 status=500 cause=PaymentConfigError"),
+    log(48, 0, "info", "checkout error rate returned to baseline"),
+  ].sort((a, b) => (a.ts < b.ts ? -1 : 1));
+  write("recovered-deploy", {
+    service: "checkout",
+    logs,
+    metrics,
+    deploys: [
+      { id: "d-4805", version: "v2.14.0", at: ts(-300), author: "jonas", summary: "checkout: address autocomplete" },
+      { id: "d-4822", version: "v2.16.0", at: ts(43), author: "sven", summary: "payments: switch EU traffic to new provider config" },
+    ],
   });
 }
 
