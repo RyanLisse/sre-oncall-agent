@@ -14,6 +14,7 @@ const rec: Recommendation = {
   proposal: "rollback",
   ruled_out: [],
   would_change_my_mind: "w",
+  data_gaps: [],
   watch_metric: "error_rate",
   draft_only: true,
   human_approval_required: true,

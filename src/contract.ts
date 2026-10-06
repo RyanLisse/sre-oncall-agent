@@ -64,6 +64,8 @@ export interface Verdict {
   readonly ruled_out: readonly string[];
   /** The one observation that would change the verdict. */
   readonly would_change_my_mind: string;
+  /** Tools that returned nothing or failed; windows with no data. Empty means every query answered. */
+  readonly data_gaps: readonly string[];
   readonly watch_metric: string;
   readonly draft_only: true;
   readonly human_approval_required: true;
@@ -92,6 +94,7 @@ export const VERDICT_SCHEMA = {
     "proposal",
     "ruled_out",
     "would_change_my_mind",
+    "data_gaps",
     "watch_metric",
     "draft_only",
     "human_approval_required",
@@ -120,6 +123,7 @@ export const VERDICT_SCHEMA = {
     proposal: { type: "string", enum: [...PROPOSALS] },
     ruled_out: { type: "array", items: { type: "string", minLength: 1 } },
     would_change_my_mind: { type: "string", minLength: 1 },
+    data_gaps: { type: "array", items: { type: "string", minLength: 1 } },
     watch_metric: { type: "string", minLength: 1 },
     draft_only: { type: "boolean", const: true },
     human_approval_required: { type: "boolean", const: true },
@@ -210,6 +214,9 @@ export const parseVerdict = (raw: unknown): Result<Verdict> => {
     ...(Array.isArray(raw.ruled_out) && raw.ruled_out.every((x) => typeof x === "string" && x.trim().length > 0)
       ? []
       : ["ruled_out: expected an array of non-empty strings (may be empty)"]),
+    ...(Array.isArray(raw.data_gaps) && raw.data_gaps.every((x) => typeof x === "string" && x.trim().length > 0)
+      ? []
+      : ["data_gaps: expected an array of non-empty strings (may be empty)"]),
     ...onlyKeys(raw, VERDICT_SCHEMA.required),
   ];
   if (errors.length > 0) return fail(errors);
@@ -226,6 +233,9 @@ export const parseVerdict = (raw: unknown): Result<Verdict> => {
       : []),
     ...(strong && verdict.confidence === "low"
       ? [`proposal: "${verdict.proposal}" with low confidence must be investigate-more`]
+      : []),
+    ...(strong && verdict.confidence === "high" && verdict.data_gaps.length > 0
+      ? [`confidence: high is not allowed while data_gaps is non-empty (${verdict.data_gaps.length}) — a missing signal is unknown, not healthy`]
       : []),
   ];
   return ruleErrors.length === 0 ? ok(verdict) : fail(ruleErrors);

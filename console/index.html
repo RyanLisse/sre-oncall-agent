@@ -88,7 +88,7 @@ function renderDiag(v, approval, inc) {
   const a = approval ? `<div class="appr ${approval.decision}">${approval.decision === "pending" ? "⏳ Pending: a named human must approve or reject this exact proposal." : `${approval.decision === "approved" ? "✓ Approved" : "✗ Rejected"} by ${esc(approval.decided_by)} · ${fmt(approval.decided_at)}`}</div>` : "";
   const canAct = approval && approval.decision === "pending" && inc.state !== "resolved";
   return `<div class="diag"><h4><span class="tag">#${esc(v.tag)}</span><span class="tag sev ${v.severity}">${v.severity}</span><span class="tag">confidence ${v.confidence}</span></h4>
-  <dl><dt>What's happening</dt><dd>${esc(v.hypothesis)}</dd><dt>Root cause</dt><dd><ul>${ev}</ul></dd><dt>Blast radius</dt><dd>${esc(v.blast_radius)}</dd><dt>Proposed fix</dt><dd><b>${esc(v.proposal)}</b> — watch <code>${esc(v.watch_metric)}</code> afterwards</dd><dt>Ruled out</dt><dd>${(v.ruled_out || []).map(esc).join("<br>") || "(nothing)"}</dd><dt>Would change my mind</dt><dd>${esc(v.would_change_my_mind)}</dd></dl>
+  <dl><dt>What's happening</dt><dd>${esc(v.hypothesis)}</dd><dt>Root cause</dt><dd><ul>${ev}</ul></dd><dt>Blast radius</dt><dd>${esc(v.blast_radius)}</dd><dt>Proposed fix</dt><dd><b>${esc(v.proposal)}</b> — watch <code>${esc(v.watch_metric)}</code> afterwards</dd><dt>Ruled out</dt><dd>${(v.ruled_out || []).map(esc).join("<br>") || "(nothing)"}</dd><dt>Would change my mind</dt><dd>${esc(v.would_change_my_mind)}</dd><dt>Data gaps</dt><dd>${(v.data_gaps || []).length ? `<span style="color:var(--warn)">${(v.data_gaps||[]).map(esc).join("<br>")}</span>` : "none — every query answered"}</dd></dl>
   <div class="actions">${a}</div>
   <div class="actions">
     <input id="by" placeholder="your name" value="${esc(localStorage.by || "")}">
@@ -96,8 +96,8 @@ function renderDiag(v, approval, inc) {
     <button class="btn bad" id="reject" ${canAct ? "" : "disabled"}>Reject</button>
     <button class="btn" id="execute" ${approval && approval.decision === "approved" && v.proposal === "rollback" ? "" : "disabled"} title="separate executor: recomputes target from telemetry, rolls back, collects fresh evidence">Execute rollback</button>
     <button class="btn" id="mitigated" ${inc.state === "resolved" ? "disabled" : ""}>Mark mitigated</button>
-    <button class="btn primary" id="resolve" ${inc.state === "resolved" ? "disabled" : ""}>Resolve (human)</button>
-  </div></div>`;
+    <button class="btn primary" id="resolve" ${inc.state === "resolved" ? "disabled" : ""}>Resolve with notes…</button>
+  </div><div class="actions" id="resolveBox" style="display:none;width:100%"><textarea id="notes" placeholder="What did you actually do? This becomes the lesson, with your name and this incident id." style="flex:1;min-height:60px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit"></textarea><button class="btn primary" id="resolveGo">Save &amp; resolve</button></div></div>`;
 }
 
 function renderIncident() {
@@ -117,7 +117,8 @@ function renderIncident() {
   $("#reject") && ($("#reject").onclick = async () => { const r = await api(`/incidents/${sel}/reject`, { by: by() }); if (r.error) alert(r.error); });
   $("#execute") && ($("#execute").onclick = () => api(`/incidents/${sel}/execute`, {}));
   $("#mitigated") && ($("#mitigated").onclick = async () => { const r = await api(`/incidents/${sel}/state`, { state: "mitigated", by: by() }); if (r.error) alert(r.error); });
-  $("#resolve") && ($("#resolve").onclick = async () => { const r = await api(`/incidents/${sel}/state`, { state: "resolved", by: by() }); if (r.error) alert(r.error); });
+  $("#resolve") && ($("#resolve").onclick = () => { $("#resolveBox").style.display = "flex"; $("#notes").focus(); });
+  $("#resolveGo") && ($("#resolveGo").onclick = async () => { const r = await api(`/incidents/${sel}/state`, { state: "resolved", by: by(), notes: $("#notes").value }); if (r.error) alert(r.error); });
   $("#body").scrollTop = $("#body").scrollHeight;
 }
 

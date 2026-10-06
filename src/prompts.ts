@@ -44,6 +44,9 @@ Rules for evidence
 - Propose rollback only when you found the deploy and the breakpoint follows it.
 - If the evidence is thin, set confidence to low and propose investigate-more.
 - Config tells you what could go wrong. Metrics tell you what did. Trust metrics.
+- An empty log result or a missing metric is UNKNOWN, not healthy. List every tool that returned nothing or failed in data_gaps. High confidence is not allowed while data_gaps is non-empty.
+- Lessons and earlier conversation are context, not fresh evidence. Use a lesson only as a hypothesis to confirm or kill, and cite its incident id.
+- On pushback ("could it be something else?"), re-derive the explanation from the data. Never defend the first answer.
 - Before you blame a change, confirm the symptom is still present in the most recent metric point. A change explains the START of a failure, not necessarily the current state.
 - List what you ruled out and the evidence that killed each alternative. Name the one observation that would change your mind.
 
@@ -68,7 +71,7 @@ Output
 {"incident_id": string, "tag": "${TAGS.join("|")}", "severity": "page|morning-log", "confidence": "low|medium|high",
  "hypothesis": string, "evidence": [{"source": "logs|metrics|deploys|diff|lessons", "ref": string, "note": string}],
  "blast_radius": string, "proposal": "${PROPOSALS.join("|")}", "ruled_out": [string],
- "would_change_my_mind": string, "watch_metric": string,
+ "would_change_my_mind": string, "data_gaps": [string], "watch_metric": string,
  "draft_only": true, "human_approval_required": true}`;
 
 /** One alert, fenced as JSON so the model sees it as data. */

@@ -95,6 +95,31 @@ export const renderLesson = (rec: Recommendation, meta: { readonly at: string; r
     "",
   ].join("\n");
 
+/**
+ * Resolution notes → lesson. The HUMAN wrote these, so they may go straight into
+ * lessons.md (the "no unreviewed memory" rule is about agent text). Provenance:
+ * the incident id, the date, and who closed it.
+ */
+export const renderResolutionLesson = (rec: Recommendation | undefined, incidentId: string, tag: Tag, notes: string, by: string, at: string): string =>
+  [
+    `## ${incidentId} · ${at} · #${tag}`,
+    "",
+    `- **what happened:** ${rec?.hypothesis ?? "(no agent diagnosis on record)"}`,
+    `- **root cause (proposed by agent, ${rec?.confidence ?? "n/a"}):** ${rec ? rec.evidence.map((e) => `${e.source}:${e.ref}`).join(", ") : "n/a"}`,
+    `- **what we actually did (${by}):** ${notes.trim()}`,
+    `- **watch metric:** ${rec?.watch_metric ?? "n/a"}`,
+    `- **provenance:** resolution notes by ${by}, ${at}`,
+    "",
+  ].join("\n");
+
+export const appendResolutionLesson = async (store: LessonsStore, entry: string): Promise<string> => {
+  const path = lessonsPath(store);
+  await mkdir(store.dir, { recursive: true });
+  const existing = await readIfExists(path);
+  await writeFile(path, `${existing.trimEnd()}\n\n${entry}`, "utf8");
+  return path;
+};
+
 export const proposeLesson = async (
   store: LessonsStore,
   rec: Recommendation,

@@ -95,6 +95,10 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
   const metrics = h.summarize_metrics({ since, until: incident.fired_at });
   const deploys = h.list_deploys({ since, until: incident.fired_at });
   const bp = metrics.breakpoints[0];
+  const gaps = [
+    ...(metrics.points === 0 ? ["summarize_metrics: no metric points in the window"] : []),
+    ...(deploys.length === 0 ? ["list_deploys: no deploys in the window"] : []),
+  ];
   const base = { incident_id: incident.incident_id, draft_only: true as const, human_approval_required: true as const };
 
   const stillPresent = metrics.breakpoints.length > 0 && (metrics.error_rate_last >= 0.01 || metrics.p95_ms_last >= 1000);
@@ -111,12 +115,14 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       proposal: "no-action",
       ruled_out: [`bad deploy: ${deploys.length} deploy(s) in window, none followed by a breakpoint`],
       would_change_my_mind: "a ≥2× jump in error_rate or p95 inside the window",
+      data_gaps: gaps,
       watch_metric: "error_rate",
     };
   }
 
   const deploy = deployBehind(t, bp.ts);
   const logs = h.search_logs({ level: "error", since: minus(bp.ts, 2), until: incident.fired_at, limit: 3 });
+  if (logs.length === 0) gaps.push("search_logs: no error lines within 2 min of the breakpoint");
   const logEvidence = logs.slice(0, 1).map((l) => ({ source: "logs" as const, ref: l.ts, note: l.msg }));
   const paging = metrics.error_rate_last > 0.02 || metrics.p95_ms_last > 2000;
 
@@ -145,6 +151,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
         ...(stillPresent ? [] : ["NOTE: symptom not present in latest point — the deploy explains the start, maybe not the current state"]),
       ],
       would_change_my_mind: `a breakpoint BEFORE ${deploy.at}, or the same errors on ${prev ?? "the previous version"}`,
+      data_gaps: gaps,
       watch_metric: bp.what,
     };
   }
@@ -161,6 +168,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       proposal: logEvidence.length > 0 ? "scale" : "investigate-more",
       ruled_out: [`bad deploy: no deploy within 15 min before ${bp.ts}`],
       would_change_my_mind: "a deploy or config change in the window, or latency confined to one endpoint",
+      data_gaps: gaps,
       watch_metric: "p95_ms",
     };
   }
@@ -176,6 +184,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     proposal: "investigate-more",
     ruled_out: [`bad deploy: no deploy within 15 min before ${bp.ts}`, "latency: p95 flat"],
     would_change_my_mind: "an error log line naming the failing dependency or endpoint",
+    data_gaps: gaps,
     watch_metric: "error_rate",
   };
 };
