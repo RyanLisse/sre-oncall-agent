@@ -34,6 +34,8 @@ import { ask, investigateFromChat, routeMessage } from "../src/chat.js";
 import { parseIncident, type Incident } from "../src/contract.js";
 import { runWatch } from "../src/deployWatch.js";
 import { execute } from "../src/executor.js";
+import { appendResolutionLesson, lessonsStore, renderResolutionLesson } from "../src/lessons.js";
+import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
 import { loadTelemetry, summarizeMetrics, type Telemetry } from "../src/telemetry.js";
 import { watchMetric } from "../src/watch.js";
@@ -236,8 +238,21 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === "POST" && action === "state") {
       const b = await body(req);
-      try { const r = store.setState(row.id, b.state as IncidentRow["state"], String(b.by ?? "")); broadcast("incidents", store.list()); return json(res, 200, r); }
-      catch (e) { return json(res, 400, { error: (e as Error).message }); }
+      const by = String(b.by ?? "").trim();
+      const notes = String(b.notes ?? "").trim();
+      if (b.state === "resolved" && notes.length === 0) return json(res, 400, { error: "resolution notes are required — they become the lesson" });
+      try {
+        const r = store.setState(row.id, b.state as IncidentRow["state"], by);
+        if (b.state === "resolved") {
+          const diag = store.messages(row.id).filter((x) => x.kind === "diagnosis").pop();
+          const rec = diag ? (JSON.parse(diag.text) as Recommendation) : undefined;
+          const entry = renderResolutionLesson(rec, row.id, (rec?.tag ?? "errors") as Tag, notes, by, new Date().toISOString());
+          const path = await appendResolutionLesson(lessonsStore(), entry);
+          say(row.id, "user", "text", `Resolution notes: ${notes}`);
+          say(row.id, "system", "text", `lesson written → ${path} (human-authored, provenance ${row.id} by ${by})`);
+        }
+        broadcast("incidents", store.list()); return json(res, 200, r);
+      } catch (e) { return json(res, 400, { error: (e as Error).message }); }
     }
   }
   json(res, 404, { error: "not found" });

@@ -256,9 +256,9 @@ docs/sources.md               what each idea was taken from
 
 ## What was added after comparing with the video's repo
 
-Owain's `ai-sre-agent` has a demo shop, a chat-scheduled deployment watch
+Owain's `ai-sre-agent` (the video's docs) has a demo shop, a chat-scheduled deployment watch
 with a fixed failure policy, an approved-recovery executor that produces
-fresh checkout evidence, and a `doctor`. The first version of this repo had
+fresh checkout evidence, and a `doctor`. (Its public **V1** repo is narrower: investigate-and-propose only, *no* automated rollback — the rollback design is kept in `docs/design-history.md` as history. The video demo is ahead of the public code.) The first version of this repo had
 none of those — it only replayed fixtures. All four are now here (`demo/`,
 `src/deployWatch.ts`, `src/executor.ts`, `npm run doctor`), with two
 differences kept on purpose: the executor is a separate program the agent
@@ -289,6 +289,9 @@ Every idea in this repo has a primary source. Per-source "taken / deliberately n
 ### Google SRE
 - [AI in SRE: where and how Google is deploying agentic AI to improve operations](https://cloud.google.com/blog/products/devops-sre/how-google-sre-is-using-agentic-ai-to-improve-operations) (2026-05-28) and the whitepaper [AI in SRE Practice](https://goo.gle/4uUxy4y) — RCA is one area of several; playbooks improve from use; anomaly detection over static thresholds (→ the `noisy-alert` scenario).
 - [SRE book](https://sre.google/sre-book/table-of-contents/) · [SRE workbook](https://sre.google/workbook/table-of-contents/) — the discipline the agent slots into.
+
+### Owain's own repo (the video's V1)
+- [`ai-developer-community/ai-sre-agent`](https://github.com/ai-developer-community/ai-sre-agent) — read `sre_agent/prompts/triage.md`, `docs/oncall-kit-insights.md`, `docs/verification.md`. Taken: *a missing signal is unknown, not healthy* (→ `data_gaps` + the contract rule that refuses `high` confidence with gaps); *history is context, not fresh evidence*; *re-derive on pushback*; reproducible query links on every tool result (→ `reproduce` line); human **resolution notes become the lesson** with incident id, date and name; a `verification.md` that separates what was tested from what is claimed; the rehearsal grading protocol (→ `docs/evaluation.md`); "a healthy /health is not proof — re-check the original failing path". Not taken: Cloud Run / Pub/Sub / Vertex / Postgres (deployment choices); its React frontend.
 
 ### Base repo and writing
 - [`RyanLisse/aetherlink-day5-n8n-to-agent`](https://github.com/RyanLisse/aetherlink-day5-n8n-to-agent) — the shape: contract → runtime port → trace → validate → route → memory; `Result` over `throw`; the SOLO.md format; the HTML course build.

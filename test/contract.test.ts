@@ -16,6 +16,7 @@ const base = {
   proposal: "rollback",
   ruled_out: [],
   would_change_my_mind: "y",
+  data_gaps: [],
   watch_metric: "error_rate",
   draft_only: true,
   human_approval_required: true,
@@ -61,4 +62,11 @@ test("incident ids and timestamps are validated", () => {
   const r = parseIncident({ incident_id: "9", service: "", alert: "a", fired_at: "now", extra: 1 });
   assert.equal(r.ok, false);
   if (!r.ok) assert.equal(r.errors.length, 4);
+});
+
+test("high confidence is refused while data gaps exist", () => {
+  const r = parseVerdict({ ...base, data_gaps: ["search_logs: returned nothing"] });
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.match(r.errors.join(), /missing signal is unknown/);
+  assert.equal(parseVerdict({ ...base, confidence: "medium", data_gaps: ["search_logs: returned nothing"] }).ok, true);
 });

@@ -29,6 +29,13 @@ const text = (value: unknown) => ({
 });
 
 /**
+ * Every tool result carries a `reproduce` line: the exact tool + arguments that
+ * produced it, so an evidence ref can be re-run by a human (Owain's Logs
+ * Explorer links carry the query and window for the same reason).
+ */
+const withRepro = <T>(name: ToolName, args: unknown, result: T) => ({ reproduce: `${name} ${JSON.stringify(args)}`, result });
+
+/**
  * Pure handlers, exported so the offline runtime and the tests can call the
  * same logic without an MCP transport.
  */
@@ -63,7 +70,7 @@ export const createTelemetryServer = (t: Telemetry): McpSdkServerConfigWithInsta
           until: z.string().optional().describe("ISO-8601 upper bound"),
           limit: z.number().int().min(1).max(50).optional(),
         },
-        async (args) => text(h.search_logs(args)),
+        async (args) => text(withRepro("search_logs", args, h.search_logs(args))),
       ),
       tool(
         "summarize_metrics",
@@ -72,7 +79,7 @@ export const createTelemetryServer = (t: Telemetry): McpSdkServerConfigWithInsta
           since: z.string().optional(),
           until: z.string().optional(),
         },
-        async (args) => text(h.summarize_metrics(args)),
+        async (args) => text(withRepro("summarize_metrics", args, h.summarize_metrics(args))),
       ),
       tool(
         "list_deploys",
@@ -81,13 +88,13 @@ export const createTelemetryServer = (t: Telemetry): McpSdkServerConfigWithInsta
           since: z.string().optional(),
           until: z.string().optional(),
         },
-        async (args) => text(h.list_deploys(args)),
+        async (args) => text(withRepro("list_deploys", args, h.list_deploys(args))),
       ),
       tool(
         "get_diff",
         "Unified diff for a deploy id or version. Read the change before you blame it. Cite as diff:<deploy id>.",
         { deploy: z.string().describe("deploy id like d-4821, or a version like v2.15.0") },
-        async (args) => text(h.get_diff(args)),
+        async (args) => text(withRepro("get_diff", args, h.get_diff(args))),
       ),
     ],
   });

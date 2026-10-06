@@ -40,3 +40,11 @@ test("guessTag classifies alert text cheaply", () => {
   assert.equal(guessTag("Error rate 12%"), "errors");
   assert.equal(guessTag("hello"), "noise");
 });
+
+import { renderResolutionLesson } from "../src/lessons.js";
+test("a resolution note becomes a lesson with human provenance", () => {
+  const e = renderResolutionLesson(undefined, "INC-9", "bad-deploy", "rolled back d-1, re-deployed with the EU secret", "ryan", "2026-10-05T20:00:00Z");
+  assert.match(e, /^## INC-9 · 2026-10-05T20:00:00Z · #bad-deploy/);
+  assert.match(e, /what we actually did \(ryan\)/);
+  assert.match(e, /\*\*provenance:\*\* resolution notes by ryan/);
+});

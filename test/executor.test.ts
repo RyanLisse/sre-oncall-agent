@@ -9,7 +9,7 @@ const incident: Incident = { incident_id: "INC-1001", service: "checkout", alert
 const rec = (proposal: Recommendation["proposal"]): Recommendation => ({
   incident_id: "INC-1001", tag: "bad-deploy", severity: "page", confidence: "high", hypothesis: "h",
   evidence: [{ source: "metrics", ref: "t", note: "n" }, { source: "deploys", ref: "d", note: "n" }],
-  blast_radius: "b", proposal, ruled_out: [], would_change_my_mind: "w", watch_metric: "error_rate",
+  blast_radius: "b", proposal, ruled_out: [], would_change_my_mind: "w", data_gaps: [], watch_metric: "error_rate",
   draft_only: true, human_approval_required: true, owner: "Deploy owner (approves and runs the rollback)",
 });
 
