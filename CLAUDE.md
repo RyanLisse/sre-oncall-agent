@@ -34,4 +34,5 @@ The agent gathers evidence, proposes, verifies and communicates.
 - Functional style: pure functions, `readonly` data, `Result` instead of throwing across modules. File I/O only in `src/lessons.ts`, `src/approval.ts`, `src/telemetry.ts` (load), `src/cli.ts`, `src/bench.ts`.
 - Strict types: no `any`, no non-null assertions in `src/`.
 - Never put credentials in files or commands. `ANTHROPIC_API_KEY` is exported in the shell only.
-- Write only under `src/`, `test/`, `docs/`, `fixtures/`, `bench/`, `lessons/proposed/`, `approvals/`, `course/`, and the markdown files at the root.
+- Write only under `src/`, `test/`, `docs/`, `fixtures/`, `bench/`, `lessons/proposed/`, `approvals/`, `course/`, `scripts/`, `.claude/`, `LICENSES/`, and the markdown files at the root.
+- Two gates, do not confuse them: the **runtime gate** (`npm run approve`, the console buttons, `approvals/*.approval.json`) signs a diagnosis so the executor may run; the **SDLC gate** (`npm run approve:git`, `approvals/approvals.jsonl` + `.claude/hooks/guard.mjs`) signs a `fix/*` branch so a human may push it. The agent may run neither.

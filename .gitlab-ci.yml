@@ -1,0 +1,19 @@
+# Mirrors .github/workflows/ci.yml for GitLab hosts.
+image: node:24
+
+stages: [test]
+
+test:
+  stage: test
+  script:
+    - npm ci
+    - npm run fixtures
+    - npm run diagrams
+    - git diff --exit-code -- fixtures/telemetry
+    - git diff --exit-code -- docs/diagrams/*.svg
+    - npm run verify
+    - npm run test:workshop
+    - npm run test:hooks
+    - npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
+    - npm run investigate -- fixtures/incidents/slow-dependency.json --dry-run
+    - npm run course:check

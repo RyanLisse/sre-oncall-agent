@@ -31,6 +31,49 @@ jobs:
       - run: git diff --exit-code -- fixtures/telemetry   # fixtures are deterministic
       - run: git diff --exit-code -- docs/diagrams/*.svg   # diagrams are generated
       - run: npm run verify                                # typecheck · tests · bench ratchet
+      - run: npm run test:workshop                         # workshop spec green on main
+      - run: npm run test:hooks                            # guard + progress + settings wiring
+      - run: npm run workshop:check -- --expect-solved     # no cut markers on main
       - run: npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
       - run: npm run investigate -- fixtures/incidents/adversarial.json --dry-run
       - run: npm run course:check
+
+  workshop-start:
+    name: workshop/start is cut correctly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: workshop/start
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run workshop:check -- --expect-start      # all 4 cut markers present
+      - run: npm test                                      # main suite green at start
+      - run: npm run test:hooks                            # invariant hook suite green
+      - name: workshop suite is red by design (the exercises)
+        run: |
+          npm run test:workshop && { echo "workshop suite should be red on workshop/start"; exit 1; } || echo "workshop suite red as expected"
+
+  workshop-tags:
+    name: w5-step tags stay consistent
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/w5-')
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run workshop:check -- --expect-solved     # only on the final tag
+        if: github.ref == 'refs/tags/w5-step-8-maintain'
+      - run: npm test                                    # main suite green at every step
+      - run: npm run test:hooks                          # invariant hook suite green
+      - run: npm run test:workshop                       # workshop spec all green on the final tag
+        if: github.ref == 'refs/tags/w5-step-8-maintain'
