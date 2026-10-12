@@ -44,14 +44,14 @@ shows exactly one step.
 | # | Assignment | Catch-up | tag |
 |---|---|---|---|
 | A1 | Setup check | — (install only) | `w5-step-0-setup` |
-| A2 | Team intent.md | `git checkout w5-step-1-intent -- intent.md` | `w5-step-1-intent` |
-| A3 | Spec + contract red→green | `git checkout w5-step-2-spec-contract -- src/contract.ts src/runtime.ts src/prompts.ts src/cli.ts console/index.html test/contract.test.ts docs/spec.md` | `w5-step-2-spec-contract` |
-| A4 | Wire + prove controls | `git checkout w5-step-3-design-controls -- src/chat.ts .claude/hooks/guard.mjs` | `w5-step-3-design-controls` |
+| A2 | Write your team intent.md | `git checkout w5-step-1-intent -- intent.md` | `w5-step-1-intent` |
+| A3 | Spec + contract green | `git checkout w5-step-2-spec-contract -- src/contract.ts src/runtime.ts src/prompts.ts src/cli.ts console/index.html test/contract.test.ts docs/spec.md` | `w5-step-2-spec-contract` |
+| A4 | Wire and prove the controls | `git checkout w5-step-3-design-controls -- src/chat.ts .claude/hooks/guard.mjs` | `w5-step-3-design-controls` |
 | A5 | Build a read-only tool | `git checkout w5-step-4-build-tool -- src/tools.ts` | `w5-step-4-build-tool` |
 | A6 | Diagnose a live incident | `git checkout w5-step-5-diagnose -- docs/diagnosis-live.md` | `w5-step-5-diagnose` |
-| A7 | Eval + ratchet | `git checkout w5-step-6-eval -- bench/cases.json` | `w5-step-6-eval` |
-| A8 | Gate | `git checkout w5-step-7-gate -- src/executor.ts approvals/` | `w5-step-7-gate` |
-| A9 | Maintain + hackathon | `git checkout w5-step-8-maintain -- lessons/lessons.md docs/hackathon-intent.md` | `w5-step-8-maintain` |
+| A7 | Pass the bench. Add a case. | `git checkout w5-step-6-eval -- bench/cases.json` | `w5-step-6-eval` |
+| A8 | The gate: approve with your name | `git checkout w5-step-7-gate -- src/executor.ts approvals/` | `w5-step-7-gate` |
+| A9 | Maintain + your hackathon intent.md | `git checkout w5-step-8-maintain -- lessons/lessons.md docs/hackathon-intent.md` | `w5-step-8-maintain` |
 
 ## A1 — Setup check
 
@@ -62,7 +62,7 @@ shows exactly one step.
 - `npm run console` → open `http://localhost:4320`, then `curl localhost:4320/api/health`
 - `claude` in this directory → `/status` shows the guard + progress hooks
 
-## A2 — Team intent.md
+## A2 — Write your team intent.md
 
 **Goal:** one page a stranger could hold you to. Fill `intent.md`: who the
 agent serves, the boundary (read-only; propose, never mutate; humans close),
@@ -70,7 +70,7 @@ and **three checks a stranger can verify** (e.g. "chat refuses 'roll back
 now'", "a verdict without evidence refs is rejected"). The
 `design-control-loop` skill can interview you onto the page.
 
-## A3 — Spec + contract, red→green
+## A3 — Spec + contract green
 
 **Goal:** rebuild the evidence rules **and** add the `customer_impact` field,
 test-first. `test/workshop/contract.test.ts` is red now. Write down the
@@ -106,7 +106,7 @@ investigation and see `list_deploys` in the trace.
 - In chat, challenge it: *"Could this be something other than the deployment?"*
 - Save the diagnosis to `docs/diagnosis-live.md` (template header there).
 
-## A7 — Eval + ratchet
+## A7 — Pass the bench. Add a case.
 
 **Goal:** the bench is the regression gate.
 
@@ -116,7 +116,7 @@ investigation and see `list_deploys` in the trace.
 - Try lowering `bench/ratchet.json` `min_rate` → the bench refuses; the floor
   only goes up. Your guard rule from A4 keeps the agent out of that file.
 
-## A8 — The gate
+## A8 — The gate: approve with your name
 
 **Goal:** the executor verifies a signed approval before it acts. Rebuild
 `checkApproval` in `src/executor.ts` (`TODO(A8)`) until
@@ -125,12 +125,20 @@ your name → Execute → watch the three verified checkouts → **LANDED** → 
 mitigated. And confirm chat still refuses *"roll back now"* — a button, not a
 sentence.
 
-## A9 — Maintain + hackathon
+**Optional second half — the git gate.** Branch `fix/<your-name>` off your
+work and try to push it: the guard hook denies the push. Your *neighbour* — a
+named human — runs `npm run approve:git -- <their-name> fix/<your-name>
+"<reason>"` in their own terminal; `npm run check:approval` then passes. The
+agent may never run that command itself.
+
+## A9 — Maintain + your hackathon intent.md
 
 **Goal:** close the loop. Resolve the incident in the console with real notes
 → they land in `lessons/lessons.md` with provenance. Review
 `lessons/proposed/` (agent-written, unreviewed). Then write
 `docs/hackathon-intent.md`: the intent.md for the agent you build next.
+Hand the day off to the next agent or teammate with the `/handoff` skill —
+it writes a clipboard-ready `HANDOFF.md`.
 
 ## Solved states
 

@@ -13,5 +13,5 @@ if (!/^fix\//.test(branch)) { console.log(`check-approval: '${branch}' is not a 
 const f = "approvals/approvals.jsonl";
 const rows = existsSync(f) ? readFileSync(f, "utf8").split(/\r?\n/).filter(Boolean).flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } }) : [];
 const a = rows.filter((r) => r.ref === branch && r.approved_by && !/^(claude|agent|ai|bot|assistant)$/i.test(r.approved_by)).pop();
-if (!a) { console.error(`check-approval: NO named approval for '${branch}' in ${f} (${platform}). A human runs: npm run approve -- <name> ${branch} "<reason>" and commits the file with git add -f.`); process.exit(1); }
+if (!a) { console.error(`check-approval: NO named approval for '${branch}' in ${f} (${platform}). A human runs: npm run approve:git -- <name> ${branch} "<reason>" and commits the file with git add -f.`); process.exit(1); }
 console.log(`check-approval: ${branch} approved by ${a.approved_by} (${a.at}) — ${platform}.`);

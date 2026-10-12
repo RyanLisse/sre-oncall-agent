@@ -22,11 +22,11 @@ const FILL = (dir, step) => {
     case "A-1": w(dir, "node_modules/.keep", ""); w(dir, "approvals/audit.jsonl", '{"decision":"allow"}\n'); break;
     case "A-2": w(dir, "intent.md", "# Intent\n\nthis agent serves the on-call team\n"); break;
     case "A-3": w(dir, "docs/spec.md", "# Spec\nfilled\n"); w(dir, "src/contract.ts", "customer_impact\n"); break;
-    case "A-4": w(dir, "approvals/audit.jsonl", '{"decision":"deny"}\n{"decision":"allow"}\n'); w(dir, ".claude/hooks/guard.mjs", "// ratchet.json deny\n"); w(dir, "src/chat.ts", "MUTATION\n"); break;
+    case "A-4": w(dir, "approvals/audit.jsonl", '{"decision":"deny"}\n{"decision":"allow"}\n'); w(dir, ".claude/hooks/guard.mjs", 'if (/^bench\\/ratchet\\.json$/.test(rel)) decide("deny", "x")\n'); w(dir, "src/chat.ts", "MUTATION\n"); break;
     case "A-5": w(dir, "src/tools.ts", 'tool(\n  "list_deploys",\n'); break;
     case "A-6": w(dir, "docs/diagnosis-live.md", "# Live diagnosis\nfilled\n"); break;
     case "A-7": w(dir, "bench/cases.json", JSON.stringify([1, 2, 3, 4, 5, 6])); break;
-    case "A-8": w(dir, "approvals/INC-1.approval.json", "{}\n"); w(dir, "src/executor.ts", "isApproved\n"); break;
+    case "A-8": w(dir, "approvals/INC-1.approval.json", "{}\n"); w(dir, "src/executor.ts", 'if (!isApproved(record, id, "rollback")) return err\n'); break;
     case "A-9": w(dir, "lessons/lessons.md", "## INC-1\n## INC-2\n## INC-3\n"); w(dir, "docs/hackathon-intent.md", "# Hackathon\nfilled\n"); break;
   }
 };
@@ -67,6 +67,23 @@ test("append-only and idempotent: rerunning adds nothing twice", () => {
   const twice = readFileSync(join(dir, "PROGRESS.md"), "utf8");
   assert.equal(twice, once);
   assert.ok(once.startsWith("# Build log"));
+});
+
+test("workshop/start shape: exercise markers inside TODO comments do not count (0/9)", () => {
+  const dir = setup();
+  w(dir, "src/contract.ts", "// TODO(A3): rebuild the evidence rules, incl. customer_impact\n");
+  w(dir, "src/chat.ts", "// TODO(A4): rebuild the mutation refusal (MUTATION)\n");
+  w(dir, "src/tools.ts", '// TODO(A5): register tool("list_deploys", …) here\nlist_deploys: () => []\n');
+  w(dir, "src/executor.ts", '// TODO(A8): isApproved(record, id, "rollback") must hold\n');
+  w(dir, ".claude/hooks/guard.mjs", "// TODO(A4): deny Edit/Write to bench/ratchet.json\n");
+  w(dir, "approvals/audit.jsonl", '{"decision":"deny"}\n{"decision":"allow"}\n');
+  w(dir, "approvals/INC-9.approval.json", "{}\n");
+  w(dir, "docs/spec.md", "# Spec\n<fill in: …>\n");
+  w(dir, "docs/diagnosis-live.md", "<fill in: …>\n");
+  w(dir, "docs/hackathon-intent.md", "<fill in: …>\n");
+  const r = run(dir, ["--status"]);
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /0\/9 assignments with evidence/);
 });
 
 test("no network or dynamic imports in the hook", () => {

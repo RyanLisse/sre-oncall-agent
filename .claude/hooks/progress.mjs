@@ -9,6 +9,11 @@ const FILE = "PROGRESS.md";
 
 function evidence() {
   const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : "");
+  // Only uncommented code counts: on workshop/start the exercise markers exist
+  // inside TODO comments and must not tick the checklist.
+  const code = (p) => read(p).split("\n")
+    .filter((l) => { const s = l.trimStart(); return !s.startsWith("//") && !s.startsWith("*"); })
+    .join("\n");
   const audit = read("approvals/audit.jsonl");
   const cases = (() => { try { return JSON.parse(read("bench/cases.json")); } catch { return []; } })();
   const lessons = read("lessons/lessons.md");
@@ -32,7 +37,7 @@ function evidence() {
     {
       key: "A-3", name: "spec + contract",
       done: read("docs/spec.md").length > 0 && !read("docs/spec.md").includes("<fill")
-        && read("src/contract.ts").includes("customer_impact"),
+        && code("src/contract.ts").includes("customer_impact"),
       title: "Spec + contract: evidence rules and customer_impact red to green",
       shipped: "Contract rebuilt test-first: evidence rules reject uncited claims; new required field customer_impact enforced end to end.",
       validation: "`npm run test:workshop` shows workshop-contract green; `npm test` still green.",
@@ -40,8 +45,8 @@ function evidence() {
     },
     {
       key: "A-4", name: "design + controls",
-      done: audit.includes('"deny"') && read(".claude/hooks/guard.mjs").includes("ratchet.json")
-        && read("src/chat.ts").includes("MUTATION"),
+      done: audit.includes('"deny"') && code(".claude/hooks/guard.mjs").includes("ratchet.json")
+        && code("src/chat.ts").includes("MUTATION"),
       title: "Controls: chat refuses mutations + guard hook wired",
       shipped: "routeMessage refuses mutation requests in chat again; guard.mjs gained a participant-chosen deny rule and is wired in settings.json.",
       validation: "`npm run test:workshop` + `npm run test:hooks` green; a deny line exists in approvals/audit.jsonl.",
@@ -49,7 +54,7 @@ function evidence() {
     },
     {
       key: "A-5", name: "read-only tool",
-      done: /tool\(\s*"list_deploys"/.test(read("src/tools.ts")),
+      done: /tool\(\s*"list_deploys"/.test(code("src/tools.ts")),
       title: "Build: list_deploys tool + capability binding",
       shipped: "list_deploys re-implemented as a read-only telemetry tool and bound to its capability in the handlers map.",
       validation: "`npm run test:workshop` green; the console investigation trace shows a list_deploys call.",
@@ -74,7 +79,7 @@ function evidence() {
     {
       key: "A-8", name: "gate",
       done: (existsSync("approvals") ? readdirSync("approvals") : []).some((f) => f.endsWith(".approval.json"))
-        && read("src/executor.ts").includes("isApproved"),
+        && /isApproved\s*\(/.test(code("src/executor.ts")),
       title: "Gate: executor verifies a NAMED approval before executing",
       shipped: "The executor gate rebuilt: it verifies the approval signature for this incident + proposal before planRollback runs.",
       validation: "Console: approve with your name, Execute, watch LANDED; chat still refuses 'roll back now'.",

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // Run by a HUMAN in their own terminal (host or `docker compose run --rm lab ...`). The hook blocks Claude from calling this.
-// Usage: npm run approve -- <your-name> <branch> "<reason>"    (or: node scripts/approve.mjs ...)
+// Usage: npm run approve:git -- <your-name> <branch> "<reason>"    (or: node scripts/approve.mjs ...)
 // Works the same for a GitHub or GitLab remote: the approval is tied to the branch, not to the host.
 import { appendFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const [name, ref, reason, ...rest] = process.argv.slice(2);
 const fail = (m) => { console.error(m); process.exit(1); };
-if (!name || !ref || !reason || rest.length) fail('usage: npm run approve -- <your-name> <branch> "<reason>"');
+if (!name || !ref || !reason || rest.length) fail('usage: npm run approve:git -- <your-name> <branch> "<reason>"');
 if (process.env.CLAUDECODE === "1") fail("Denied: this command is running inside a Claude Code session. Only a human approves, in their own terminal.");
 if (/^(claude|agent|ai|bot|assistant)$/i.test(name)) fail(`Denied: '${name}' is not a named human.`);
 if (!/^[\w.\/-]+$/.test(ref)) fail(`Invalid branch name: ${ref}`);

@@ -33,7 +33,7 @@ allowed-tools: Bash(gh *) Bash(glab *) Bash(git *)
 - Correctness and security over style-only nits
 - Focused commits; no unrelated files
 - Fix hook failures rather than bypassing hooks
-- Findings never approve; a named human approves (`npm run approve`) and merges
+- Findings never approve; a named human approves (`npm run approve:git`) and merges
 
 ## Output
 
