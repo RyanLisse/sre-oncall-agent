@@ -68,5 +68,19 @@
       "proposal": "rollback",
       "severity": "page"
     }
+  },
+  {
+    "name": "post-rollback-calm",
+    "incident": {
+      "incident_id": "INC-1006",
+      "service": "checkout",
+      "alert": "Scheduled re-check after the rollback: error rate high earlier, confirm service recovered",
+      "fired_at": "2026-10-05T05:20:00Z"
+    },
+    "telemetry": "fixtures/telemetry/after-rollback.json",
+    "expect": {
+      "proposal": "no-action",
+      "severity": "morning-log"
+    }
   }
 ]
