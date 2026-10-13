@@ -11,7 +11,7 @@
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import type { Incident, Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
-import { deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
+import { listDeploys, deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
 
 // ── Port: the slice of SDK messages the agent reads ──────────────────────
 export interface ContentBlock {
@@ -93,7 +93,8 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
   const h = handlers(t);
   const since = minus(incident.fired_at, 60);
   const metrics = h.summarize_metrics({ since, until: incident.fired_at });
-  const deploys = h.list_deploys({ since, until: incident.fired_at });
+  // A5 bypass: until the list_deploys binding is rebuilt, read deploys directly
+  const deploys = listDeploys(t, since, incident.fired_at);
   const bp = metrics.breakpoints[0];
   const gaps = [
     ...(metrics.points === 0 ? ["summarize_metrics: no metric points in the window"] : []),
@@ -110,7 +111,6 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       severity: "morning-log",
       confidence: "medium",
       hypothesis: "No breakpoint in error_rate or p95 in the hour before the alert. The alert may be a threshold too tight for this traffic pattern.",
-      customer_impact: "None observed in the data: error rate and latency are within their thresholds.",
       evidence: [{ source: "metrics", ref: metrics.last_ts ?? "window", note: `error_rate_max ${metrics.error_rate_max}, p95_max ${metrics.p95_ms_max} ms, no ≥2× jump` }],
       blast_radius: "none observed — no customer-facing metric moved",
       proposal: "no-action",
@@ -139,7 +139,6 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       severity: paging ? "page" : "morning-log",
       confidence: stillPresent ? "high" : "medium",
       hypothesis: `${bp.what} jumped from ${bp.from} to ${bp.to} at ${bp.ts}, minutes after deploy ${deploy.id} (${deploy.version}). Nothing else changed in the window. Rolling back to ${prev ?? "the previous version"} should restore the baseline.`,
-      customer_impact: `Customers hitting ${t.service} since ${deploy.version} are seeing ${bp.what === "error_rate" ? "failed requests" : "slower responses"}; impact started at ${bp.ts} and is ongoing.`,
       evidence: [
         { source: "metrics", ref: bp.ts, note: `${bp.what} ${bp.from} → ${bp.to} on ${bp.version}` },
         { source: "deploys", ref: deploy.id, note: `${deploy.version} at ${deploy.at}: ${deploy.summary}` },
@@ -165,7 +164,6 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       severity: paging ? "page" : "morning-log",
       confidence: "medium",
       hypothesis: `p95 doubled at ${bp.ts} with no deploy in the window. Latency without errors or a change points at load or a dependency.`,
-      customer_impact: `Customers on ${t.service} wait roughly twice as long since ${bp.ts}; no failures seen yet.`,
       evidence: [{ source: "metrics", ref: bp.ts, note: `p95 ${bp.from} → ${bp.to} ms` }, ...logEvidence],
       blast_radius: `every ${t.service} request slower; nothing failing (error_rate ${metrics.error_rate_last})`,
       proposal: logEvidence.length > 0 ? "scale" : "investigate-more",
@@ -182,7 +180,6 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     severity: paging ? "page" : "morning-log",
     confidence: "low",
     hypothesis: `error_rate jumped at ${bp.ts} with no deploy in the window. Cause not yet found.`,
-    customer_impact: `Some customers on ${t.service} are hitting errors since ${bp.ts}; blast radius not yet quantified.`,
     evidence: [{ source: "metrics", ref: bp.ts, note: `error_rate ${bp.from} → ${bp.to}` }, ...logEvidence],
     blast_radius: `error_rate ${metrics.error_rate_last} on ${t.service}; cause unknown`,
     proposal: "investigate-more",
@@ -212,7 +209,7 @@ export const offlineQuery =
     const behind = bp0 ? deployBehind(t, bp0.ts) : undefined;
     const outputs: Record<ToolName, unknown> = {
       summarize_metrics: h.summarize_metrics({ since, until: incident.fired_at }),
-      list_deploys: h.list_deploys({ since, until: incident.fired_at }),
+      list_deploys: listDeploys(t, since, incident.fired_at), // A5 bypass: rebind in tools.ts
       get_diff: behind ? h.get_diff({ deploy: behind.id }) : { error: "no deploy lines up with the breakpoint — not called in anger" },
       search_logs: h.search_logs({ level: "error", since, until: incident.fired_at, limit: 5 }),
     };
@@ -258,3 +255,4 @@ export const resolveRuntime = (t: Telemetry, name: string = process.env.AGENT_MO
   name === OFFLINE
     ? { query: offlineQuery(t), model: undefined, label: "offline (scripted, not model evidence)" }
     : { query: sdkQuery, model: name, label: `claude-agent-sdk/${name}` };
+

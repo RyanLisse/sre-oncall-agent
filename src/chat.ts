@@ -22,7 +22,7 @@ import { guessTag, lessonsStore, loadLessons, renderLessons } from "./lessons.js
 import { ONCALL_SYSTEM } from "./prompts.js";
 import { resolveRuntime, type AgentEvent } from "./runtime.js";
 import { ALLOWED_TOOLS, SERVER_NAME, createTelemetryServer, handlers } from "./tools.js";
-import type { Telemetry } from "./telemetry.js";
+import { listDeploys, type Telemetry } from "./telemetry.js";
 
 export type Route =
   | { kind: "watch"; command: WatchCommand }
@@ -31,7 +31,11 @@ export type Route =
   | { kind: "refused"; reason: string }
   | { kind: "question"; text: string };
 
-const MUTATION = /\b(roll\s*-?\s*back|rollback|scale|replicas?|flip|toggle|disable|enable|approv\w*|reject\w*|resolv\w*|mitigat\w*\s+(?:this|the|it|incident|ticket)|clos\w*\s+(?:the\s+|this\s+|that\s+)?(?:incident|ticket|it)|mark\s+.{0,30}\b(?:resolved|closed|mitigated)|flags?\s+(?:on|off|enabled|disabled)|deploy|restart)\b/i;
+// TODO(A4): rebuild the mutation refusal. test/workshop/chat.test.ts is red:
+//   mutation requests in chat ("roll back", "approve", "resolve", "scale up")
+//   must be refused here — they are buttons a named human clicks, never chat
+//   text the agent interprets. Keep it a grammar (a regex is fine), routed
+//   BEFORE the investigate/question branches.
 
 export const routeMessage = (text: string): Route => {
   const t = text.trim();
@@ -39,9 +43,6 @@ export const routeMessage = (text: string): Route => {
   const w = parseWatchCommand(t);
   if (w.ok) return { kind: "watch", command: w.value };
   if (/^(?:watch|monitor)\b/i.test(t)) return { kind: "refused", reason: w.errors.join("; ") };
-  if (MUTATION.test(t)) {
-    return { kind: "refused", reason: "Rollbacks, approvals and resolution are buttons a named human clicks, not chat text the agent interprets. Use the Approve / Execute / Resolve controls on the incident." };
-  }
   const inv = /^(?:investigate|triage|look into|something is (?:broken|wrong)|customers? (?:are|is) reporting)[:\s-]*(.*)$/i.exec(t);
   if (inv) return { kind: "investigate", alert: (inv[1] ?? "").trim() || t };
   return { kind: "question", text: t };
@@ -58,7 +59,7 @@ export interface AskDeps {
 const offlineAnswer = (text: string, t: Telemetry): string => {
   const h = handlers(t);
   const m = h.summarize_metrics({});
-  const d = h.list_deploys({}).slice(0, 3);
+  const d = listDeploys(t).slice(0, 3); // A5 bypass: rebind in tools.ts
   const errs = h.search_logs({ level: "error", limit: 3 });
   const health = m.breakpoints.length === 0
     ? `Production looks steady: error_rate ${m.error_rate_last}, p95 ${m.p95_ms_last} ms over ${m.points} buckets, no ≥2× jump.`

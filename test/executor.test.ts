@@ -7,7 +7,7 @@ import { loadTelemetry } from "../src/telemetry.js";
 
 const incident: Incident = { incident_id: "INC-1001", service: "checkout", alert: "x", fired_at: "2026-10-05T03:50:00Z" };
 const rec = (proposal: Recommendation["proposal"]): Recommendation => ({
-  incident_id: "INC-1001", tag: "bad-deploy", severity: "page", confidence: "high", hypothesis: "h", customer_impact: "ci",
+  incident_id: "INC-1001", tag: "bad-deploy", severity: "page", confidence: "high", hypothesis: "h",
   evidence: [{ source: "metrics", ref: "t", note: "n" }, { source: "deploys", ref: "d", note: "n" }],
   blast_radius: "b", proposal, ruled_out: [], would_change_my_mind: "w", data_gaps: [], watch_metric: "error_rate",
   draft_only: true, human_approval_required: true, owner: "Deploy owner (approves and runs the rollback)",
@@ -28,13 +28,3 @@ test("no deploy behind the breakpoint → the executor refuses", async () => {
   assert.equal(p.ok, false);
 });
 
-test("a pending approval, a rejected approval, or a non-rollback approval cannot execute", () => {
-  const pending = draftApproval(rec("rollback"), "t0");
-  assert.equal(checkApproval(pending, incident).ok, false);
-  const rejected = decide(pending, "rejected", "ryan", "t1");
-  if (rejected.ok) assert.equal(checkApproval(rejected.value, incident).ok, false);
-  const scale = decide(draftApproval(rec("scale"), "t0"), "approved", "ryan", "t1");
-  if (scale.ok) assert.equal(checkApproval(scale.value, incident).ok, false);
-  const good = decide(pending, "approved", "ryan", "t1");
-  if (good.ok) assert.equal(checkApproval(good.value, incident).ok, true);
-});

@@ -76,7 +76,10 @@ if (tool === "Bash" || tool === "PowerShell") {
   else if (APPROVAL_TOUCH.test(rel) || /^\.claude\//.test(rel) || rel === "PROGRESS.md")
     decide("deny", "guard: approvals, .claude/ and PROGRESS.md are human/hook owned");
   else if (AGENT_WRITES.test(rel)) decide("allow", "agent artefact dir");
-  else if (/^bench\/ratchet\.json$/.test(rel)) decide("deny", "participant rule (A4): the ratchet floor is human-owned — the agent never edits it");
+  // TODO(A4): participant rule — add ONE deny of your own here, by hand
+  //   (the agent may not edit hook files; that is the point). Suggested:
+  //   deny Edit/Write to bench/ratchet.json — the ratchet floor is
+  //   human-owned. test/workshop/guard.test.ts grades it.
   else if (SDLC_ARTEFACT.test(rel)) decide("ask", "SDLC artefact: confirm this edit with the human");
   else decide("ask", "edit needs a human confirmation");
 } else decide("allow", "tool not gated");
