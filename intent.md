@@ -1,14 +1,13 @@
 # Intent — on-call first responder (Workshop 5 lab)
 
 ## Problem
-<fill in: in one or two sentences, what goes wrong today when the alert fires
-that this agent helps with — e.g. the first responder spends the first ten
-minutes gathering the same four pieces of telemetry>
+When the checkout alert fires, the first responder spends the first ten
+minutes gathering the same four pieces of telemetry — metrics summary, recent
+deploys, the diff, error logs — before any diagnosis can start.
 
 ## Proposed outcome
-<fill in: what the agent delivers — e.g. within a minute of an alert, a
-diagnosis that cites real telemetry evidence and ONE proposed next step a
-named human can approve or reject>
+Within a minute of an alert, a diagnosis that cites real telemetry evidence
+and ONE proposed next step a named human can approve or reject.
 
 ## Affected users and systems
 - **Serves:** the on-call engineer for the demo checkout service
@@ -25,5 +24,10 @@ named human can approve or reject>
   recomputes the target from telemetry.
 - Chat is a grammar: mutations in chat are refused and routed to buttons.
 
+## Three checks a stranger can verify
+1. Chat refuses "roll back now" and points at the Approve button.
+2. A verdict without evidence refs is rejected by the contract.
+3. The executor refuses to run without a named approval for this incident.
+
 ## Open questions
-<fill in — e.g. how long should evidence stay valid before a re-check?>
+- How long should evidence stay valid before a re-check is owed?
