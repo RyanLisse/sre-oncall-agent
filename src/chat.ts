@@ -31,11 +31,7 @@ export type Route =
   | { kind: "refused"; reason: string }
   | { kind: "question"; text: string };
 
-// TODO(A4): rebuild the mutation refusal. test/workshop/chat.test.ts is red:
-//   mutation requests in chat ("roll back", "approve", "resolve", "scale up")
-//   must be refused here — they are buttons a named human clicks, never chat
-//   text the agent interprets. Keep it a grammar (a regex is fine), routed
-//   BEFORE the investigate/question branches.
+const MUTATION = /\b(roll\s*-?\s*back|rollback|scale|replicas?|flip|toggle|disable|enable|approv\w*|reject\w*|resolv\w*|mitigat\w*\s+(?:this|the|it|incident|ticket)|clos\w*\s+(?:the\s+|this\s+|that\s+)?(?:incident|ticket|it)|mark\s+.{0,30}\b(?:resolved|closed|mitigated)|flags?\s+(?:on|off|enabled|disabled)|deploy|restart)\b/i;
 
 export const routeMessage = (text: string): Route => {
   const t = text.trim();
@@ -43,6 +39,9 @@ export const routeMessage = (text: string): Route => {
   const w = parseWatchCommand(t);
   if (w.ok) return { kind: "watch", command: w.value };
   if (/^(?:watch|monitor)\b/i.test(t)) return { kind: "refused", reason: w.errors.join("; ") };
+  if (MUTATION.test(t)) {
+    return { kind: "refused", reason: "Rollbacks, approvals and resolution are buttons a named human clicks, not chat text the agent interprets. Use the Approve / Execute / Resolve controls on the incident." };
+  }
   const inv = /^(?:investigate|triage|look into|something is (?:broken|wrong)|customers? (?:are|is) reporting)[:\s-]*(.*)$/i.exec(t);
   if (inv) return { kind: "investigate", alert: (inv[1] ?? "").trim() || t };
   return { kind: "question", text: t };
