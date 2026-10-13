@@ -23,3 +23,11 @@ fix / gotcha.
 - **fix:** pool → 32 and a queue-depth alert
 - **gotcha:** latency without errors and without a change is nearly always capacity. Check pool saturation in the logs before anything else.
 - **watch metric:** p95_ms
+
+## INC-D1 — bad deploy rolled back (#bad-deploy, 2026-10-12, workshop participant)
+- **What happened:** error_rate broke the breakpoint minutes after deploy
+  v2.15.0; diagnosis cited metrics + deploys + logs; a named human approved,
+  the executor rolled back to v2.14.8 and reported LANDED after three
+  verified checkouts.
+- **Lesson:** the deploy window check matters — the breakpoint alone is not
+  enough; the diff is what made the hypothesis specific.
