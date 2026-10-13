@@ -9,6 +9,7 @@ const rec: Recommendation = {
   severity: "page",
   confidence: "high",
   hypothesis: "h",
+  customer_impact: "ci",
   evidence: [{ source: "metrics", ref: "t", note: "n" }, { source: "deploys", ref: "d", note: "n" }],
   blast_radius: "b",
   proposal: "rollback",
