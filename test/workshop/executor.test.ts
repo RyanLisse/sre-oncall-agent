@@ -13,7 +13,7 @@ const rec = (proposal: Recommendation["proposal"]): Recommendation => ({
   customer_impact: "failed checkouts", evidence: [{ source: "metrics", ref: "t", note: "n" }, { source: "deploys", ref: "d", note: "n" }],
   blast_radius: "b", proposal, ruled_out: [], would_change_my_mind: "w", data_gaps: [], watch_metric: "error_rate",
   draft_only: true, human_approval_required: true, owner: "Deploy owner (approves and runs the rollback)",
-});
+} as Recommendation);
 
 test("A8: a pending (undecided) approval does not execute", () => {
   assert.equal(checkApproval(draftApproval(rec("rollback"), "t0"), incident).ok, false);

@@ -177,7 +177,6 @@ const main = async (): Promise<number> => {
   // The oncall-kit diagnosis format, in-thread.
   console.log(`\n── diagnosis (#${rec.tag}) ──`);
   console.log(`What's happening:        ${rec.hypothesis}`);
-  console.log(`Customer impact:         ${rec.customer_impact}`);
   console.log(`Root cause (${rec.confidence}):`);
   rec.evidence.forEach((e) => console.log(`  - ${e.source}:${e.ref} — ${e.note}`));
   console.log(`Blast radius:            ${rec.blast_radius}`);
