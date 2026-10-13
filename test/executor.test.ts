@@ -28,3 +28,13 @@ test("no deploy behind the breakpoint → the executor refuses", async () => {
   assert.equal(p.ok, false);
 });
 
+test("a pending approval, a rejected approval, or a non-rollback approval cannot execute", () => {
+  const pending = draftApproval(rec("rollback"), "t0");
+  assert.equal(checkApproval(pending, incident).ok, false);
+  const rejected = decide(pending, "rejected", "ryan", "t1");
+  if (rejected.ok) assert.equal(checkApproval(rejected.value, incident).ok, false);
+  const scale = decide(draftApproval(rec("scale"), "t0"), "approved", "ryan", "t1");
+  if (scale.ok) assert.equal(checkApproval(scale.value, incident).ok, false);
+  const good = decide(pending, "approved", "ryan", "t1");
+  if (good.ok) assert.equal(checkApproval(good.value, incident).ok, true);
+});

@@ -15,7 +15,7 @@
  *
  *   npm run execute -- <incident-file> --shop http://localhost:4310
  */
-import { readApproval, type ApprovalRecord } from "./approval.js";
+import { isApproved, readApproval, type ApprovalRecord } from "./approval.js";
 import { fail, ok, type Incident, type Result } from "./contract.js";
 import { deployBehind, loadTelemetry, previousVersion, summarizeMetrics, type Telemetry } from "./telemetry.js";
 
@@ -40,13 +40,11 @@ export const planRollback = (incident: Incident, t: Telemetry): Result<Execution
 
 /** The approval must be for this incident, be a rollback, and be signed. Pure. */
 export const checkApproval = (record: ApprovalRecord, incident: Incident): Result<ApprovalRecord> =>
-  // TODO(A8): rebuild the gate. test/workshop/executor.test.ts is red: refuse
-  // unless the record is for THIS incident, the proposal is "rollback", and
-  // isApproved(record, incident.incident_id, "rollback") holds — a named
-  // human signed it. Re-import isApproved from ./approval.js.
   record.proposal !== "rollback"
     ? fail([`executor only implements rollback; approval is for ${record.proposal}`])
-    : ok(record);
+    : isApproved(record, incident.incident_id, "rollback")
+      ? ok(record)
+      : fail([`approval for ${incident.incident_id} is ${record.decision} by ${record.decided_by} — not executable`]);
 
 export interface Evidence {
   readonly attempts: number;
