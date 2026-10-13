@@ -11,7 +11,7 @@
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import type { Incident, Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
-import { deployBehind, getDiff, listDeploys, previousVersion, type Telemetry } from "./telemetry.js";
+import { deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
 
 // ── Port: the slice of SDK messages the agent reads ──────────────────────
 export interface ContentBlock {
@@ -93,8 +93,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
   const h = handlers(t);
   const since = minus(incident.fired_at, 60);
   const metrics = h.summarize_metrics({ since, until: incident.fired_at });
-  // A5 bypass: until the list_deploys binding is rebuilt, read deploys directly
-  const deploys = listDeploys(t, since, incident.fired_at);
+  const deploys = h.list_deploys({ since, until: incident.fired_at });
   const bp = metrics.breakpoints[0];
   const gaps = [
     ...(metrics.points === 0 ? ["summarize_metrics: no metric points in the window"] : []),
@@ -213,7 +212,7 @@ export const offlineQuery =
     const behind = bp0 ? deployBehind(t, bp0.ts) : undefined;
     const outputs: Record<ToolName, unknown> = {
       summarize_metrics: h.summarize_metrics({ since, until: incident.fired_at }),
-      list_deploys: listDeploys(t, since, incident.fired_at), // A5 bypass: rebind in tools.ts
+      list_deploys: h.list_deploys({ since, until: incident.fired_at }),
       get_diff: behind ? h.get_diff({ deploy: behind.id }) : { error: "no deploy lines up with the breakpoint — not called in anger" },
       search_logs: h.search_logs({ level: "error", since, until: incident.fired_at, limit: 5 }),
     };

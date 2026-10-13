@@ -22,7 +22,7 @@ import { guessTag, lessonsStore, loadLessons, renderLessons } from "./lessons.js
 import { ONCALL_SYSTEM } from "./prompts.js";
 import { resolveRuntime, type AgentEvent } from "./runtime.js";
 import { ALLOWED_TOOLS, SERVER_NAME, createTelemetryServer, handlers } from "./tools.js";
-import { listDeploys, type Telemetry } from "./telemetry.js";
+import type { Telemetry } from "./telemetry.js";
 
 export type Route =
   | { kind: "watch"; command: WatchCommand }
@@ -58,7 +58,7 @@ export interface AskDeps {
 const offlineAnswer = (text: string, t: Telemetry): string => {
   const h = handlers(t);
   const m = h.summarize_metrics({});
-  const d = listDeploys(t).slice(0, 3); // A5 bypass: rebind in tools.ts
+  const d = h.list_deploys({}).slice(0, 3);
   const errs = h.search_logs({ level: "error", limit: 3 });
   const health = m.breakpoints.length === 0
     ? `Production looks steady: error_rate ${m.error_rate_last}, p95 ${m.p95_ms_last} ms over ${m.points} buckets, no ≥2× jump.`
