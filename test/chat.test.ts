@@ -9,7 +9,11 @@ test("watch commands route to the grammar, not the model", () => {
 });
 
 test("mutations in chat are refused — they are buttons for a named human", () => {
-  for (const t of ["Roll back the deploy", "approve", "please resolve this", "scale up the API", "mark it resolved"]) {
+  for (const t of [
+    "Roll back the deploy", "approve", "please resolve this", "scale up the API", "mark it resolved",
+    "scale checkout to 5 replicas", "give approval", "mark this incident resolved",
+    "roll back now", "flip the flag", "set flag off", "close the incident", "approve the rollback",
+  ]) {
     assert.equal(routeMessage(t).kind, "refused", t);
   }
 });

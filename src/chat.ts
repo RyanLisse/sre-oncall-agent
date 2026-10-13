@@ -31,7 +31,7 @@ export type Route =
   | { kind: "refused"; reason: string }
   | { kind: "question"; text: string };
 
-const MUTATION = /\b(roll ?back|rollback|scale (up|down|out)|flip|disable|enable|approve|reject|resolve|close the incident|mark (it )?resolved|deploy)\b/i;
+const MUTATION = /\b(roll\s*-?\s*back|rollback|scale|replicas?|flip|toggle|disable|enable|approv\w*|reject\w*|resolv\w*|mitigat\w*\s+(?:this|the|it|incident|ticket)|clos\w*\s+(?:the\s+|this\s+|that\s+)?(?:incident|ticket|it)|mark\s+.{0,30}\b(?:resolved|closed|mitigated)|flags?\s+(?:on|off|enabled|disabled)|deploy|restart)\b/i;
 
 export const routeMessage = (text: string): Route => {
   const t = text.trim();
