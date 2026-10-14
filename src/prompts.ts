@@ -69,7 +69,7 @@ Severity
 Output
 - Return ONLY the structured verdict (one JSON object, no prose) with exactly these fields:
 {"incident_id": string, "tag": "${TAGS.join("|")}", "severity": "page|morning-log", "confidence": "low|medium|high",
- "hypothesis": string, "evidence": [{"source": "logs|metrics|deploys|diff|lessons", "ref": string, "note": string}],
+ "hypothesis": string, "customer_impact": string, "evidence": [{"source": "logs|metrics|deploys|diff|lessons", "ref": string, "note": string}],
  "blast_radius": string, "proposal": "${PROPOSALS.join("|")}", "ruled_out": [string],
  "would_change_my_mind": string, "data_gaps": [string], "watch_metric": string,
  "draft_only": true, "human_approval_required": true}`;

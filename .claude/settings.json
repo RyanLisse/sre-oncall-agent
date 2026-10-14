@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(npm ci)",
+      "Bash(npm install)",
+      "Bash(npm test)",
+      "Bash(npm run test)",
+      "Bash(npm run test:*)",
+      "Bash(npm run verify)",
+      "Bash(npm run check)",
+      "Bash(npm run check:approval*)",
+      "Bash(npm run fixtures)",
+      "Bash(npm run bench*)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run progress*)",
+      "Bash(npm run skill:scan*)",
+      "Bash(npm run workshop:check*)",
+      "Bash(npm run console*)",
+      "Bash(npm run shop*)",
+      "Bash(npm run traffic*)",
+      "Bash(npm run chaos*)",
+      "Bash(npm run demo*)",
+      "Bash(npm run e2e*)",
+      "Bash(npm run investigate*)",
+      "Bash(npm run doctor)",
+      "Bash(npm run watch*)",
+      "Bash(npm run diagrams)",
+      "Bash(npm run course:*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git switch -c fix/*)",
+      "Bash(git checkout -b fix/*)",
+      "Bash(git add*)",
+      "Bash(node scripts/scan-skill.mjs*)",
+      "Read(./**)",
+      "Grep(./**)",
+      "Glob(./**)",
+      "LS(./**)"
+    ],
+    "ask": [
+      "Bash(git commit*)",
+      "Bash(git tag*)"
+    ],
+    "deny": [
+      "WebFetch",
+      "WebSearch",
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(ssh*)",
+      "Bash(scp*)",
+      "Bash(sftp*)",
+      "Bash(telnet*)",
+      "Bash(nc *)",
+      "Bash(npm run approve*)",
+      "Bash(npm run approve:git*)",
+      "Bash(node scripts/approve*)",
+      "Bash(./scripts/approve*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh pr review --approve*)",
+      "Bash(gh api*/merges*)",
+      "Bash(gh api*/approve*)",
+      "Bash(glab mr merge*)",
+      "Bash(glab mr approve*)",
+      "Read(**/.env*)",
+      "Read(**/.env)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/id_rsa*)",
+      "Read(**/.ssh/**)",
+      "Read(**/application_default_credentials.json)",
+      "Grep(**/secrets/**)",
+      "Grep(**/.ssh/**)",
+      "Edit(./approvals/**)",
+      "Write(./approvals/**)",
+      "Edit(./.claude/**)",
+      "Write(./.claude/**)",
+      "Edit(./PROGRESS.md)",
+      "Write(./PROGRESS.md)",
+      "Edit(./lessons/lessons.md)",
+      "Write(./lessons/lessons.md)",
+      "NotebookEdit"
+    ]
+  },
+  "disableBypassPermissionsMode": "disable",
+  "disableSkillShellExecution": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Grep|Glob|Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|Bash",
+        "hooks": [
+          { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/progress.mjs" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/progress.mjs" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/progress.mjs" }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_AUTOUPDATER": "1"
+  }
+}

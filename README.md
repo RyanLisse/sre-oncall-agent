@@ -16,8 +16,9 @@ You can run the whole project offline. The offline runtime is a scripted
 investigator that runs the same tools against the same fixtures. Its output
 demonstrates the pipeline; it is not model evidence.
 
-Follow **[SOLO.md](SOLO.md)** for the step-by-step tutorial. This README is
-the reference.
+Follow **[SOLO.md](SOLO.md)** for the step-by-step tutorial, or
+**[WORKSHOP.md](WORKSHOP.md)** for the Workshop 5 (AI-native SDLC) team path.
+This README is the reference.
 
 ![The on-call loop: alert → investigation → recovery](docs/diagrams/01-architecture.svg)
 
@@ -167,7 +168,9 @@ the loop.
 ## Files
 
 ```
-SOLO.md                       step-by-step tutorial
+SOLO.md                       step-by-step tutorial (solo)
+WORKSHOP.md                   Workshop 5 assignments (team path)
+FACILITATOR.md                facilitator run sheet for the workshop day
 src/contract.ts               Incident · Verdict · Recommendation · schema · evidence rules
 src/telemetry.ts              the fictional production system: logs, metrics, deploys (pure queries)
 src/tools.ts                  the three read-only tools, as an in-process MCP server

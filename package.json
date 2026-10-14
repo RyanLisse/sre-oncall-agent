@@ -32,7 +32,15 @@
     "demo": "bash demo/run.sh",
     "demo:watch": "bash demo/watch-demo.sh",
     "e2e": "tsx src/e2e.ts",
-    "console": "tsx console/server.ts"
+    "console": "tsx console/server.ts",
+    "check": "npm run verify",
+    "test:workshop": "tsx --test \"test/workshop/*.test.ts\"",
+    "test:hooks": "node test/hooks.test.mjs && node test/progress.test.mjs && node test/config.test.mjs",
+    "approve:git": "node scripts/approve.mjs",
+    "check:approval": "node scripts/check-approval.mjs",
+    "skill:scan": "node scripts/scan-skill.mjs",
+    "progress": "node .claude/hooks/progress.mjs --status",
+    "workshop:check": "node scripts/workshop-check.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.274",
