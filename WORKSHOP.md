@@ -75,7 +75,11 @@ now'", "a verdict without evidence refs is rejected"). The
 **Goal:** rebuild the evidence rules **and** add the `customer_impact` field,
 test-first. `test/workshop/contract.test.ts` is red now. Write down the
 contract in `docs/spec.md`, then make it pass in `src/contract.ts`
-(`TODO(A3)`). The console must still render a diagnosis — run one in
+(`TODO(A3)`). `customer_impact` is required, so add it to the offline
+verdicts in `src/runtime.ts` and the verdict fixtures in
+`test/contract.test.ts` too. With only `src/contract.ts` changed, `npm test`
+shows 5 failures and the dry run prints `FAIL contract`. The console must
+still render a diagnosis — run one in
 `npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run`.
 
 ## A4 — Wire and prove the controls
@@ -101,8 +105,10 @@ investigation and see `list_deploys` in the trace.
 
 - Terminal 1: `npm run shop` (the checkout service, `localhost:4310`)
 - Terminal 2: `npm run traffic`, then `npm run chaos -- deploy v2.15.0 --mode bad-deploy`
-- The console raises the incident (deterministic listener). Open it: read the
-  diagnosis and click every evidence ref.
+- The console raises the incident (deterministic listener) after the error
+  rate stays above 2% for about 5 minutes (`AGENT_LISTEN_WINDOW_MIN=1` for a
+  faster demo). Open it: read the diagnosis and match every evidence ref to
+  the trace line of the tool that produced it.
 - In chat, challenge it: *"Could this be something other than the deployment?"*
 - Save the diagnosis to `docs/diagnosis-live.md` (template header there).
 
@@ -113,8 +119,10 @@ investigation and see `list_deploys` in the trace.
 - `npm run bench` → `PASS bench (5/5)` (or better)
 - Add one case to `bench/cases.json` (new incident shape or an adversarial
   alert). `npm run bench` again.
-- Try lowering `bench/ratchet.json` `min_rate` → the bench refuses; the floor
-  only goes up. Your guard rule from A4 keeps the agent out of that file.
+- Ask the agent to lower `bench/ratchet.json` `min_rate` → your guard rule
+  from A4 denies the edit. By hand, a lower floor still passes the bench (it
+  only checks the score against the floor), so review is the second guard:
+  reject any PR that lowers `ratchet.json`. The floor only goes up.
 
 ## A8 — The gate: approve with your name
 
