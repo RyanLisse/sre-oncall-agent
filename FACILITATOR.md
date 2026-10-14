@@ -19,7 +19,7 @@ Assignment titles below match the slide deck.
 | 13:50–14:05 | A5 Build a read-only tool | `list_deploys` in the console investigation trace |
 | 14:10–14:40 | A6 Diagnose a live incident | `docs/diagnosis-live.md`; a challenged chat answer with refs |
 | 14:40–14:55 | break | — |
-| 15:04–15:15 | A7 Pass the bench. Add a case. | `PASS bench`; a new case in cases.json; ratchet refused a lower floor |
+| 15:04–15:15 | A7 Pass the bench. Add a case. | `PASS bench`; a new case in cases.json; agent edit of ratchet.json denied |
 | 15:23–15:30 | A8 The gate: approve with your name | LANDED in console; `executor.test.ts` green |
 | 15:42–15:50 | A9 Maintain + your hackathon intent.md | new lessons.md entry; hackathon intent; `/handoff` → HANDOFF.md |
 
@@ -35,11 +35,12 @@ Skip it if the afternoon runs long — the runtime gate is the core lesson.
 
 - **A1** — tests red in `npm test`: wrong branch. `git checkout workshop/start`, `npm ci`. (Exercise tests live in `test/workshop/` — `npm test` is green by design.)
 - **A2** — intent reads like a wish list: demand the three *verifiable* checks, each runnable by a stranger.
+- **A3** — `npm test` shows 5 failures or the dry run prints `FAIL contract`: `customer_impact` is in `src/contract.ts` but not yet in the offline verdicts in `src/runtime.ts` or the fixtures in `test/contract.test.ts`.
 - **A3** — "green" but the console broke: they dropped a required field. The console renders the same schema; `npm run typecheck` catches it first.
 - **A4** — participant tries to make the agent edit the hook: that IS the lesson (denied by design; hooks are human-edited). If `approvals/audit.jsonl` is missing: the hook only logs on tool calls — run one.
 - **A5** — tool returns `[]`: they bound the handler but did not register `tool("list_deploys", ...)`; or registered but the handler is the stub. Both halves are in `src/tools.ts`.
-- **A6** — no incident appears: traffic isn't running. `npm run traffic` must be up before chaos; the listener needs ~10s per tick. Check `curl localhost:4320/api/incidents`.
-- **A7** — lowered ratchet "worked": they edited `min_rate` directly on disk but re-read the cached file — run `npm run bench` again; it exits non-zero and explains why.
+- **A6** — no incident appears: traffic isn't running. `npm run traffic` must be up before chaos; the listener opens an incident only after the error rate stays above 2% for ~5 minutes (start the console with `AGENT_LISTEN_WINDOW_MIN=1` for a faster demo). Check `curl localhost:4320/api/incidents`.
+- **A7** — lowered ratchet "worked": expected. By hand, a lower `min_rate` still passes, because the bench only checks the score against the floor. The floor is protected by the A4 guard rule (the agent is denied) and by review (reject a PR that lowers `ratchet.json`).
 - **A8** — execute button stays disabled: approval pending or name empty; a name is required and it must match *this* incident + `rollback`.
 - **A9** — lessons entry without provenance: notes must include incident id, date and the human's name (the console does this — free-form edits do not count). `/handoff` writes `HANDOFF.md` — check it exists.
 
