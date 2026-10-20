@@ -21,7 +21,7 @@
  *   npm run bench -- --raise → if better, write the new floor
  */
 import { readFile, writeFile } from "node:fs/promises";
-import { parseIncident, type Proposal, type Severity } from "./contract.js";
+import { parseIncident, type Proposal, type Severity, type Verdict } from "./contract.js";
 import { offlineVerdict } from "./runtime.js";
 import { loadTelemetry } from "./telemetry.js";
 
@@ -30,6 +30,23 @@ export interface BenchCase {
   readonly incident: unknown;
   readonly telemetry: string;
   readonly expect: { readonly proposal: Proposal; readonly severity: Severity };
+  /**
+   * EXT: "known-bad" marks a case the offline investigator is expected to
+   * fail today. It is graded and printed, but kept out of the rate and the
+   * harmful count, so the ratchet only moves on cases it can pass.
+   */
+  readonly status?: "known-bad";
+  /** EXT: extra checks on the verdict; every one must hold for a pass. */
+  readonly checks?: BenchChecks;
+}
+
+export interface BenchChecks {
+  /** The proposal must not be any of these. */
+  readonly proposal_not?: readonly Proposal[];
+  /** Each term must appear (case-insensitive) in some ruled_out line. */
+  readonly ruled_out_mentions?: readonly string[];
+  /** Some evidence line must come from one of these: source === x, or ref starts with "x:". */
+  readonly evidence_sources_any?: readonly string[];
 }
 
 export interface Graded {
@@ -37,7 +54,23 @@ export interface Graded {
   readonly got: { proposal: string; severity: string };
   readonly expect: { proposal: string; severity: string };
   readonly grade: "pass" | "partial" | "fail" | "harmful";
+  /** EXT: set on a known-bad case; such a case never counts towards the score. */
+  readonly known_bad?: boolean;
+  /** EXT: the checks that did not hold. */
+  readonly failed_checks?: readonly string[];
 }
+
+/** EXT: which checks fail for a verdict. Pure. */
+export const failedChecks = (v: Pick<Verdict, "proposal" | "ruled_out" | "evidence">, c: BenchChecks): string[] => [
+  ...(c.proposal_not ?? []).filter((p) => v.proposal === p).map((p) => `proposal is ${p}`),
+  ...(c.ruled_out_mentions ?? [])
+    .filter((term) => !v.ruled_out.some((r) => r.toLowerCase().includes(term.toLowerCase())))
+    .map((term) => `ruled_out does not mention ${term}`),
+  ...(c.evidence_sources_any && c.evidence_sources_any.length > 0 &&
+  !v.evidence.some((e) => c.evidence_sources_any?.some((src) => e.source === src || e.ref.startsWith(`${src}:`)))
+    ? [`no evidence from ${c.evidence_sources_any.join(" | ")}`]
+    : []),
+];
 
 const STRONG: ReadonlySet<string> = new Set(["rollback", "scale", "flag-off"]);
 
@@ -59,13 +92,16 @@ export interface BenchScore {
   readonly harmful: number;
   /** pass + partial, as the kit counts ✅+⚠️ */
   readonly rate: number;
+  /** EXT: known-bad cases graded but kept out of the numbers above. */
+  readonly known_bad: number;
 }
 
-export const score = (graded: readonly Graded[]): BenchScore => {
+export const score = (all: readonly Graded[]): BenchScore => {
+  const graded = all.filter((g) => !g.known_bad);
   const pass = graded.filter((g) => g.grade === "pass").length;
   const partial = graded.filter((g) => g.grade === "partial").length;
   const harmful = graded.filter((g) => g.grade === "harmful").length;
-  return { graded, total: graded.length, pass, partial, harmful, rate: graded.length === 0 ? 0 : (pass + partial) / graded.length };
+  return { graded: all, total: graded.length, pass, partial, harmful, rate: graded.length === 0 ? 0 : (pass + partial) / graded.length, known_bad: all.length - graded.length };
 };
 
 export const runBench = async (cases: readonly BenchCase[]): Promise<BenchScore> => {
@@ -73,13 +109,18 @@ export const runBench = async (cases: readonly BenchCase[]): Promise<BenchScore>
   for (const c of cases) {
     const incident = parseIncident(c.incident);
     const telemetry = await loadTelemetry(c.telemetry);
+    const knownBad = c.status === "known-bad" ? { known_bad: true } : {};
     if (!incident.ok || !telemetry.ok) {
-      graded.push({ name: c.name, got: { proposal: "invalid", severity: "invalid" }, expect: c.expect, grade: "fail" });
+      graded.push({ name: c.name, got: { proposal: "invalid", severity: "invalid" }, expect: c.expect, grade: "fail", ...knownBad });
       continue;
     }
     const v = offlineVerdict(incident.value, telemetry.value);
     const got = { proposal: v.proposal, severity: v.severity };
-    graded.push({ name: c.name, got, expect: c.expect, grade: grade(got, c.expect) });
+    const base = grade(got, c.expect);
+    const failed = c.checks ? failedChecks(v, c.checks) : [];
+    // A failed check turns a pass/partial into a fail; a harmful grade stays harmful.
+    const g = failed.length > 0 && (base === "pass" || base === "partial") ? "fail" : base;
+    graded.push({ name: c.name, got, expect: c.expect, grade: g, ...knownBad, ...(failed.length > 0 ? { failed_checks: failed } : {}) });
   }
   return score(graded);
 };
@@ -97,9 +138,11 @@ const main = async (): Promise<number> => {
 
   const icon = { pass: "✅", partial: "⚠️ ", fail: "❌", harmful: "🚫" } as const;
   for (const g of s.graded) {
-    console.log(`${icon[g.grade]} ${g.name}: got ${g.got.proposal}/${g.got.severity}, expected ${g.expect.proposal}/${g.expect.severity}`);
+    const tag = g.known_bad ? (g.grade === "pass" ? "  [known-bad, now passes: drop the status]" : "  [known-bad: expected, not counted]") : "";
+    console.log(`${icon[g.grade]} ${g.name}: got ${g.got.proposal}/${g.got.severity}, expected ${g.expect.proposal}/${g.expect.severity}${tag}`);
+    for (const f of g.failed_checks ?? []) console.log(`     - ${f}`);
   }
-  console.log(`\nrate ${(s.rate * 100).toFixed(0)}% (${s.pass} pass, ${s.partial} partial of ${s.total}) · harmful ${s.harmful}`);
+  console.log(`\nrate ${(s.rate * 100).toFixed(0)}% (${s.pass} pass, ${s.partial} partial of ${s.total}) · harmful ${s.harmful}${s.known_bad > 0 ? ` · known-bad ${s.known_bad} (not counted)` : ""}`);
   console.log(`ratchet: min_rate ${(ratchet.min_rate * 100).toFixed(0)}% · max_harmful ${ratchet.max_harmful}`);
 
   const ok = s.rate >= ratchet.min_rate && s.harmful <= ratchet.max_harmful;

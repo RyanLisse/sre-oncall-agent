@@ -9,7 +9,7 @@
  * demonstration of the pipeline, never model evidence.
  */
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
-import type { Incident, Verdict } from "./contract.js";
+import { VERDICT_SCHEMA, type Incident, type Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
 import { listDeploys, deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
 
@@ -90,6 +90,7 @@ const minus = (iso: string, minutes: number): string =>
  *   no breakpoint                                      → no-action (morning-log)
  */
 export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
+  if (t.scenario === "correlation-trap") return correlationTrapVerdict(incident, t);
   const h = handlers(t);
   const since = minus(incident.fired_at, 60);
   const metrics = h.summarize_metrics({ since, until: incident.fired_at });
@@ -188,6 +189,43 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     data_gaps: gaps,
     watch_metric: "error_rate",
   };
+};
+
+/**
+ * INC-1002 (correlation-trap fixture). The scripted runtime reads only the
+ * volume and the deploy list and blames capacity. It passes the contract
+ * validator, and it is wrong: the exercise is to show why.
+ */
+// EXT: deliberately naive for the correlation-trap exercise
+const correlationTrapVerdict = (incident: Incident, t: Telemetry): Verdict => {
+  const since = minus(incident.fired_at, 60);
+  const pts = t.metrics.filter((m) => m.ts >= since && m.ts <= incident.fired_at);
+  const before = pts.filter((m) => m.error_rate < 0.02).at(-1); // last quiet minute
+  const surge = pts.find((m) => before !== undefined && m.ts > before.ts && (m.n ?? 0) >= 1.5 * (before.n ?? Infinity));
+  const deploy = listDeploys(t, since, incident.fired_at)[0];
+  // Once A3 adds customer_impact to the contract, the verdict carries it too,
+  // so it stays valid on the start state and on the solved state.
+  const needsImpact = (VERDICT_SCHEMA.required as readonly string[]).includes("customer_impact");
+  return {
+    ...(needsImpact ? { customer_impact: "about 9% of checkouts fail and the rest take ~2.6 s; customers retry the same order" } : {}),
+    incident_id: incident.incident_id,
+    tag: "latency",
+    severity: "page",
+    confidence: "medium",
+    hypothesis: "Request volume nearly doubled at 03:38–03:39; capacity saturation",
+    evidence: [
+      { source: "metrics", ref: surge?.ts ?? incident.fired_at, note: `requests per minute ${before?.n ?? "?"} → ${surge?.n ?? "?"} while error_rate went to ${surge?.error_rate ?? "?"}` },
+      ...(deploy ? [{ source: "deploys" as const, ref: deploy.id, note: `${deploy.version} at ${deploy.at}: ${deploy.summary}` }] : []),
+    ],
+    blast_radius: `all ${t.service} traffic; error_rate ${pts[pts.length - 1]?.error_rate ?? "?"}`,
+    proposal: "scale",
+    ruled_out: [],
+    would_change_my_mind: "flat first attempts with the extra volume all retries, or a change other than a deploy in the window",
+    data_gaps: ["no trace data read", "changes other than deploys not checked"],
+    watch_metric: "error_rate",
+    draft_only: true,
+    human_approval_required: true,
+  } as Verdict;
 };
 
 /** Replays the system prompt's method as tool events, then emits the verdict. */

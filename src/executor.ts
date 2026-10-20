@@ -8,7 +8,9 @@
  *      that was live before the blamed deploy (recomputed from telemetry,
  *      never taken from model text),
  *   4. and after acting it produces FRESH checkout evidence on the intended
- *      revision — three verified successful checkouts — before it reports done.
+ *      revision — three verified successful checkouts, AND an error rate over
+ *      a sample of checkouts that is back near the pre-incident baseline —
+ *      before it reports done. Three good checkouts alone pass at 9% errors.
  *
  * Model output and log text cannot approve a mutation. The executor never
  * imports anything from agent.ts or runtime.ts.
@@ -52,23 +54,72 @@ export interface Evidence {
   readonly attempts: number;
   readonly verified_ok: number;
   readonly revision_seen: readonly string[];
+  /** Failed checkouts (5xx or no answer) / attempts, over the whole sample. */
+  readonly error_rate: number;
+  /** The bar the error rate had to stay under: max(2 × baseline, 0.02). */
+  readonly threshold: number;
 }
 
-/** Fresh evidence: N verified successful checkouts on the intended revision. */
-export const freshEvidence = async (shopUrl: string, revision: string, n = 3): Promise<Result<Evidence>> => {
+export interface FreshOptions {
+  /** Verified successful checkouts required on the revision. Default 3. */
+  readonly n?: number;
+  /** Checkouts sent in total; the error rate is measured over all of them. Default 100. */
+  readonly sample?: number;
+  /** Pre-incident error rate (0..1) from telemetry. Default 0, which makes the bar 0.02. */
+  readonly baseline?: number;
+  /** Checkouts in flight at once. Default 10. */
+  readonly concurrency?: number;
+}
+
+/** The error-rate bar fresh evidence must clear. Pure. */
+export const errorRateThreshold = (baseline: number): number => Math.max(2 * baseline, 0.02);
+
+/** Mean error rate before the first breakpoint in the hour before the alert: the "normal" to return to. Pure. */
+export const baselineErrorRate = (incident: Incident, t: Telemetry): number => {
+  const since = new Date(Date.parse(incident.fired_at) - 60 * 60_000).toISOString();
+  const bp = summarizeMetrics(t, since, incident.fired_at).breakpoints[0];
+  const pts = t.metrics.filter((m) => m.ts >= since && m.ts < (bp?.ts ?? incident.fired_at));
+  return pts.length === 0 ? 0 : pts.reduce((a, m) => a + m.error_rate, 0) / pts.length;
+};
+
+/**
+ * Fresh evidence: N verified successful checkouts on the intended revision,
+ * AND the error rate over a sample of checkouts at or under
+ * max(2 × baseline, 0.02). A handful of good checkouts is not "resolved"
+ * while the error rate is still elevated.
+ */
+export const freshEvidence = async (shopUrl: string, revision: string, opts: number | FreshOptions = {}): Promise<Result<Evidence>> => {
+  const o: FreshOptions = typeof opts === "number" ? { n: opts } : opts;
+  const n = o.n ?? 3;
+  // 100: at 0.3% a healthy revision fails the 2% bar ~0.4% of the time; at 9% a broken one passes ~0.5%.
+  const sample = Math.max(o.sample ?? 100, n);
+  const concurrency = Math.max(1, o.concurrency ?? 10);
+  const threshold = errorRateThreshold(o.baseline ?? 0);
   const seen = new Set<string>();
-  let okCount = 0, attempts = 0;
-  while (okCount < n && attempts < n * 4) {
-    attempts++;
+  let okCount = 0, failed = 0, attempts = 0;
+  const one = async (): Promise<void> => {
     try {
       const r = await fetch(`${shopUrl}/checkout`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
       const j = (await r.json().catch(() => ({}))) as { revision?: string; paid?: boolean };
       if (j.revision) seen.add(j.revision);
+      if (r.status >= 500) failed++;
       if (j.revision === revision && r.status < 500 && j.paid === true) okCount++;
-    } catch { /* counts as a failed attempt */ }
+    } catch {
+      failed++; // no answer counts as a failed attempt
+    }
+  };
+  while (attempts < sample) {
+    const batch = Math.min(concurrency, sample - attempts);
+    attempts += batch;
+    await Promise.all(Array.from({ length: batch }, one));
   }
-  const ev = { attempts, verified_ok: okCount, revision_seen: [...seen] };
-  return okCount >= n ? ok(ev) : fail([`only ${okCount}/${n} verified successful checkouts on ${revision} after ${attempts} attempts (saw: ${ev.revision_seen.join(", ") || "none"})`]);
+  const error_rate = Number((failed / attempts).toFixed(4));
+  const ev: Evidence = { attempts, verified_ok: okCount, revision_seen: [...seen], error_rate, threshold };
+  if (okCount < n)
+    return fail([`only ${okCount}/${n} verified successful checkouts on ${revision} after ${attempts} attempts (saw: ${ev.revision_seen.join(", ") || "none"})`]);
+  if (error_rate > threshold)
+    return fail([`not resolved: error_rate ${error_rate} over ${attempts} checkouts on ${revision} is above ${threshold} (max(2 × baseline, 0.02)), even with ${okCount} successful checkouts`]);
+  return ok(ev);
 };
 
 export interface ExecuteDeps {
@@ -101,8 +152,8 @@ export const execute = async (incident: Incident, deps: ExecuteDeps): Promise<Re
   if (!r || r.status !== 200) return fail([`shop refused the rollback (${r?.status ?? "unreachable"})`]);
   log(`applied: ${plan.value.to_version} is now serving`);
 
-  const ev = await freshEvidence(deps.shopUrl, plan.value.to_version);
+  const ev = await freshEvidence(deps.shopUrl, plan.value.to_version, { baseline: baselineErrorRate(incident, t.value) });
   if (!ev.ok) return ev;
-  log(`evidence: ${ev.value.verified_ok} verified successful checkouts on ${plan.value.to_version}`);
+  log(`evidence: ${ev.value.verified_ok} verified successful checkouts on ${plan.value.to_version}; error_rate ${ev.value.error_rate} over ${ev.value.attempts} (bar ${ev.value.threshold})`);
   return ok({ plan: plan.value, evidence: ev.value });
 };

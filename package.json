@@ -17,7 +17,7 @@
     "reject": "tsx src/cli.ts --reject",
     "watch": "tsx src/cli.ts --watch",
     "bench": "tsx src/bench.ts",
-    "verify": "npm run typecheck && npm test && npm run bench",
+    "verify": "npm run typecheck && npm test && npm run test:ext && npm run bench",
     "course:build": "node course/build.mjs",
     "course:check": "node course/build.mjs --check",
     "diagrams": "node docs/diagrams/build.mjs",
@@ -41,7 +41,11 @@
     "skill:scan": "node scripts/scan-skill.mjs",
     "progress": "node .claude/hooks/progress.mjs --status",
     "progress:note": "node scripts/progress-note.mjs",
-    "workshop:check": "node scripts/workshop-check.mjs"
+    "workshop:check": "node scripts/workshop-check.mjs",
+    "test:ext": "tsx --test \"test/extension/*.test.ts\"",
+    "tool": "tsx scripts/tool.ts",
+    "investigate:trap": "tsx src/cli.ts fixtures/incidents/correlation-trap.json",
+    "postmortem:check": "node scripts/postmortem-check.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.274",

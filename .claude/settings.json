@@ -25,6 +25,8 @@
       "Bash(npm run demo*)",
       "Bash(npm run e2e*)",
       "Bash(npm run investigate*)",
+      "Bash(npm run tool*)",
+      "Bash(npm run postmortem:check*)",
       "Bash(npm run doctor)",
       "Bash(npm run watch*)",
       "Bash(npm run diagrams)",
