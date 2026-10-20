@@ -63,7 +63,7 @@ export interface Evidence {
 export interface FreshOptions {
   /** Verified successful checkouts required on the revision. Default 3. */
   readonly n?: number;
-  /** Checkouts sent in total; the error rate is measured over all of them. Default 50. */
+  /** Checkouts sent in total; the error rate is measured over all of them. Default 100. */
   readonly sample?: number;
   /** Pre-incident error rate (0..1) from telemetry. Default 0, which makes the bar 0.02. */
   readonly baseline?: number;
@@ -91,7 +91,8 @@ export const baselineErrorRate = (incident: Incident, t: Telemetry): number => {
 export const freshEvidence = async (shopUrl: string, revision: string, opts: number | FreshOptions = {}): Promise<Result<Evidence>> => {
   const o: FreshOptions = typeof opts === "number" ? { n: opts } : opts;
   const n = o.n ?? 3;
-  const sample = Math.max(o.sample ?? 50, n);
+  // 100: at 0.3% a healthy revision fails the 2% bar ~0.4% of the time; at 9% a broken one passes ~0.5%.
+  const sample = Math.max(o.sample ?? 100, n);
   const concurrency = Math.max(1, o.concurrency ?? 10);
   const threshold = errorRateThreshold(o.baseline ?? 0);
   const seen = new Set<string>();

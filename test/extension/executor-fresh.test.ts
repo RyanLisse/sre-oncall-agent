@@ -29,7 +29,7 @@ test("9% errors after the rollback: NOT resolved, even though the first 3 checko
   try {
     const ev = await freshEvidence(shop.url, "v2.14.0", { baseline: 0.003 });
     assert.equal(ev.ok, false, "must not declare resolved on a few good checkouts");
-    if (!ev.ok) assert.match(ev.errors.join(), /not resolved: error_rate 0\.08/);
+    if (!ev.ok) assert.match(ev.errors.join(), /not resolved: error_rate 0\.0[89]/);
     assert.ok(shop.hits() >= 50, "the error rate is measured over a sample, not 3 checkouts");
   } finally {
     shop.server.close();
@@ -54,7 +54,7 @@ test("healthy after the fix: resolved, with the error rate and the bar in the ev
       assert.equal(ev.value.error_rate, 0);
       assert.equal(ev.value.threshold, 0.02);
       assert.ok(ev.value.verified_ok >= 3);
-      assert.equal(ev.value.attempts, 50);
+      assert.equal(ev.value.attempts, 100);
     }
   } finally {
     shop.server.close();

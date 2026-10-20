@@ -55,6 +55,10 @@ test("retries are counted per bucket from the request options", () => {
   assert.ok(s.metrics.reduce((a, m) => a + (m.retries ?? 0), 0) >= 2);
 });
 
-test("cache warm returns to the mode before the flush", () => {
+test("a healthy deploy (a rollback) does not cure an empty cache; cache warm does", () => {
+  shop.applyDeploy("v2.14.0", "healthy", "executor", "rollback of d-x");
+  let fails = 0;
+  for (let i = 0; i < 1000; i++) if (shop.checkout().status >= 500) fails++;
+  assert.ok(fails / 1000 > 0.05, `still elevated after the rollback: ${fails / 1000}`);
   assert.equal(shop.cacheAction("warm"), "healthy");
 });

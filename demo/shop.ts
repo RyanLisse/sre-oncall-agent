@@ -161,7 +161,10 @@ export const applyDeploy = (version: string, mode: Mode, author: string, summary
   const d: Deploy = { id: `d-${state.deployCounter}`, version, at: new Date().toISOString(), author, summary, ...(diff ? { diff } : {}) };
   log("info", `deploy ${d.id} started: ${version}`);
   state.version = version;
-  state.mode = mode;
+  // Extension: an empty price-cache is not fixed by a deploy. A "healthy"
+  // deploy (e.g. a rollback) keeps cache-loss until the cache is warmed.
+  if (state.mode === "cache-loss" && mode === "healthy") state.modeBeforeFlush = "healthy";
+  else state.mode = mode;
   state.deploys.push(d);
   log("info", `deploy ${d.id} complete: 100% traffic on ${version}`);
   if (mode === "bad-deploy") log("error", "PaymentConfigError: missing key PAYMENT_PROVIDER_SECRET_EU for provider=stripe-eu");

@@ -37,12 +37,12 @@ test("bench checks: a good answer for the trap passes every check", () => {
   assert.deepEqual(failedChecks(good, { proposal_not: ["rollback", "scale"], ruled_out_mentions: ["capacity", "d-4830"], evidence_sources_any: ["changes", "traces"] }), []);
 });
 
-const rec: Recommendation = {
+const rec = {
   incident_id: "INC-1002", tag: "latency", severity: "page", confidence: "medium", hypothesis: "h",
   evidence: [{ source: "metrics", ref: "t", note: "n" }, { source: "deploys", ref: "d-4830", note: "n" }],
   blast_radius: "b", proposal: "scale", ruled_out: [], would_change_my_mind: "w", data_gaps: [], watch_metric: "error_rate",
   draft_only: true, human_approval_required: true, owner: OWNERS.scale,
-};
+} as Recommendation; // a cast, so it compiles before and after A3 adds customer_impact
 
 test("reject with a reason: stored on the record, isApproved unchanged", () => {
   const rejected = decide(draftApproval(rec, "t0"), "rejected", "ryan", "t1");

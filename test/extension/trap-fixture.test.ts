@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { parseIncident, parseVerdict } from "../../src/contract.js";
+import { parseIncident, parseVerdict, VERDICT_SCHEMA } from "../../src/contract.js";
 import { planRollback } from "../../src/executor.js";
 import { offlineVerdict } from "../../src/runtime.js";
 import { loadTelemetry, searchLogs, summarizeMetrics, type Telemetry } from "../../src/telemetry.js";
@@ -80,6 +80,8 @@ test("trap-after: rollback at 03:50 leaves error_rate ≥ 0.08 at 03:52; warm-up
 test("scripted verdict: valid against the contract, and deliberately wrong (capacity / scale)", async () => {
   const v = offlineVerdict(incident, await load("correlation-trap"));
   assert.equal(parseVerdict(v).ok, true);
+  const needsImpact = (VERDICT_SCHEMA.required as readonly string[]).includes("customer_impact");
+  assert.equal("customer_impact" in v, needsImpact, "customer_impact follows the contract (added once A3 is solved)");
   assert.equal(v.proposal, "scale");
   assert.match(v.hypothesis, /capacity/i);
   assert.deepEqual(v.ruled_out, []);

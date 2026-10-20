@@ -9,7 +9,7 @@
  * demonstration of the pipeline, never model evidence.
  */
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
-import type { Incident, Verdict } from "./contract.js";
+import { VERDICT_SCHEMA, type Incident, type Verdict } from "./contract.js";
 import { handlers, qualified, type ToolName } from "./tools.js";
 import { listDeploys, deployBehind, getDiff, previousVersion, type Telemetry } from "./telemetry.js";
 
@@ -203,7 +203,11 @@ const correlationTrapVerdict = (incident: Incident, t: Telemetry): Verdict => {
   const before = pts.filter((m) => m.error_rate < 0.02).at(-1); // last quiet minute
   const surge = pts.find((m) => before !== undefined && m.ts > before.ts && (m.n ?? 0) >= 1.5 * (before.n ?? Infinity));
   const deploy = listDeploys(t, since, incident.fired_at)[0];
+  // Once A3 adds customer_impact to the contract, the verdict carries it too,
+  // so it stays valid on the start state and on the solved state.
+  const needsImpact = (VERDICT_SCHEMA.required as readonly string[]).includes("customer_impact");
   return {
+    ...(needsImpact ? { customer_impact: "about 9% of checkouts fail and the rest take ~2.6 s; customers retry the same order" } : {}),
     incident_id: incident.incident_id,
     tag: "latency",
     severity: "page",
@@ -221,7 +225,7 @@ const correlationTrapVerdict = (incident: Incident, t: Telemetry): Verdict => {
     watch_metric: "error_rate",
     draft_only: true,
     human_approval_required: true,
-  };
+  } as Verdict;
 };
 
 /** Replays the system prompt's method as tool events, then emits the verdict. */
