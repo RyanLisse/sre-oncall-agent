@@ -8,6 +8,10 @@ Entries cite assignment keys **A-1**..**A-9** and decision-register rows (D<nn>)
 - Entries marked `<!-- auto: A-n -->` are appended by
   `.claude/hooks/progress.mjs` from local evidence; fill in the
   `<fill in: …>` bullets yourself.
+- The agent appends status, decision and blocker lines with
+  `npm run progress:note -- [--kind status|decision|blocker] "<text>"`
+  (one timestamped line at the bottom). The agent never edits this file
+  directly, and nobody rewrites old lines.
 - Record only evidence you actually saw; if a check was not run, write `OPEN`.
 
 <!-- ========================================================================
