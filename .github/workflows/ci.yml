@@ -12,7 +12,12 @@ permissions:
 jobs:
   test:
     name: Node ${{ matrix.node }}
+    # main: the solved-state checks. A PR into workshop/start: the start-branch
+    # suite on both Node versions (the exercises are red there by design, so the
+    # solved-only steps are swapped for the start checks; nothing is skipped).
     runs-on: ubuntu-latest
+    env:
+      START: ${{ github.base_ref == 'workshop/start' }}
     strategy:
       fail-fast: false
       matrix:
@@ -26,17 +31,36 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm run fixtures
-      - run: npm run diagrams
-      - run: git diff --exit-code -- fixtures/telemetry   # fixtures are deterministic
-      - run: git diff --exit-code -- docs/diagrams/*.svg   # diagrams are generated
-      - run: npm run verify                                # typecheck · tests · bench ratchet
-      - run: npm run test:workshop                         # workshop spec green on main
-      - run: npm run test:hooks                            # guard + progress + settings wiring
-      - run: npm run workshop:check -- --expect-solved     # no cut markers on main
-      - run: npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
-      - run: npm run investigate -- fixtures/incidents/adversarial.json --dry-run
-      - run: npm run course:check
+      # PR into workshop/start: the start-branch suite
+      - if: env.START == 'true'
+        run: npm run workshop:check -- --expect-start      # all 4 cut markers present
+      - if: env.START == 'true'
+        run: npm test                                      # main suite green at start
+      - if: env.START == 'true'
+        run: npm run test:hooks                            # invariant hook suite green
+      # main (and PRs into main): the solved state
+      - if: env.START != 'true'
+        run: npm run fixtures
+      - if: env.START != 'true'
+        run: npm run diagrams
+      - if: env.START != 'true'
+        run: git diff --exit-code -- fixtures/telemetry   # fixtures are deterministic
+      - if: env.START != 'true'
+        run: git diff --exit-code -- docs/diagrams/*.svg   # diagrams are generated
+      - if: env.START != 'true'
+        run: npm run verify                                # typecheck · tests · bench ratchet
+      - if: env.START != 'true'
+        run: npm run test:workshop                         # workshop spec green on main
+      - if: env.START != 'true'
+        run: npm run test:hooks                            # guard + progress + settings wiring
+      - if: env.START != 'true'
+        run: npm run workshop:check -- --expect-solved     # no cut markers on main
+      - if: env.START != 'true'
+        run: npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
+      - if: env.START != 'true'
+        run: npm run investigate -- fixtures/incidents/adversarial.json --dry-run
+      - if: env.START != 'true'
+        run: npm run course:check
 
   workshop-start:
     name: workshop/start is cut correctly
@@ -44,7 +68,8 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: workshop/start
+          # a PR into workshop/start is checked at its own head; otherwise the branch itself
+          ref: ${{ github.base_ref == 'workshop/start' && github.event.pull_request.head.sha || 'workshop/start' }}
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:

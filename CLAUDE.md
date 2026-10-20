@@ -7,7 +7,7 @@ changing behaviour.
 ## The division of labour (fixed, non-negotiable)
 
 The agent gathers evidence, proposes, verifies and communicates.
-**Humans decide what to mitigate and when.** From `anthropics/oncall-kit`.
+**Humans decide what to mitigate and when.**
 
 ## Rules
 

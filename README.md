@@ -1,259 +1,130 @@
-# AI SRE first responder on the Claude Agent SDK
+# SRE on-call lab — Workshop 5 (AI-native SDLC)
 
-An alert fires. The agent reads the lessons for that failure class, pulls the
-metrics, the deploy history and the logs, and posts one diagnosis with a
-reference behind every claim and ONE proposed next step. A human decides.
-After the human acts, the agent watches the metric land — and says so if it
-does not.
+In this lab you build an AI first responder for a small checkout service, with
+Claude Code as your builder. An alert fires. The agent reads the telemetry,
+the deploy history and the logs. It posts one diagnosis with a reference
+behind every claim, and it proposes ONE next step. A named human decides.
+After the human acts, the agent watches the metric and reports if the fix
+landed.
 
-The agent **cannot** roll back, scale, flip a flag or page anyone. That is
-not a missing feature. It is the design, taken from
-[`anthropics/oncall-kit`](https://github.com/anthropics/oncall-kit):
-*the agent gathers evidence, proposes, verifies and communicates; humans
-decide what to mitigate and when.*
+The agent **cannot** roll back, scale, flip a flag or page anyone. That is the
+design: the agent gathers evidence, proposes, verifies and communicates;
+humans decide what to mitigate and when.
 
-You can run the whole project offline. The offline runtime is a scripted
-investigator that runs the same tools against the same fixtures. Its output
-demonstrates the pipeline; it is not model evidence.
-
-Follow **[SOLO.md](SOLO.md)** for the step-by-step tutorial, or
-**[WORKSHOP.md](WORKSHOP.md)** for the Workshop 5 (AI-native SDLC) team path.
-This README is the reference.
+Everything runs on your own machine. All data is fictional.
 
 ![The on-call loop: alert → investigation → recovery](docs/diagrams/01-architecture.svg)
 
-Four diagrams explain the design (`docs/diagrams/`, regenerate with
-`npm run diagrams`): the loop above, [the contract](docs/diagrams/02-contract.svg),
-[the lessons loop](docs/diagrams/03-lessons.svg) and [the ratchet](docs/diagrams/04-ratchet.svg).
-A five-minute narrated explainer is at `docs/video/explainer.mp4`
-(rebuild with `npm run video`).
+## The scenario
+
+| Part | Command | Where |
+| --- | --- | --- |
+| **Checkout shop** — a mock checkout service that writes its own telemetry | `npm run shop` | `http://localhost:4310` |
+| **Traffic** — steady checkouts against the shop | `npm run traffic` | — |
+| **Chaos** — your lever to break the shop: a bad deploy, slow latency or errors | `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | modes: `healthy`, `bad-deploy`, `slow`, `errors` |
+| **Console** — the on-call desk: incidents, chat with the agent, approve/execute/resolve buttons, and a JSON API | `npm run console` | `http://localhost:4320` (health: `/api/health`) |
+
+The reference incident is **INC-1001** (`fixtures/incidents/bad-deploy.json`):
+the checkout error rate jumps after a deploy. The tutorial, the tests and the
+bench replay it from fixtures. When you break the live shop, the console's
+listener opens a new incident with its own id (`INC-<number>`). The listener
+uses fixed criteria (error rate above 2% or p95 above 2000 ms, sustained for
+about 5 minutes; set `AGENT_LISTEN_WINDOW_MIN=1` for a faster demo). The agent
+is never the detector.
 
 ## Set up
 
-```
-git clone <this repo>
+You need:
+
+- **Node.js 22 or newer** (check with `node --version`) and npm.
+- **Claude Code**, signed in with your own account (`claude`, then `/login`).
+  Claude Code is your builder.
+- **No API key.** The agent runs offline by default: a scripted investigator
+  drives the same tools against the same data. Its output demonstrates the
+  pipeline; it is not model evidence.
+
+```bash
+git clone <repo-url> sre-oncall-agent   # the URL your facilitator gives you
 cd sre-oncall-agent
+git checkout workshop/start             # the lab branch
 npm install
 npm run fixtures
-npm run verify
+npm test                                # green: the main suite
+npm run test:workshop                   # red: the exercises (by design)
 ```
 
-`npm run verify` runs the type check, 35 tests and the bench ratchet. It
-ends with `PASS bench`.
+Start Claude Code in the folder (`claude`) and run `/status`: it shows the
+guard and progress hooks from `.claude/settings.json`.
 
-## The loop, in five commands
+## Run it
 
-```
-npm run investigate -- fixtures/incidents/bad-deploy.json          # 1 · diagnose, draft an approval, propose a lesson
-npm run approve     -- fixtures/incidents/bad-deploy.json --by you  # 2 · a NAMED human signs (or: npm run reject)
-#                                                                    # 3 · a human (or a separate gated system) applies the fix
-npm run watch       -- fixtures/incidents/bad-deploy.json \
-    --metric error_rate --fix-at 2026-10-05T03:52:00Z \
-    --after fixtures/telemetry/after-rollback.json                   # 4 · three bounded checks: LANDED or NOT LANDED
-#                                                                    # 5 · review lessons/proposed/INC-1001.md → PR into lessons/lessons.md
+Three terminals:
+
+```bash
+npm run shop                                        # 1 · the checkout shop on :4310
+npm run traffic                                     # 2 · traffic
+npm run console                                     # 3 · the console on :4320
 ```
 
-Add `--dry-run` to step 1 to skip the approval draft and the lesson proposal.
+Then break the shop and watch the console:
 
-## The console: a local on-call desk with a chat
-
-```
-npm run shop && npm run traffic          # (two terminals) the demo service
-npm run console                           # http://localhost:4320 — offline investigator
-AGENT_MODEL=sonnet npm run console        # same console, real model behind the chat
+```bash
+npm run chaos -- deploy v2.15.0 --mode bad-deploy   # a bad deploy
+npm run chaos -- degrade --mode slow                # the same kind of fault, no deploy record
 ```
 
-![Console: incident view](docs/console-incident.png)
+Other useful commands:
 
-Everything runs locally: Node `http`, `node:sqlite`, one HTML file, the
-Claude **Agent SDK** (not Managed Agents). The console is the three intake
-paths from Anthropic's figure landing in one triage loop:
+```bash
+npm run demo                 # the whole loop on a bad deploy, about 2 minutes
+npm run doctor               # preflight check
+npm run progress             # which assignments already have evidence
+npm run workshop:check       # the TODO markers you still have to fill in
+npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run   # INC-1001 from fixtures
+```
 
-| Path | How it reaches the console |
+## The file flow
+
+Each step of the AI SDLC leaves one file behind. Write them in this order:
+
+1. **`intent.md`** — who the agent serves, the boundary, and three checks a
+   stranger can verify.
+2. **`docs/spec.md`** — the contract the code must meet.
+3. **`docs/plan.md`** — the steps, smallest first, and the checks.
+4. **`PROGRESS.md`** — the build log: append-only. The progress hook appends
+   an entry when it sees local evidence for an assignment; you add your own
+   lines at the bottom. Nobody rewrites old lines.
+5. **`REVIEW.md`** — the review checklist you run before you share a change.
+
+## The assignment
+
+Build the agent piece by piece, test first: **Intent → Spec → Design/controls
+→ Build → Test/evals → Gate → Maintain.** The `workshop/start` branch has
+four pieces removed (`TODO(A3/A4/A5/A8)`); the red tests in `test/workshop/`
+turn green as you rebuild them.
+
+| # | Assignment |
 | --- | --- |
-| **Alert** | your alerting `POST /api/alerts {"alert": "…"}` — or the built-in **listener**: every 10 s it evaluates `oncall.md`-style criteria on the live telemetry (error_rate > 2% or p95 > 2000 ms, sustained, deploy-window aware) and opens an incident. Deterministic. The agent is never the detector. |
-| **Human report** | "+ New investigation", or type `Investigate: customers report checkout errors` |
-| **Deployment watch** | type `Watch the next deployment for five minutes.` — a failed watch opens an incident |
+| A1 | Setup check: install, green main suite, console up, Claude Code connected |
+| A2 | Write your team `intent.md` |
+| A3 | Spec + contract: the evidence rules and the new `customer_impact` field, test-first |
+| A4 | Controls: chat refuses mutations again; add your own guard rule by hand |
+| A5 | Build the read-only `list_deploys` tool |
+| A6 | Diagnose a live incident from the console |
+| A7 | Pass the bench and add one case; the ratchet only goes up |
+| A8 | The gate: the executor acts only on a NAMED human approval |
+| A9 | Maintain: resolve the incident with notes that become a lesson |
 
-The chat box is routed by a grammar before any model sees it
-(`src/chat.ts`): watch commands → the watcher; `Investigate: …` → the full
-loop; a free question → the investigator in read-only Q&A mode (no
-proposal); and **anything that sounds like a mutation — "roll back",
-"approve", "resolve" — is refused**: those are buttons a named human clicks.
-Incidents move through `active → stale → mitigated → resolved`; every arrow
-into a closed state is a button with a name field, and the agent may only
-flag *stale*.
+The full steps, catch-up commands and step tags are in
+**[WORKSHOP.md](WORKSHOP.md)**. Working alone? Follow **[SOLO.md](SOLO.md)**.
 
-## The live demo: a shop you can break
+## The rules
 
-Fixtures are good for the tutorial. To see the agent react to something
-*happening*, run the demo shop — a tiny checkout service with fault
-injection that writes its own telemetry in the shape the agent reads.
-
-```
-npm run demo                      # whole loop on a bad deploy, ~2 min: shop → traffic → fault → investigate → refused → approve → execute → LANDED
-npm run demo -- slow degrade      # latency with NO deploy record → agent proposes scale, executor refuses (not a rollback)
-npm run demo -- errors degrade    # mystery 5xx, no deploy → investigate-more, low confidence
-npm run demo:watch                # "Watch the next deployment for one minute." with a bad deploy injected mid-watch → FAILED, incident queued, no rollback
-```
-
-Or drive it by hand in three terminals:
-
-```
-npm run shop                                           # :4310, telemetry → demo/data/telemetry.json
-npm run traffic                                        # 8 checkouts/s
-npm run chaos -- deploy v2.15.0 --mode bad-deploy      # faults: healthy · bad-deploy · slow · errors
-npm run chaos -- degrade --mode slow                   # same fault, no deploy record
-npm run live -- --alert "Error rate 12% for 5 min on checkout" --out demo/incidents/live.json
-npm run investigate -- demo/incidents/live.json
-npm run approve -- demo/incidents/live.json --by you
-npm run execute -- demo/incidents/live.json            # the SEPARATE executor: approval → recomputed target → rollback → 3 fresh verified checkouts
-npm run watch-deploy -- "Watch the next deployment for five minutes."
-npm run doctor                                         # preflight
-```
-
-The executor (`src/executor.ts`) is deliberately a different program from
-the agent. It never reads model text: it re-derives the rollback target from
-telemetry, refuses anything that is not an approved `rollback`, and reports
-done only after three verified successful checkouts on the intended
-revision. The deployment watch (`src/deployWatch.ts`) parses a strict
-command grammar — extra sentences describing the fixed policy are accepted,
-anything else is rejected rather than silently changing the rules — and
-evaluates a fixed, model-free failure policy: three consecutive verified
-failures, three consecutive >1000 ms, or ≥3 5xx since the watch began. An
-unverified check breaks a streak. There is no automatic rollback.
-
-## Run with a real model (optional)
-
-```
-export ANTHROPIC_API_KEY=sk-ant-...        # shell only, never in a file
-npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model sonnet
-npm run e2e                                # headless: 8 assertions on real model output, clean + adversarial (~$0.06)
-```
-
-The team runbook lives in `skills/triage/SKILL.md` — a Skill-shaped file,
-loaded into the system prompt, editable like code, and uploadable unchanged
-as a Claude Code or Managed Agents skill. Its order of operations is the
-agent's method: deploys first, line them up with the metric, **read the
-diff**, then grep to confirm — "don't grep to fish".
-
-The model gets the same three read-only tools through an in-process MCP
-server, the same `lessons.md` slice, and the same JSON-schema output
-contract. A run costs a few cents. `--max-turns` and `--max-budget-usd` bound
-the loop.
-
-## What the model can and cannot do
-
-| Can | Cannot |
-| --- | --- |
-| `search_logs`, `summarize_metrics`, `list_deploys`, `get_diff` (read-only, capped) | call any tool that changes the system — none exists |
-| read lessons for the matching `#tag` | read the whole `lessons.md` (grows unbounded by design) |
-| propose `rollback` / `scale` / `flag-off` / `investigate-more` / `no-action` | execute any of them |
-| write `lessons/proposed/<id>.md` | append to `lessons/lessons.md` |
-| draft `approvals/<id>.approval.json` as *pending* | sign it — `decided_by` must be a named human |
-
-![The lessons loop](docs/diagrams/03-lessons.svg)
-
-## The contract (what code checks after the model answers)
-
-![The model proposes. Code checks.](docs/diagrams/02-contract.svg)
-
-- `evidence` has ≥1 line; each line is `logs:<ts>`, `metrics:<ts>`, `deploys:<id>` or `lessons:<id>`.
-- A strong proposal (`rollback`, `scale`, `flag-off`) needs **two sources**. One signal is a hunch.
-- `rollback` needs a `deploys` line — you cannot undo a change you did not find.
-- `low` confidence may only propose `investigate-more`.
-- `summarize_metrics` and `list_deploys` must appear in the tool trace; a cited source whose tool was never called fails.
-- `incident_id` must match the input. `draft_only` and `human_approval_required` are the literal `true`.
-
-## Files
-
-```
-SOLO.md                       step-by-step tutorial (solo)
-WORKSHOP.md                   Workshop 5 assignments (team path)
-FACILITATOR.md                facilitator run sheet for the workshop day
-src/contract.ts               Incident · Verdict · Recommendation · schema · evidence rules
-src/telemetry.ts              the fictional production system: logs, metrics, deploys (pure queries)
-src/tools.ts                  the three read-only tools, as an in-process MCP server
-src/prompts.ts                standing orders (ASD-STE100-ish) + the runbook from skills/triage/SKILL.md
-skills/triage/SKILL.md        the team runbook as a Skill: order of operations, things that have burned us
-src/e2e.ts                    headless real-model check (npm run e2e)
-src/lessons.ts                lessons.md: read by #tag, propose-only writes, promotion candidates
-src/agent.ts                  the query() loop, trace extraction, trace ↔ evidence check
-src/router.ts                 parse → validate → attach owner
-src/approval.ts               the approval record a human signs; isApproved() for executors
-src/watch.ts                  "watch it land": baseline + three bounded checks
-src/bench.ts                  held-out replay + ratchet
-src/runtime.ts                real SDK or the offline scripted investigator
-src/cli.ts                    investigate · approve · reject · watch
-src/deployWatch.ts            "Watch the next deployment for N minutes": strict grammar, fixed failure policy, no model
-src/executor.ts               the SEPARATE approved-recovery executor: approval → recomputed plan → rollback → fresh evidence
-src/ops.ts                    doctor · live · watch-deploy · execute
-src/chat.ts                   chat routing: grammar first, mutations refused, questions → read-only Q&A
-src/store.ts                  incidents + messages in node:sqlite; four states, human-only closing arrows
-console/server.ts             the local console: HTTP API, SSE, alert webhook, deterministic listener
-console/index.html            the UI: sidebar, overview, incident chat, approve/execute/resolve buttons
-demo/shop.ts                  the fictional checkout service with fault injection; writes telemetry.json
-demo/chaos.ts                 traffic generator + deploy/degrade levers (the operator's, not the agent's)
-demo/run.sh                   npm run demo — the whole loop live
-fixtures/generate.mjs         deterministic telemetry for five scenarios
-fixtures/incidents/           the alerts, incl. adversarial + malformed
-bench/cases.json              expected proposal + severity per scenario
-bench/ratchet.json            the floor CI enforces (only goes up)
-docs/diagrams/                four SVG swimlane diagrams + the script that draws them
-docs/video/                   the explainer video + the script that renders it
-lessons/lessons.md            reviewed incident log (two seed entries)
-lessons/proposed/             where the agent writes; humans promote
-approvals/                    pending/approved/rejected records
-.claude/agents/               the same investigator as a Claude Code subagent
-course/                       interactive HTML course (open course/index.html)
-docs/sources.md               what each idea was taken from
-```
-
-## What was added after comparing with the video's repo
-
-Owain's `ai-sre-agent` (the video's docs) has a demo shop, a chat-scheduled deployment watch
-with a fixed failure policy, an approved-recovery executor that produces
-fresh checkout evidence, and a `doctor`. (Its public **V1** repo is narrower: investigate-and-propose only, *no* automated rollback — the rollback design is kept in `docs/design-history.md` as history. The video demo is ahead of the public code.) The first version of this repo had
-none of those — it only replayed fixtures. All four are now here (`demo/`,
-`src/deployWatch.ts`, `src/executor.ts`, `npm run doctor`), with two
-differences kept on purpose: the executor is a separate program the agent
-cannot call, and the rollback target is recomputed from telemetry instead of
-taken from the proposal. What is still not here: Pub/Sub intake, a web
-console, Postgres persistence, and Cloud Run — those are deployment choices,
-not design.
-
-## Resources
-
-Every idea in this repo has a primary source. Per-source "taken / deliberately not taken" is in [`docs/sources.md`](docs/sources.md).
-
-### The video that started it
-- Owain Lewis — [I Built A Claude DevOps Agent To Run My Software Factory](https://www.youtube.com/watch?v=l6GpUvPOVpM) (2026-10-05). The framing: agents are superhuman at searching data for one problem; humans decide; "watch the next deployment for N minutes".
-- DevOps Toolkit — [Claude Code: AI Agent for DevOps, SRE, and Platform Engineering](https://www.youtube.com/watch?v=h-6LP133o6w). The wish for an agent that *watches* and notifies; bounded here as `watch`.
-
-### Anthropic — the rules
-- [`anthropics/oncall-kit`](https://github.com/anthropics/oncall-kit) (Apache-2.0, reference implementation) — read [`skills/triage/SKILL.md`](https://github.com/anthropics/oncall-kit/blob/main/skills/triage/SKILL.md) and [`CLAUDE.md`](https://github.com/anthropics/oncall-kit/blob/main/CLAUDE.md), not just the README. Never the detector · no auto-mitigation · no unreviewed memory · every claim linked · lessons by tag · the six-line diagnosis · rule 5a · rule 9 (three checks) · ≥70% / zero harmful.
-- [Claude on call: how Claude Tag serves as Anthropic's first responder for CI/CD failures](https://claude.com/blog/ai-ci-cd-on-call) (2026-08-18) — `lessons.md` entry format; "query the data first, then theorize"; deterministic alerting, agentic triage.
-- [Claude Tag on-call webinar](https://www.anthropic.com/webinars/claude-tag-on-call-a-new-teammate-in-your-incident-channel) — companion to the blog.
-- [Claude Cookbook: Build an SRE incident response agent with Claude Managed Agents](https://platform.claude.com/cookbook/managed-agents-sre-incident-responder) ([notebook](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/sre_incident_responder.ipynb)) — `request_approval` as a custom tool the application answers; Skills for runbook conventions. Live session: [Cooking with Claude](https://www.anthropic.com/webinars/cooking-with-claude-how-to-build-an-sre-incident-response-agent) (2026-06-25).
-- [Agent SDK: the site-reliability agent](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/03_The_site_reliability_agent.ipynb) — the same problem on the local SDK (the runtime this repo uses).
-- [cwc-workshops: ship your first managed agent](https://github.com/anthropics/cwc-workshops/tree/main/ship-your-first-managed-agent) (MIT, workshop sample) — the runbook-as-Skill with an explicit order of operations and a "things that have burned us" list; `get_diff` as a tool (read the change before you blame it); `e2e.py` as a headless real-model check; the incident dashboard with the agent in a side panel.
-- [How we made claude.ai 3x faster in two weeks](https://claude.dev/blog/how-we-made-claude-ai-faster/) (2026-09-23) — every benchmark is a CI guardrail with a one-way ratchet; prove a proxy tracks the real metric before climbing it.
-- [`anthropics/code-migration-kit-with-claude-code`](https://github.com/anthropics/code-migration-kit-with-claude-code) — "you don't fix the code, you fix the process"; recurring failures indict a rule; ban by configuration, not by request.
-- [Claude Agent SDK](https://docs.claude.com/en/docs/agent-sdk/overview) · [TypeScript SDK](https://github.com/anthropics/claude-agent-sdk-typescript) · [MCP in the SDK](https://code.claude.com/docs/en/mcp).
-
-### Google SRE
-- [AI in SRE: where and how Google is deploying agentic AI to improve operations](https://cloud.google.com/blog/products/devops-sre/how-google-sre-is-using-agentic-ai-to-improve-operations) (2026-05-28) and the whitepaper [AI in SRE Practice](https://goo.gle/4uUxy4y) — RCA is one area of several; playbooks improve from use; anomaly detection over static thresholds (→ the `noisy-alert` scenario).
-- [SRE book](https://sre.google/sre-book/table-of-contents/) · [SRE workbook](https://sre.google/workbook/table-of-contents/) — the discipline the agent slots into.
-
-### Owain's own repo (the video's V1)
-- [`ai-developer-community/ai-sre-agent`](https://github.com/ai-developer-community/ai-sre-agent) — read `sre_agent/prompts/triage.md`, `docs/oncall-kit-insights.md`, `docs/verification.md`. Taken: *a missing signal is unknown, not healthy* (→ `data_gaps` + the contract rule that refuses `high` confidence with gaps); *history is context, not fresh evidence*; *re-derive on pushback*; reproducible query links on every tool result (→ `reproduce` line); human **resolution notes become the lesson** with incident id, date and name; a `verification.md` that separates what was tested from what is claimed; the rehearsal grading protocol (→ `docs/evaluation.md`); "a healthy /health is not proof — re-check the original failing path". Not taken: Cloud Run / Pub/Sub / Vertex / Postgres (deployment choices); its React frontend.
-
-### Base repo and writing
-- [`RyanLisse/aetherlink-day5-n8n-to-agent`](https://github.com/RyanLisse/aetherlink-day5-n8n-to-agent) — the shape: contract → runtime port → trace → validate → route → memory; `Result` over `throw`; the SOLO.md format; the HTML course build.
-- [ASD-STE100](https://www.asd-ste100.org/) — the controlled-language spec the prompts, `SOLO.md` and the narration aim at (~80%): short sentences, one instruction each, one term per thing.
-
-## Safety
-
-All data is fictional. Nothing is sent, deployed, rolled back, scaled or
-paged. The agent has three read-only tools and no network. Every verdict has
-`draft_only: true` and `human_approval_required: true`.
+- **Local only.** Everything runs on your machine. The agent has no network
+  access: the guard hook denies network calls.
+- **Push nothing.** Commit locally if you like, but do not push branches, open
+  pull requests or deploy anything. The guard hook denies `git push`.
+- **Humans decide.** The agent proposes; a named human approves, executes and
+  closes. The agent may not sign approvals, edit hooks, edit `.claude/`, or
+  rewrite `PROGRESS.md`.
+- **No secrets in files.** You do not need an API key for this lab.

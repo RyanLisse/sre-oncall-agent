@@ -3,7 +3,6 @@
 For each investigation on real (or demo) traffic, record one row. Grade
 independently of the agent, after you know the outcome. Do not put the
 resolution into the prompt. A scripted happy path is not an evaluation set.
-(After the oncall-kit Validate phase and `ai-sre-agent/docs/oncall-kit-insights.md`.)
 
 | incident | alert | first diagnosis (proposal / confidence) | evidence refs opened? | human action | observed outcome | grade |
 |---|---|---|---|---|---|---|
