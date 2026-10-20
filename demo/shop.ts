@@ -123,7 +123,7 @@ export const snapshot = () => ({
     .filter((b) => b.n > 0)
     .map((b) => ({
       ts: b.ts, error_rate: Number((b.errors / b.n).toFixed(4)), p95_ms: p95(b.lat), version: b.version, n: b.n,
-      first_attempts: b.first, retries: b.retries, cache_hit_ratio: Number((b.cacheHits / b.n).toFixed(2)),
+      ...(state.ext ? { first_attempts: b.first, retries: b.retries, cache_hit_ratio: Number((b.cacheHits / b.n).toFixed(2)) } : {}),
     })),
   deploys: state.deploys,
   ...(state.ext ? { changes: state.changes, traces: state.traces } : {}),

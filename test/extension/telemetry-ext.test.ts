@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import { test } from "node:test";
+import { checkTrace } from "../../src/agent.js";
 import { allowedToolsFor, createTelemetryServer, EXT_TOOL_NAMES, handlers, TOOL_NAMES } from "../../src/tools.js";
 import { getTrace, listChanges, loadTelemetry, parseTelemetry, summarizeMetrics, type Telemetry } from "../../src/telemetry.js";
 
@@ -100,4 +101,15 @@ test("handlers: list_changes / get_trace / summarize_metrics group_by are read-o
   assert.equal(byVersion?.by, "version");
   if (byVersion?.by === "version") assert.deepEqual(byVersion.versions.map((v) => v.version), ["v2.14.0", "v2.15.1"]);
   assert.equal(JSON.stringify(t), before, "telemetry is not mutated");
+});
+
+test("checkTrace: changes:/traces: refs need list_changes / get_trace in the trace", () => {
+  const entry = (tool: string) => ({ tool, input: {}, output: "" });
+  const base = [entry("summarize_metrics"), entry("list_deploys"), entry("search_logs")];
+  assert.deepEqual(checkTrace(base, ["metrics", "deploys"]), [], "W5 call shape unchanged");
+  const errs = checkTrace(base, ["deploys", "logs"], ["changes:cfg-912", "traces:7f3a9c"]);
+  assert.equal(errs.length, 2);
+  assert.match(errs.join(), /list_changes was never called/);
+  assert.match(errs.join(), /get_trace was never called/);
+  assert.deepEqual(checkTrace([...base, entry("list_changes"), entry("get_trace")], ["deploys", "logs"], ["changes:cfg-912", "traces:7f3a9c"]), []);
 });

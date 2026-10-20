@@ -97,9 +97,13 @@ export const extractTrace = (events: readonly AgentEvent[]): ToolTraceEntry[] =>
  * The agent must have called metrics AND deploys at least once; every
  * evidence `source` it cites (other than lessons) must appear in the trace.
  */
-export const checkTrace = (trace: readonly ToolTraceEntry[], cited: readonly string[]): string[] => {
+export const checkTrace = (trace: readonly ToolTraceEntry[], cited: readonly string[], refs: readonly string[] = []): string[] => {
   const called = new Set(trace.map((t) => t.tool));
   const bySource: Record<string, string> = { metrics: "summarize_metrics", deploys: "list_deploys", logs: "search_logs", diff: "get_diff" };
+  // EXT: the contract is unchanged, so a change is cited as ref "changes:<id>"
+  // and a trace as ref "traces:<id>"; those refs need their own tool call.
+  const byRefPrefix: Record<string, string> = { changes: "list_changes", traces: "get_trace" };
+  const prefixes = [...new Set(refs.map((r) => /^([a-z]+):/.exec(r)?.[1] ?? "").filter((p) => p in byRefPrefix))];
   return [
     ...(["summarize_metrics", "list_deploys"] as const)
       .filter((t) => !called.has(t))
@@ -107,6 +111,9 @@ export const checkTrace = (trace: readonly ToolTraceEntry[], cited: readonly str
     ...cited
       .filter((s) => s in bySource && !called.has(bySource[s] as string))
       .map((s) => `evidence cites "${s}" but ${bySource[s]} was never called`),
+    ...prefixes
+      .filter((p) => !called.has(byRefPrefix[p] as string))
+      .map((p) => `evidence cites "${p}:…" but ${byRefPrefix[p]} was never called`),
   ];
 };
 
@@ -177,7 +184,7 @@ export const investigate = async (incident: Incident, deps: AgentDeps): Promise<
   const verdict = validateVerdict(incident, json.value);
   if (!verdict.ok) return { ...base, result: verdict };
 
-  const traceErrors = checkTrace(trace, verdict.value.evidence.map((e) => e.source));
+  const traceErrors = checkTrace(trace, verdict.value.evidence.map((e) => e.source), verdict.value.evidence.map((e) => e.ref));
   if (traceErrors.length > 0) return { ...base, result: fail(traceErrors) };
 
   const rec = routeVerdict(verdict.value);

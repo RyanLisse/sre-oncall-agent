@@ -15,7 +15,7 @@ test("without the extension the snapshot has no changes/traces and error lines a
   assert.equal("changes" in s, false);
   assert.equal("traces" in s, false);
   assert.ok(s.logs.filter((l) => l.level === "error").every((l) => !/trace=/.test(l.msg)));
-  assert.ok(s.metrics.every((m) => m.retries === 0 && m.first_attempts === m.n));
+  for (const m of s.metrics) for (const k of ["first_attempts", "retries", "cache_hit_ratio"]) assert.equal(k in m, false, k);
 });
 
 test("config push + cache flush: cache-loss mode, ~9% errors, DbTimeout price_lookup, hit ratio ~0.04", () => {
