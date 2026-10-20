@@ -86,3 +86,13 @@ test("bar = max(2 × baseline, 0.02); baseline is the mean before the breakpoint
   const inc: Incident = { incident_id: "INC-1002", service: "checkout", alert: "x", fired_at: "2026-10-06T03:44:00Z" };
   assert.ok(Math.abs(baselineErrorRate(inc, t.value) - 0.003) < 1e-9);
 });
+
+test("caveat: a high error rate across the whole hour becomes the baseline (no breakpoint)", async () => {
+  const t = await loadTelemetry("fixtures/telemetry/bad-deploy.json");
+  if (!t.ok) throw new Error();
+  const allHigh = { ...t.value, metrics: t.value.metrics.map((m) => ({ ...m, error_rate: 0.05 })) };
+  const inc: Incident = { incident_id: "INC-1001", service: "checkout", alert: "x", fired_at: "2026-10-05T03:50:00Z" };
+  const b = baselineErrorRate(inc, allHigh);
+  assert.ok(Math.abs(b - 0.05) < 1e-9, `baseline ${b}`);
+  assert.ok(Math.abs(errorRateThreshold(b) - 0.1) < 1e-9, "the bar is then 2× the elevated rate: only 'no worse than before'");
+});

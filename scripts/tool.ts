@@ -10,14 +10,20 @@
  *   npm run tool -- logs    <incident> [--pattern X] [--level error] [--window 60m] [--until <iso>]
  *   npm run tool -- trace   <incident> <trace_id>
  *
- * <incident>: trap · trap-after · inc-1001, or a path to an incident file.
+ * <incident>: trap · trap-after · inc-1001, or a .json file under
+ * fixtures/incidents/. Anything else is refused without reading it; the
+ * telemetry and alert files an incident points at must live under
+ * fixtures/telemetry/ and alerts/. Errors never echo file content.
  * The window ends at the alert's fired_at (trap-after: at the end of its
  * telemetry, so you see what happened after the alert), unless --until is set.
  */
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { parseIncident } from "../src/contract.js";
 import { handlers, withRepro, type ExtToolName, type ToolName } from "../src/tools.js";
-import { loadTelemetry, type GroupBy, type Telemetry } from "../src/telemetry.js";
+import { parseTelemetry, type GroupBy, type Telemetry } from "../src/telemetry.js";
 
 interface Alias { readonly incident: string; readonly telemetry?: string; readonly untilEnd?: boolean }
 export const ALIASES: Readonly<Record<string, Alias>> = {
@@ -27,7 +33,7 @@ export const ALIASES: Readonly<Record<string, Alias>> = {
 };
 
 const USAGE = `usage: npm run tool -- <alert|changes|metrics|logs|trace> <incident> [options]
-  incident: ${Object.keys(ALIASES).join(" | ")} | <path to incident file>
+  incident: ${Object.keys(ALIASES).join(" | ")} | fixtures/incidents/<name>.json
   changes  [--window 15m] [--until <iso>]
   metrics  [--by retry|version] [--window 60m] [--until <iso>]
   logs     [--pattern X] [--level info|warn|error] [--window 60m] [--until <iso>]
@@ -58,6 +64,34 @@ export const parseAlertFile = (text: string): Record<string, string | string[]> 
   return out;
 };
 
+/**
+ * True when `p` (resolved against `root`, symlinks followed) is a file path
+ * strictly inside `root/dir` with the given extension. Pure apart from realpath.
+ */
+export const insideDir = (root: string, dir: string, p: string, ext: string): boolean => {
+  const real = (x: string): string | undefined => {
+    try {
+      return realpathSync(x);
+    } catch {
+      return undefined;
+    }
+  };
+  const base = real(resolve(root, dir));
+  const target = real(resolve(root, p));
+  if (!base || !target || !target.endsWith(ext)) return false;
+  const rel = relative(base, target);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+};
+
+/** Read + JSON.parse without ever putting file content into the error. */
+const readJson = async (path: string): Promise<unknown | undefined> => {
+  try {
+    return JSON.parse(await readFile(path, "utf8")) as unknown;
+  } catch {
+    return undefined;
+  }
+};
+
 interface Loaded {
   readonly incident: { incident_id: string; service: string; alert: string; fired_at: string };
   readonly alertFile: string | undefined;
@@ -66,23 +100,30 @@ interface Loaded {
   readonly until: string;
 }
 
-const load = async (name: string, untilFlag: string | undefined): Promise<Loaded | string> => {
-  const alias = ALIASES[name];
+export const REFUSED = `incident must be one of ${Object.keys(ALIASES).join(" | ")}, or a .json file under fixtures/incidents/`;
+
+const load = async (name: string, untilFlag: string | undefined): Promise<Loaded | { refused: string } | string> => {
+  const root = process.cwd();
+  const alias = Object.hasOwn(ALIASES, name) ? ALIASES[name] : undefined;
   const incidentPath = alias?.incident ?? name;
-  let file: { incident?: Loaded["incident"]; telemetry?: string; alert_file?: string };
-  try {
-    file = JSON.parse(await readFile(incidentPath, "utf8")) as typeof file;
-  } catch (error) {
-    return `cannot read incident ${incidentPath}: ${(error as Error).message}`;
-  }
+  if (!alias && !insideDir(root, "fixtures/incidents", incidentPath, ".json")) return { refused: REFUSED };
+  const file = (await readJson(incidentPath)) as { incident?: Loaded["incident"]; telemetry?: unknown; alert_file?: unknown } | undefined;
+  if (!file || typeof file !== "object") return `incident file ${incidentPath}: not valid JSON`;
   if (!file.incident || typeof file.telemetry !== "string") return `incident file ${incidentPath}: expected { incident, telemetry }`;
+  const inc = parseIncident(file.incident);
+  if (!inc.ok) return `incident file ${incidentPath}: ${inc.errors.join("; ")}`;
   const telemetryPath = alias?.telemetry ?? file.telemetry;
-  const t = await loadTelemetry(telemetryPath);
+  if (!insideDir(root, "fixtures/telemetry", telemetryPath, ".json")) return "the incident's telemetry must be a .json file under fixtures/telemetry/";
+  const alertFile = typeof file.alert_file === "string" ? file.alert_file : undefined;
+  if (alertFile !== undefined && !insideDir(root, "alerts", alertFile, ".yaml")) return "the incident's alert_file must be a .yaml file under alerts/";
+  const raw = await readJson(telemetryPath);
+  if (raw === undefined) return `telemetry ${telemetryPath}: not valid JSON`;
+  const t = parseTelemetry(raw);
   if (!t.ok) return `telemetry ${telemetryPath}: ${t.errors.join("; ")}`;
   if (untilFlag !== undefined && Number.isNaN(Date.parse(untilFlag))) return `--until must be an ISO-8601 time (got ${untilFlag})`;
   const end = t.value.metrics.map((m) => m.ts).sort().at(-1);
   const until = untilFlag !== undefined ? iso(untilFlag) : alias?.untilEnd && end ? end : iso(file.incident.fired_at);
-  return { incident: file.incident, alertFile: file.alert_file, telemetry: t.value, telemetryPath, until };
+  return { incident: inc.value, alertFile, telemetry: t.value, telemetryPath, until };
 };
 
 const print = (name: ToolName | ExtToolName | "alert", args: unknown, result: unknown): void => {
@@ -120,6 +161,10 @@ export const main = async (argv: readonly string[]): Promise<number> => {
     return 2;
   }
   const l = await load(name, values.until);
+  if (typeof l === "object" && "refused" in l) {
+    console.error(`FAIL ${l.refused}`);
+    return 2;
+  }
   if (typeof l === "string") {
     console.error(`FAIL ${l}`);
     return 1;
