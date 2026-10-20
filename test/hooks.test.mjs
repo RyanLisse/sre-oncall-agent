@@ -85,6 +85,13 @@ test("writes: secrets/outside denied, artefacts asked, agent dirs allowed", () =
   assert.equal(write(dir, `${P}src/contract.ts`), "ask", "source edit needs human confirmation");
 });
 
+test("PROGRESS.md: direct writes stay denied, npm run progress:note is the agent's append path", () => {
+  const dir = setup();
+  assert.equal(write(dir, `${P}PROGRESS.md`), "deny", "Write stays denied");
+  assert.equal(guard(dir, { tool_name: "Edit", tool_input: { file_path: `${P}PROGRESS.md`, old_string: "a", new_string: "ab" } }), "deny", "Edit stays denied");
+  assert.equal(bash(dir, 'npm run progress:note -- --kind status "A3 contract green"'), "allow", "append script allowed");
+});
+
 test("fail closed on malformed input", () => {
   const dir = setup();
   const r = spawnSync("node", [join(dir, ".claude/hooks/guard.mjs")], { input: "not json{", encoding: "utf8", cwd: dir });
