@@ -5,6 +5,7 @@
  *
  *   npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
  *   npm run approve  -- fixtures/incidents/bad-deploy.json --by ryan          (or --reject)
+ *   npm run reject   -- fixtures/incidents/bad-deploy.json --by ryan --reason "<why, with a ref>"
  *   npm run watch    -- fixtures/incidents/bad-deploy.json --metric error_rate \
  *                       --fix-at 2026-10-05T03:52:00Z --after fixtures/telemetry/after-rollback.json
  */
@@ -12,7 +13,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { parseArgs } from "node:util";
 import { investigate } from "./agent.js";
-import { decide, draftApproval, isApproved, readApproval, writeApproval } from "./approval.js";
+import { decide, draftApproval, isApproved, readApproval, withReason, writeApproval } from "./approval.js";
 import { lessonsStore } from "./lessons.js";
 import { parseIncident, parseJson } from "./router.js";
 import { resolveRuntime, type AgentEvent } from "./runtime.js";
@@ -60,6 +61,7 @@ const main = async (): Promise<number> => {
       approve: { type: "boolean", default: false },
       reject: { type: "boolean", default: false },
       by: { type: "string" },
+      reason: { type: "string" },
     },
   });
 
@@ -83,12 +85,21 @@ const main = async (): Promise<number> => {
       console.error("FAIL choose --approve or --reject, not both");
       return 1;
     }
+    if (values.reason !== undefined && !values.reject) {
+      console.error("FAIL --reason goes with --reject (say why you reject, with a ref)");
+      return 1;
+    }
+    if (values.reason !== undefined && values.reason.trim().length === 0) {
+      console.error("FAIL --reason needs text");
+      return 1;
+    }
     const existing = await readApproval(approvalsDir, incident.value.incident_id);
     if (!existing.ok) {
       console.error(`FAIL no pending approval for ${incident.value.incident_id} — run investigate (without --dry-run) first\n  - ${existing.errors.join("\n  - ")}`);
       return 1;
     }
-    const signed = decide(existing.value, values.approve ? "approved" : "rejected", values.by ?? "", new Date().toISOString());
+    const decided = decide(existing.value, values.approve ? "approved" : "rejected", values.by ?? "", new Date().toISOString());
+    const signed = decided.ok && values.reason !== undefined ? withReason(decided.value, values.reason) : decided;
     if (!signed.ok) {
       console.error(`FAIL approval\n  - ${signed.errors.join("\n  - ")}`);
       return 1;
@@ -96,6 +107,7 @@ const main = async (): Promise<number> => {
     const path = await writeApproval(approvalsDir, signed.value);
     console.log(`▶ ${signed.value.decision.toUpperCase()} ${signed.value.proposal} for ${signed.value.incident_id} by ${signed.value.decided_by}`);
     console.log(`   ${signed.value.summary}`);
+    if (signed.value.reason) console.log(`   reason: ${signed.value.reason}`);
     console.log(`saved ${path}`);
     console.log(
       signed.value.decision === "approved"

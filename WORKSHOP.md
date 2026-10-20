@@ -148,6 +148,52 @@ agent may never run that command itself.
 Hand the day off to the next agent or teammate with the `/handoff` skill —
 it writes a clipboard-ready `HANDOFF.md`.
 
+## Extension CORE — INC-1002
+
+**Situation:** 03:44, P1 on checkout. Error rate 9% (threshold 2%), request
+volume ×1.9, and the INC-1001 fix (v2.15.1) shipped twelve minutes ago.
+**Goal:** find the cause with evidence. Two suspects match the timing; prove
+or reject each one with a ref. The scripted console is wrong on purpose.
+
+**Five checks before you call something a cause:** (1) order: the cause
+starts first; (2) mechanism: the failing span shows it; (3) split: extra
+volume is retries (same order, `retry ≥ 1`), not new users; (4) baseline: the
+same load was fine before; (5) test: undo it and the errors stop (undo a
+suspect and the errors stay: that rejects the suspect, see `trap-after`).
+
+```bash
+npm run fixtures
+npm run tool -- alert trap                      # paste the query into Claude Code; pivot by version, status, retry
+npm run tool -- changes trap --window 15m       # every change + time (list_deploys shows deploys only)
+npm run tool -- metrics trap --by retry         # first attempts vs retries
+npm run tool -- logs trap --level error         # copy a trace=<id>
+npm run tool -- trace trap <id>                 # which span fails?
+# write docs/diagnosis-trap.md: per hypothesis a prediction, a ref, a verdict
+npm run investigate:trap                        # read the proposal (writes a pending approval)
+npm run reject -- fixtures/incidents/correlation-trap.json --by <name> --reason "<your ref>"
+# ask Claude Code: "Draft docs/postmortem-INC-1002.md from docs/templates/postmortem.md.
+#                   Where you are not sure, write TODO(human)."
+npm run postmortem:check                        # lists open TODO(human) lines (red is expected)
+npm run tool -- changes trap-after --window 30m # what happened after the alert
+```
+
+**Citing the new sources:** the evidence contract is unchanged. Cite a change
+as source `deploys` with ref `changes:<id>`, a trace as source `logs` with
+ref `traces:<trace_id>`.
+
+**Done when:** `ruled_out` names capacity and d-4830, each with a ref; the
+proposal is rejected with a reason that names a ref; the postmortem draft
+still has at least two open `TODO(human)` lines for a human to answer.
+
+**Stretch (live):** `npm run shop`, `npm run traffic -- --retry 2`, then
+`npm run chaos -- scenario correlation-trap` and watch the console. Recovery
+is an operator lever: `npm run chaos -- cache warm`. The executor only reports
+done when the error rate over a sample of checkouts is back under
+max(2 × baseline, 2%), not after three good checkouts.
+
+The bench carries `correlation-trap` as a known-bad case: the scripted
+investigator fails it today, and it is kept out of the score until it passes.
+
 ## Solved states
 
 `w5-step-8-maintain` equals `main`'s behaviour — same tests pass, same bench.

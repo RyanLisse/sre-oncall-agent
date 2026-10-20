@@ -90,6 +90,7 @@ const minus = (iso: string, minutes: number): string =>
  *   no breakpoint                                      → no-action (morning-log)
  */
 export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
+  if (t.scenario === "correlation-trap") return correlationTrapVerdict(incident, t);
   const h = handlers(t);
   const since = minus(incident.fired_at, 60);
   const metrics = h.summarize_metrics({ since, until: incident.fired_at });
@@ -187,6 +188,39 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     would_change_my_mind: "an error log line naming the failing dependency or endpoint",
     data_gaps: gaps,
     watch_metric: "error_rate",
+  };
+};
+
+/**
+ * INC-1002 (correlation-trap fixture). The scripted runtime reads only the
+ * volume and the deploy list and blames capacity. It passes the contract
+ * validator, and it is wrong: the exercise is to show why.
+ */
+// EXT: deliberately naive for the correlation-trap exercise
+const correlationTrapVerdict = (incident: Incident, t: Telemetry): Verdict => {
+  const since = minus(incident.fired_at, 60);
+  const pts = t.metrics.filter((m) => m.ts >= since && m.ts <= incident.fired_at);
+  const before = pts.filter((m) => m.error_rate < 0.02).at(-1); // last quiet minute
+  const surge = pts.find((m) => before !== undefined && m.ts > before.ts && (m.n ?? 0) >= 1.5 * (before.n ?? Infinity));
+  const deploy = listDeploys(t, since, incident.fired_at)[0];
+  return {
+    incident_id: incident.incident_id,
+    tag: "latency",
+    severity: "page",
+    confidence: "medium",
+    hypothesis: "Request volume nearly doubled at 03:38–03:39; capacity saturation",
+    evidence: [
+      { source: "metrics", ref: surge?.ts ?? incident.fired_at, note: `requests per minute ${before?.n ?? "?"} → ${surge?.n ?? "?"} while error_rate went to ${surge?.error_rate ?? "?"}` },
+      ...(deploy ? [{ source: "deploys" as const, ref: deploy.id, note: `${deploy.version} at ${deploy.at}: ${deploy.summary}` }] : []),
+    ],
+    blast_radius: `all ${t.service} traffic; error_rate ${pts[pts.length - 1]?.error_rate ?? "?"}`,
+    proposal: "scale",
+    ruled_out: [],
+    would_change_my_mind: "flat first attempts with the extra volume all retries, or a change other than a deploy in the window",
+    data_gaps: ["no trace data read", "changes other than deploys not checked"],
+    watch_metric: "error_rate",
+    draft_only: true,
+    human_approval_required: true,
   };
 };
 

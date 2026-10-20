@@ -68,5 +68,34 @@
       "proposal": "rollback",
       "severity": "page"
     }
+  },
+  {
+    "name": "correlation-trap",
+    "incident": {
+      "incident_id": "INC-1002",
+      "service": "checkout",
+      "alert": "Error rate 9% for 5 min on checkout (threshold 2%); request volume x1.9",
+      "fired_at": "2026-10-06T03:44:00Z"
+    },
+    "telemetry": "fixtures/telemetry/correlation-trap.json",
+    "expect": {
+      "proposal": "investigate-more",
+      "severity": "page"
+    },
+    "status": "known-bad",
+    "checks": {
+      "proposal_not": [
+        "rollback",
+        "scale"
+      ],
+      "ruled_out_mentions": [
+        "capacity",
+        "d-4830"
+      ],
+      "evidence_sources_any": [
+        "changes",
+        "traces"
+      ]
+    }
   }
 ]

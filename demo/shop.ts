@@ -8,12 +8,20 @@
  *   GET  /admin/state         → current revision + mode
  *   POST /admin/deploy        → { version, mode } switch revision (a "deploy")
  *   POST /admin/degrade       → { mode } change behaviour WITHOUT a deploy (a dependency/load fault)
+ *   POST /admin/config        → { target, summary, actor } record a config change (extension)
+ *   POST /admin/cache         → { action: "flush" | "warm" } empty or warm the price-cache (extension)
  *
  * Modes (the faults you can inject):
  *   healthy      0.3% errors, ~180 ms
  *   bad-deploy   12% errors (PaymentConfigError), ~210 ms
  *   slow         0.3% errors, ~3000 ms (DbTimeout in logs)
  *   errors       5% errors, no useful log line (upstream 502)
+ *   cache-loss   9% errors, ~2500 ms (DbTimeout price_lookup; price-cache empty) — extension
+ *
+ * Extension (only once /admin/config or /admin/cache is used, or AGENT_EXT=1):
+ * changes[] and a ring buffer of traces in the telemetry, trace=<id> retry=<n>
+ * on error lines. Retries are counted per bucket from the x-retry-attempt and
+ * x-order-ref request headers. Without the extension the output is unchanged.
  *
  * The shop writes its own telemetry to demo/data/telemetry.json in exactly
  * the shape src/telemetry.ts reads: logs, per-bucket metrics, deploys. That
@@ -22,12 +30,13 @@
  *
  *   npm run shop                    (port 4310, AGENT_SHOP_PORT to change)
  */
+import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const MODES = ["healthy", "bad-deploy", "slow", "errors"] as const;
+export const MODES = ["healthy", "bad-deploy", "slow", "errors", "cache-loss"] as const;
 export type Mode = (typeof MODES)[number];
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -37,8 +46,11 @@ const PORT = Number(process.env.AGENT_SHOP_PORT ?? 4310);
 const BUCKET_MS = 10_000;
 
 interface LogLine { ts: string; level: "info" | "warn" | "error"; msg: string }
-interface Bucket { ts: string; n: number; errors: number; lat: number[]; version: string }
+interface Bucket { ts: string; n: number; errors: number; lat: number[]; version: string; first: number; retries: number; cacheHits: number }
 interface Deploy { id: string; version: string; at: string; author: string; summary: string; diff?: string }
+interface Change { id: string; kind: "config"; at: string; actor: string; summary: string; target: string }
+interface Span { name: string; ms: number; status: "ok" | "miss" | "timeout" | "error" | "skipped" }
+interface Trace { trace_id: string; at: string; status: number; order_ref: string; retry_attempt: number; version: string; spans: Span[] }
 
 const state = {
   version: "v2.14.0",
@@ -53,6 +65,14 @@ const state = {
     { id: "d-4790", version: "v2.13.2", at: new Date(Date.now() - 15 * 60 * 60_000).toISOString(), author: "mira", summary: "copy fix in receipt email" },
     { id: "d-4805", version: "v2.14.0", at: new Date(Date.now() - 5 * 60 * 60_000).toISOString(), author: "jonas", summary: "checkout: address autocomplete" },
   ] as Deploy[],
+  // extension state
+  ext: process.env.AGENT_EXT === "1",
+  changes: [] as Change[],
+  changeCounter: 911,
+  traces: [] as Trace[],
+  okSeen: 0,
+  cacheCounter: 0,
+  modeBeforeFlush: undefined as Mode | undefined,
 };
 
 const log = (level: LogLine["level"], msg: string) => {
@@ -74,13 +94,15 @@ const profile = (mode: Mode): Profile =>
     "bad-deploy": { errRate: 0.12, latency: () => 190 + rnd() * 40, failure: (o: string) => ({ status: 500, msg: `checkout failed order=${o} status=500 cause=PaymentConfigError` }) },
     slow: { errRate: 0.003, latency: () => 2800 + rnd() * 400, failure: (o: string) => ({ status: 500, msg: `checkout failed order=${o} status=500 cause=DbTimeout` }) },
     errors: { errRate: 0.05, latency: () => 170 + rnd() * 30, failure: (o: string) => ({ status: 502, msg: `checkout failed order=${o} status=502 cause=upstream returned 502 (no body)` }) },
+    // 0.094 on misses only (96% of requests) ≈ 9% overall; a cache hit never fails here
+    "cache-loss": { errRate: 0.094, latency: () => 2300 + rnd() * 500, failure: (o: string) => ({ status: 500, msg: `checkout failed order=${o} status=500 cause=DbTimeout price_lookup` }) },
   }) satisfies Record<Mode, Profile>)[mode];
 
 const bucketFor = (now: number): Bucket => {
   const key = Math.floor(now / BUCKET_MS) * BUCKET_MS;
   let b = state.buckets.get(key);
   if (!b) {
-    b = { ts: new Date(key).toISOString(), n: 0, errors: 0, lat: [], version: state.version };
+    b = { ts: new Date(key).toISOString(), n: 0, errors: 0, lat: [], version: state.version, first: 0, retries: 0, cacheHits: 0 };
     state.buckets.set(key, b);
     for (const k of [...state.buckets.keys()].sort((a, c) => a - c).slice(0, -720)) state.buckets.delete(k); // keep 2h
   }
@@ -99,8 +121,12 @@ export const snapshot = () => ({
   logs: state.logs,
   metrics: [...state.buckets.values()]
     .filter((b) => b.n > 0)
-    .map((b) => ({ ts: b.ts, error_rate: Number((b.errors / b.n).toFixed(4)), p95_ms: p95(b.lat), version: b.version, n: b.n })),
+    .map((b) => ({
+      ts: b.ts, error_rate: Number((b.errors / b.n).toFixed(4)), p95_ms: p95(b.lat), version: b.version, n: b.n,
+      first_attempts: b.first, retries: b.retries, cache_hit_ratio: Number((b.cacheHits / b.n).toFixed(2)),
+    })),
   deploys: state.deploys,
+  ...(state.ext ? { changes: state.changes, traces: state.traces } : {}),
 });
 
 const flush = () => {
@@ -150,22 +176,79 @@ export const degrade = (mode: Mode): void => {
   flush();
 };
 
-export const checkout = (): { status: number; payload: Record<string, unknown>; ms: number } => {
+/** Extension: record a config change (an operator lever, never an agent tool). */
+export const recordChange = (target: string, summary: string, actor: string): Change => {
+  state.ext = true;
+  state.changeCounter += 1;
+  const c: Change = { id: `cfg-${state.changeCounter}`, kind: "config", at: new Date().toISOString(), actor, summary, target };
+  state.changes.push(c);
+  flush();
+  return c;
+};
+
+/** Extension: empty the price-cache (→ cache-loss) or warm it again (→ the mode before the flush). */
+export const cacheAction = (action: "flush" | "warm"): Mode => {
+  state.ext = true;
+  if (action === "flush") {
+    if (state.mode !== "cache-loss") state.modeBeforeFlush = state.mode;
+    state.mode = "cache-loss";
+    log("warn", "price-cache: keyspace empty");
+  } else {
+    state.mode = state.mode === "cache-loss" ? (state.modeBeforeFlush ?? "healthy") : state.mode;
+    state.modeBeforeFlush = undefined;
+    log("info", "price-cache: warmed from snapshot");
+  }
+  flush();
+  return state.mode;
+};
+
+/** Cache hit, without touching the seeded random sequence the other modes use. */
+const cacheHit = (): boolean => {
+  state.cacheCounter = (state.cacheCounter + 1) % 100;
+  return state.cacheCounter < (state.mode === "cache-loss" ? 4 : 96);
+};
+
+const spansFor = (mode: Mode, ms: number, failed: boolean, hit: boolean): Span[] => {
+  const cache: Span = { name: "price-cache", ms: hit ? 2 : 1, status: hit ? "ok" : "miss" };
+  if (mode === "cache-loss" && !hit)
+    return [{ name: "edge", ms: 2, status: "ok" }, { name: "checkout", ms: 3, status: "ok" }, cache,
+      failed ? { name: "postgres.price_lookup", ms: 2500, status: "timeout" } : { name: "postgres.price_lookup", ms: Math.max(1, ms - 160), status: "ok" },
+      failed ? { name: "payments.charge", ms: 0, status: "skipped" } : { name: "payments.charge", ms: 150, status: "ok" }];
+  return [{ name: "edge", ms: 2, status: "ok" }, { name: "checkout", ms: 4, status: "ok" }, cache,
+    { name: "payments.charge", ms: Math.max(1, ms - 10), status: failed ? "error" : "ok" }];
+};
+
+const keepTrace = (t: Trace) => {
+  state.traces.push(t);
+  if (state.traces.length > 200) state.traces.splice(0, state.traces.length - 200);
+};
+
+export interface CheckoutOpts { readonly retryAttempt?: number; readonly orderRef?: string }
+
+export const checkout = (opts: CheckoutOpts = {}): { status: number; payload: Record<string, unknown>; ms: number } => {
   const p = profile(state.mode);
   const ms = Math.round(p.latency());
-  const order = `ord-${++state.orders}`;
+  const retry = opts.retryAttempt ?? 0;
+  const order = opts.orderRef ?? `ord-${++state.orders}`;
+  const traceId = randomUUID().slice(0, 6);
   const b = bucketFor(Date.now());
   b.n += 1;
   b.lat.push(ms);
-  if (rnd() < p.errRate) {
+  if (retry > 0) b.retries += 1; else b.first += 1;
+  const hit = cacheHit();
+  if (hit) b.cacheHits += 1;
+  const trace = (status: number): Trace => ({ trace_id: traceId, at: new Date().toISOString(), status, order_ref: order, retry_attempt: retry, version: state.version, spans: spansFor(state.mode, ms, status >= 500, hit) });
+  if (rnd() < p.errRate && !(state.mode === "cache-loss" && hit)) {
     b.errors += 1;
     const f = p.failure(order);
-    log("error", f.msg);
+    log("error", state.ext ? `${f.msg} trace=${traceId} retry=${retry}` : f.msg);
+    if (state.ext) keepTrace(trace(f.status));
     if (state.mode === "slow") log("error", "DbTimeout: query inventory.reserve exceeded 2500 ms (pool=12/12 busy)");
     return { status: f.status, payload: { ok: false, order_id: order, revision: state.version, ms, error: f.msg.split("cause=")[1] }, ms };
   }
   if (state.mode === "slow" && rnd() < 0.3) log("warn", "connection pool saturated");
   if (b.n % 7 === 0) log("info", `checkout ok order=${order} v=${state.version}`);
+  if (state.ext && ++state.okSeen % 20 === 0) keepTrace(trace(200));
   return { status: 200, payload: { ok: true, order_id: order, revision: state.version, ms, paid: true }, ms };
 };
 
@@ -173,7 +256,12 @@ if (process.argv[1]?.endsWith("shop.ts") || process.argv[1]?.endsWith("shop.js")
   const server = createServer(async (req, res) => {
     const url = req.url ?? "/";
     if (req.method === "POST" && url === "/checkout") {
-      const r = checkout();
+      const ra = Number(req.headers["x-retry-attempt"] ?? 0);
+      const ref = String(req.headers["x-order-ref"] ?? "");
+      const r = checkout({
+        ...(Number.isInteger(ra) && ra > 0 && ra <= 10 ? { retryAttempt: ra } : {}),
+        ...(/^ord-[\w-]{1,32}$/.test(ref) ? { orderRef: ref } : {}),
+      });
       setTimeout(() => send(res, r.status, r.payload), Math.min(r.ms, 3200)); // real latency, capped
       return;
     }
@@ -189,6 +277,16 @@ if (process.argv[1]?.endsWith("shop.ts") || process.argv[1]?.endsWith("shop.js")
       if (!MODES.includes(b.mode as Mode)) return send(res, 400, { error: `need { mode: ${MODES.join("|")} }` });
       degrade(b.mode as Mode);
       return send(res, 200, { revision: state.version, mode: state.mode, deploy: null });
+    }
+    if (req.method === "POST" && url === "/admin/config") {
+      const b = (await body(req)) as { target?: unknown; summary?: unknown; actor?: unknown };
+      if (typeof b.target !== "string" || typeof b.summary !== "string" || !b.target || !b.summary) return send(res, 400, { error: "need { target, summary, actor? }" });
+      return send(res, 200, recordChange(b.target.slice(0, 80), b.summary.slice(0, 200), typeof b.actor === "string" && b.actor ? b.actor.slice(0, 80) : "operator"));
+    }
+    if (req.method === "POST" && url === "/admin/cache") {
+      const b = (await body(req)) as { action?: unknown };
+      if (b.action !== "flush" && b.action !== "warm") return send(res, 400, { error: 'need { action: "flush" | "warm" }' });
+      return send(res, 200, { revision: state.version, mode: cacheAction(b.action) });
     }
     send(res, 404, { error: "not found" });
   });

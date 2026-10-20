@@ -27,7 +27,17 @@ export interface ApprovalRecord {
   readonly decided_at: string;
   /** Exact text the human saw. Never regenerated after signing. */
   readonly summary: string;
+  /** EXT: why a human rejected the proposal, ideally with a ref. Optional; never read by isApproved. */
+  readonly reason?: string;
 }
+
+/** EXT: attach a rejection reason to a rejected record. Pure; refuses on anything but a rejection with a non-empty reason. */
+export const withReason = (record: ApprovalRecord, reason: string): Result<ApprovalRecord> =>
+  record.decision !== "rejected"
+    ? fail([`--reason only applies to a rejection (record is ${record.decision})`])
+    : reason.trim().length === 0
+      ? fail(["reason: expected a non-empty string"])
+      : ok({ ...record, reason: reason.trim() });
 
 /** The record the human is asked to sign. Pure. */
 export const draftApproval = (rec: Recommendation, at: string): ApprovalRecord => ({
@@ -66,6 +76,7 @@ export const parseApproval = (raw: unknown): Result<ApprovalRecord> => {
     ...["incident_id", "owner", "decided_by", "decided_at", "summary"].filter((k) => typeof raw[k] !== "string").map((k) => `${k}: expected a string`),
     ...(PROPOSALS.includes(raw.proposal as Proposal) ? [] : ["proposal: unknown"]),
     ...(DECISIONS.includes(raw.decision as Decision) ? [] : ["decision: unknown"]),
+    ...(raw.reason === undefined || typeof raw.reason === "string" ? [] : ["reason: expected a string when present"]),
   ];
   return errors.length === 0 ? ok(raw as unknown as ApprovalRecord) : fail(errors);
 };

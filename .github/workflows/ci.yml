@@ -15,9 +15,12 @@ jobs:
     # main: the solved-state checks. A PR into workshop/start: the start-branch
     # suite on both Node versions (the exercises are red there by design, so the
     # solved-only steps are swapped for the start checks; nothing is skipped).
+    # A PR into workshop/ext (cut from workshop/start): the start suite plus the
+    # extension checks, and the workshop suite must stay at exactly 12 red.
     runs-on: ubuntu-latest
     env:
-      START: ${{ github.base_ref == 'workshop/start' }}
+      START: ${{ github.base_ref == 'workshop/start' || github.base_ref == 'workshop/ext' }}
+      EXT: ${{ github.base_ref == 'workshop/ext' }}
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +41,19 @@ jobs:
         run: npm test                                      # main suite green at start
       - if: env.START == 'true'
         run: npm run test:hooks                            # invariant hook suite green
+      # PR into workshop/ext: the extension on top of the start state
+      - if: env.EXT == 'true'
+        run: npm run fixtures && git diff --exit-code -- fixtures/telemetry && test -z "$(git status --porcelain -- fixtures/telemetry)"   # fixtures are deterministic
+      - if: env.EXT == 'true'
+        run: npm run verify                                # typecheck · tests · test:ext · bench ratchet
+      - if: env.EXT == 'true'
+        name: workshop suite stays at exactly 12 red (the W5 exercises)
+        run: |
+          set +e
+          npx tsx --test --test-reporter=tap "test/workshop/*.test.ts" > workshop.tap 2>&1
+          red=$(grep -c '^not ok' workshop.tap)
+          echo "workshop suite: $red red"
+          test "$red" -eq 12 || { grep '^not ok' workshop.tap; exit 1; }
       # main (and PRs into main): the solved state
       - if: env.START != 'true'
         run: npm run fixtures

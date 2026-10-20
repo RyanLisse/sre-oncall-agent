@@ -1,0 +1,9 @@
+# Alert as code. The lab does not evaluate PromQL: `npm run tool -- alert trap`
+# prints this rule so you can hand the real query to your agent and pivot it.
+alert: CheckoutErrorRate
+service: checkout
+expr: sum(rate(checkout_requests_total{status=~"5.."}[1m])) / sum(rate(checkout_requests_total[1m])) > 0.02
+for: 5m
+severity: P1
+labels_available: [version, status, retry_attempt, region, cache_result]
+runbook: docs/runbooks/checkout-errors.md

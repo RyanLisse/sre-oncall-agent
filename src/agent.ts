@@ -10,7 +10,7 @@ import { guessTag, loadLessons, proposeLesson, renderLessons, type LessonsStore 
 import { ONCALL_SYSTEM, buildIncidentPrompt } from "./prompts.js";
 import { parseJson, routeVerdict, validateVerdict } from "./router.js";
 import type { AgentEvent, ContentBlock, QueryFn } from "./runtime.js";
-import { ALLOWED_TOOLS, SDK_INTERNAL_TOOLS, SERVER_NAME, createTelemetryServer } from "./tools.js";
+import { SDK_INTERNAL_TOOLS, SERVER_NAME, allowedToolsFor, createTelemetryServer } from "./tools.js";
 import type { Telemetry } from "./telemetry.js";
 
 export interface AgentDeps {
@@ -136,8 +136,8 @@ export const investigate = async (incident: Incident, deps: AgentDeps): Promise<
       options: {
         systemPrompt: ONCALL_SYSTEM,
         mcpServers: { [SERVER_NAME]: createTelemetryServer(deps.telemetry) },
-        tools: [...ALLOWED_TOOLS],
-        allowedTools: [...ALLOWED_TOOLS],
+        tools: [...allowedToolsFor(deps.telemetry)],
+        allowedTools: [...allowedToolsFor(deps.telemetry)],
         outputFormat: { type: "json_schema", schema: VERDICT_SCHEMA },
         permissionMode: "dontAsk", // anything not allowed above is denied
         settingSources: [], // reproducible: ignore local Claude Code settings

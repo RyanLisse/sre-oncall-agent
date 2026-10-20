@@ -1,0 +1,1041 @@
+{
+  "service": "checkout",
+  "scenario": "correlation-trap",
+  "logs": [
+    {
+      "ts": "2026-10-06T03:00:11.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5000 v=v2.14.0"
+    },
+    {
+      "ts": "2026-10-06T03:07:11.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5007 v=v2.14.0"
+    },
+    {
+      "ts": "2026-10-06T03:10:00.000Z",
+      "level": "info",
+      "msg": "loadtest lt-77 started: 2x checkout load (perf-team)"
+    },
+    {
+      "ts": "2026-10-06T03:14:11.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5014 v=v2.14.0"
+    },
+    {
+      "ts": "2026-10-06T03:15:00.000Z",
+      "level": "info",
+      "msg": "loadtest lt-77 finished: p95 190 ms, error_rate 0.3%"
+    },
+    {
+      "ts": "2026-10-06T03:20:05.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5101 v=v2.14.0 trace=a11c02",
+      "trace_id": "a11c02"
+    },
+    {
+      "ts": "2026-10-06T03:21:11.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5021 v=v2.14.0"
+    },
+    {
+      "ts": "2026-10-06T03:28:11.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5028 v=v2.14.0"
+    },
+    {
+      "ts": "2026-10-06T03:32:10.000Z",
+      "level": "info",
+      "msg": "deploy d-4830 started: v2.15.1 (payments: per-region secret)"
+    },
+    {
+      "ts": "2026-10-06T03:32:12.000Z",
+      "level": "info",
+      "msg": "deploy d-4830 complete: 100% traffic on v2.15.1"
+    },
+    {
+      "ts": "2026-10-06T03:35:11.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5035 v=v2.15.1"
+    },
+    {
+      "ts": "2026-10-06T03:35:40.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5190 v=v2.15.1 trace=b7e410",
+      "trace_id": "b7e410"
+    },
+    {
+      "ts": "2026-10-06T03:37:31.000Z",
+      "level": "warn",
+      "msg": "price-cache: keyspace empty"
+    },
+    {
+      "ts": "2026-10-06T03:38:02.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5212 status=500 cause=DbTimeout price_lookup trace=e1a001 retry=0",
+      "trace_id": "e1a001"
+    },
+    {
+      "ts": "2026-10-06T03:38:04.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5213 status=500 cause=DbTimeout price_lookup trace=e1a002 retry=0",
+      "trace_id": "e1a002"
+    },
+    {
+      "ts": "2026-10-06T03:38:20.000Z",
+      "level": "warn",
+      "msg": "price-cache miss storm: hit_ratio=0.04"
+    },
+    {
+      "ts": "2026-10-06T03:39:01.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5212 status=500 cause=DbTimeout price_lookup trace=e1a003 retry=1",
+      "trace_id": "e1a003"
+    },
+    {
+      "ts": "2026-10-06T03:39:03.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5213 status=500 cause=DbTimeout price_lookup trace=e1a004 retry=1",
+      "trace_id": "e1a004"
+    },
+    {
+      "ts": "2026-10-06T03:40:10.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5212 status=500 cause=DbTimeout price_lookup trace=e1a005 retry=2",
+      "trace_id": "e1a005"
+    },
+    {
+      "ts": "2026-10-06T03:41:12.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5230 status=500 cause=DbTimeout price_lookup trace=7f3a9c retry=0",
+      "trace_id": "7f3a9c"
+    },
+    {
+      "ts": "2026-10-06T03:41:14.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5230 status=500 cause=DbTimeout price_lookup trace=7f3a9d retry=1",
+      "trace_id": "7f3a9d"
+    },
+    {
+      "ts": "2026-10-06T03:42:30.000Z",
+      "level": "info",
+      "msg": "checkout ok order=ord-5244 v=v2.15.1 trace=c09e55 slow=2400ms",
+      "trace_id": "c09e55"
+    },
+    {
+      "ts": "2026-10-06T03:42:40.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5251 status=500 cause=DbTimeout price_lookup trace=e1a006 retry=0",
+      "trace_id": "e1a006"
+    },
+    {
+      "ts": "2026-10-06T03:42:50.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5251 status=500 cause=DbTimeout price_lookup trace=e1a007 retry=1",
+      "trace_id": "e1a007"
+    },
+    {
+      "ts": "2026-10-06T03:43:01.000Z",
+      "level": "error",
+      "msg": "checkout failed order=ord-5251 status=500 cause=DbTimeout price_lookup trace=d2f001 retry=2",
+      "trace_id": "d2f001"
+    },
+    {
+      "ts": "2026-10-06T03:43:30.000Z",
+      "level": "warn",
+      "msg": "error budget: 8.7% of the 30-day budget burned in 5 minutes"
+    }
+  ],
+  "metrics": [
+    {
+      "ts": "2026-10-06T03:00:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:01:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:02:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:03:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:04:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:05:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:06:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:07:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:08:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:09:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:10:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 190,
+      "version": "v2.14.0",
+      "n": 960,
+      "first_attempts": 960,
+      "retries": 0,
+      "cache_hit_ratio": 0.97
+    },
+    {
+      "ts": "2026-10-06T03:11:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 190,
+      "version": "v2.14.0",
+      "n": 960,
+      "first_attempts": 960,
+      "retries": 0,
+      "cache_hit_ratio": 0.97
+    },
+    {
+      "ts": "2026-10-06T03:12:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 190,
+      "version": "v2.14.0",
+      "n": 960,
+      "first_attempts": 960,
+      "retries": 0,
+      "cache_hit_ratio": 0.97
+    },
+    {
+      "ts": "2026-10-06T03:13:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 190,
+      "version": "v2.14.0",
+      "n": 960,
+      "first_attempts": 960,
+      "retries": 0,
+      "cache_hit_ratio": 0.97
+    },
+    {
+      "ts": "2026-10-06T03:14:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 190,
+      "version": "v2.14.0",
+      "n": 960,
+      "first_attempts": 960,
+      "retries": 0,
+      "cache_hit_ratio": 0.97
+    },
+    {
+      "ts": "2026-10-06T03:15:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:16:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:17:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:18:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:19:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:20:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:21:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:22:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:23:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:24:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:25:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:26:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:27:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:28:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:29:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:30:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:31:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 180,
+      "version": "v2.14.0",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:32:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 182,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:33:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 182,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:34:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 182,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:35:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 182,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:36:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 182,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:37:00.000Z",
+      "error_rate": 0.003,
+      "p95_ms": 182,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.96
+    },
+    {
+      "ts": "2026-10-06T03:38:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 480,
+      "first_attempts": 480,
+      "retries": 0,
+      "cache_hit_ratio": 0.04
+    },
+    {
+      "ts": "2026-10-06T03:39:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 910,
+      "first_attempts": 480,
+      "retries": 430,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:40:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 914,
+      "first_attempts": 480,
+      "retries": 434,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:41:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 907,
+      "first_attempts": 480,
+      "retries": 427,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:42:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 917,
+      "first_attempts": 480,
+      "retries": 437,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:43:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 904,
+      "first_attempts": 480,
+      "retries": 424,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:44:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 912,
+      "first_attempts": 480,
+      "retries": 432,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:45:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 901,
+      "first_attempts": 480,
+      "retries": 421,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:46:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 915,
+      "first_attempts": 480,
+      "retries": 435,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:47:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 911,
+      "first_attempts": 480,
+      "retries": 431,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:48:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 908,
+      "first_attempts": 480,
+      "retries": 428,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:49:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 918,
+      "first_attempts": 480,
+      "retries": 438,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:50:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 905,
+      "first_attempts": 480,
+      "retries": 425,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:51:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 913,
+      "first_attempts": 480,
+      "retries": 433,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:52:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 903,
+      "first_attempts": 480,
+      "retries": 423,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:53:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 916,
+      "first_attempts": 480,
+      "retries": 436,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:54:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 909,
+      "first_attempts": 480,
+      "retries": 429,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:55:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 919,
+      "first_attempts": 480,
+      "retries": 439,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:56:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 906,
+      "first_attempts": 480,
+      "retries": 426,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:57:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 910,
+      "first_attempts": 480,
+      "retries": 430,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:58:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 902,
+      "first_attempts": 480,
+      "retries": 422,
+      "cache_hit_ratio": 0.05
+    },
+    {
+      "ts": "2026-10-06T03:59:00.000Z",
+      "error_rate": 0.09,
+      "p95_ms": 2600,
+      "version": "v2.15.1",
+      "n": 920,
+      "first_attempts": 480,
+      "retries": 440,
+      "cache_hit_ratio": 0.05
+    }
+  ],
+  "deploys": [
+    {
+      "id": "d-4790",
+      "version": "v2.13.2",
+      "at": "2026-10-04T12:00:00.000Z",
+      "author": "mira",
+      "summary": "copy fix in receipt email"
+    },
+    {
+      "id": "d-4805",
+      "version": "v2.14.0",
+      "at": "2026-10-04T22:00:00.000Z",
+      "author": "jonas",
+      "summary": "checkout: address autocomplete"
+    },
+    {
+      "id": "d-4830",
+      "version": "v2.15.1",
+      "at": "2026-10-06T03:32:10.000Z",
+      "author": "sven",
+      "summary": "payments: per-region secret, EU key present (fix for INC-1001)",
+      "diff": "--- a/payments/provider.ts\n+++ b/payments/provider.ts\n@@ -12,9 +12,9 @@ export const providerFor = (region: string): Provider => {\n   const secret = env(`PAYMENT_PROVIDER_SECRET_${region.toUpperCase()}`);\n-  if (!secret) throw new PaymentConfigError(region);\n+  if (!secret) throw new PaymentConfigError(`missing key for ${region}`);\n   return region === \"eu\" ? stripeEU(secret) : stripeUS(secret);\n };\n--- a/config/secrets.eu.ref\n+++ b/config/secrets.eu.ref\n@@ -0,0 +1 @@\n+PAYMENT_PROVIDER_SECRET_EU=vault://payments/eu/stripe"
+    }
+  ],
+  "changes": [
+    {
+      "id": "lt-77",
+      "kind": "loadtest",
+      "at": "2026-10-06T03:10:00.000Z",
+      "until": "2026-10-06T03:15:00.000Z",
+      "actor": "perf-team",
+      "summary": "2x checkout load, warm cache",
+      "target": "checkout"
+    },
+    {
+      "id": "d-4830",
+      "kind": "deploy",
+      "at": "2026-10-06T03:32:10.000Z",
+      "actor": "sven",
+      "summary": "payments: per-region secret, EU key present (fix for INC-1001)",
+      "target": "checkout",
+      "ref": "v2.15.1"
+    },
+    {
+      "id": "cfg-912",
+      "kind": "config",
+      "at": "2026-10-06T03:37:30.000Z",
+      "actor": "platform-bot",
+      "summary": "flush keyspace + ttl=0 (cache migration step 2/3)",
+      "target": "price-cache"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "a11c02",
+      "at": "2026-10-06T03:20:05.000Z",
+      "status": 200,
+      "order_ref": "ord-5101",
+      "retry_attempt": 0,
+      "version": "v2.14.0",
+      "spans": [
+        {
+          "name": "edge",
+          "ms": 2,
+          "status": "ok"
+        },
+        {
+          "name": "checkout",
+          "ms": 4,
+          "status": "ok"
+        },
+        {
+          "name": "price-cache",
+          "ms": 2,
+          "status": "ok",
+          "attrs": {
+            "result": "hit"
+          }
+        },
+        {
+          "name": "payments.charge",
+          "ms": 140,
+          "status": "ok",
+          "attrs": {
+            "provider": "stripe-eu"
+          }
+        }
+      ]
+    },
+    {
+      "trace_id": "b7e410",
+      "at": "2026-10-06T03:35:40.000Z",
+      "status": 200,
+      "order_ref": "ord-5190",
+      "retry_attempt": 0,
+      "version": "v2.15.1",
+      "spans": [
+        {
+          "name": "edge",
+          "ms": 2,
+          "status": "ok"
+        },
+        {
+          "name": "checkout",
+          "ms": 4,
+          "status": "ok"
+        },
+        {
+          "name": "price-cache",
+          "ms": 2,
+          "status": "ok",
+          "attrs": {
+            "result": "hit"
+          }
+        },
+        {
+          "name": "payments.charge",
+          "ms": 151,
+          "status": "ok",
+          "attrs": {
+            "provider": "stripe-eu"
+          }
+        }
+      ]
+    },
+    {
+      "trace_id": "7f3a9c",
+      "at": "2026-10-06T03:41:12.000Z",
+      "status": 500,
+      "order_ref": "ord-5230",
+      "retry_attempt": 0,
+      "version": "v2.15.1",
+      "spans": [
+        {
+          "name": "edge",
+          "ms": 2,
+          "status": "ok"
+        },
+        {
+          "name": "checkout",
+          "ms": 3,
+          "status": "ok"
+        },
+        {
+          "name": "price-cache",
+          "ms": 1,
+          "status": "miss",
+          "attrs": {
+            "result": "miss"
+          }
+        },
+        {
+          "name": "postgres.price_lookup",
+          "ms": 2500,
+          "status": "timeout",
+          "attrs": {
+            "timeout_ms": 2500
+          }
+        },
+        {
+          "name": "payments.charge",
+          "ms": 0,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "trace_id": "7f3a9d",
+      "at": "2026-10-06T03:41:14.000Z",
+      "status": 500,
+      "order_ref": "ord-5230",
+      "retry_attempt": 1,
+      "version": "v2.15.1",
+      "spans": [
+        {
+          "name": "edge",
+          "ms": 2,
+          "status": "ok"
+        },
+        {
+          "name": "checkout",
+          "ms": 3,
+          "status": "ok"
+        },
+        {
+          "name": "price-cache",
+          "ms": 1,
+          "status": "miss",
+          "attrs": {
+            "result": "miss"
+          }
+        },
+        {
+          "name": "postgres.price_lookup",
+          "ms": 2500,
+          "status": "timeout",
+          "attrs": {
+            "timeout_ms": 2500
+          }
+        },
+        {
+          "name": "payments.charge",
+          "ms": 0,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "trace_id": "c09e55",
+      "at": "2026-10-06T03:42:30.000Z",
+      "status": 200,
+      "order_ref": "ord-5244",
+      "retry_attempt": 0,
+      "version": "v2.15.1",
+      "spans": [
+        {
+          "name": "edge",
+          "ms": 2,
+          "status": "ok"
+        },
+        {
+          "name": "checkout",
+          "ms": 3,
+          "status": "ok"
+        },
+        {
+          "name": "price-cache",
+          "ms": 1,
+          "status": "miss",
+          "attrs": {
+            "result": "miss"
+          }
+        },
+        {
+          "name": "postgres.price_lookup",
+          "ms": 2210,
+          "status": "ok"
+        },
+        {
+          "name": "payments.charge",
+          "ms": 148,
+          "status": "ok",
+          "attrs": {
+            "provider": "stripe-eu"
+          }
+        }
+      ]
+    },
+    {
+      "trace_id": "d2f001",
+      "at": "2026-10-06T03:43:01.000Z",
+      "status": 500,
+      "order_ref": "ord-5251",
+      "retry_attempt": 2,
+      "version": "v2.15.1",
+      "spans": [
+        {
+          "name": "edge",
+          "ms": 2,
+          "status": "ok"
+        },
+        {
+          "name": "checkout",
+          "ms": 3,
+          "status": "ok"
+        },
+        {
+          "name": "price-cache",
+          "ms": 1,
+          "status": "miss",
+          "attrs": {
+            "result": "miss"
+          }
+        },
+        {
+          "name": "postgres.price_lookup",
+          "ms": 2500,
+          "status": "timeout",
+          "attrs": {
+            "timeout_ms": 2500
+          }
+        },
+        {
+          "name": "payments.charge",
+          "ms": 0,
+          "status": "skipped"
+        }
+      ]
+    }
+  ]
+}

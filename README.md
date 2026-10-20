@@ -118,6 +118,33 @@ turn green as you rebuild them.
 The full steps, catch-up commands and step tags are in
 **[WORKSHOP.md](WORKSHOP.md)**. Working alone? Follow **[SOLO.md](SOLO.md)**.
 
+## Extension: INC-1002
+
+The night after INC-1001: checkout errors at 9%, request volume almost
+doubled, and the INC-1001 fix shipped twelve minutes earlier. Two suspects
+line up in time. Prove or reject each one with a ref. The scripted console is
+wrong on purpose; your job is to show why. Steps: **[WORKSHOP.md](WORKSHOP.md#extension-core--inc-1002)**.
+
+```bash
+npm run fixtures
+npm run tool -- alert trap                    # the alert rule: hand the query to your agent
+npm run tool -- changes trap --window 15m     # every change in the window, not only deploys
+npm run tool -- metrics trap --by retry       # first attempts vs retries
+npm run tool -- logs trap --level error       # copy a trace=<id>
+npm run tool -- trace trap <id>               # which span fails?
+npm run investigate:trap                      # the scripted verdict
+npm run reject -- fixtures/incidents/correlation-trap.json --by <name> --reason "<ref>"
+npm run postmortem:check                      # open TODO(human) lines in docs/postmortem-*.md
+npm run test:ext                              # the extension's own tests
+```
+
+`npm run tool` is read-only: it calls the same handlers the agent uses and
+prints a `reproduce` line. `trap-after` is the same incident with the
+telemetry after the alert (a rollback, then a cache warm-up). Live variant:
+`npm run shop`, `npm run traffic -- --retry 2`, then
+`npm run chaos -- scenario correlation-trap`; recover with
+`npm run chaos -- cache warm`.
+
 ## The rules
 
 - **Local only.** Everything runs on your machine. The agent has no network
