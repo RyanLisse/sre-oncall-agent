@@ -96,3 +96,17 @@ test("the hook only ever appends to PROGRESS.md (single appendFileSync)", () => 
   assert.equal((src.match(/appendFileSync\(FILE/g) ?? []).length, 1);
   assert.ok(!/writeFileSync\(FILE|renameSync|unlinkSync/.test(src));
 });
+
+test("works from any folder name and from a subfolder: root comes from git", () => {
+  const base = mkdtempSync(join(tmpdir(), "w5-progress-renamed-"));
+  const dir = join(base, "sre-oncall-agent-workshop-start");
+  mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
+  mkdirSync(join(dir, "src/deep"), { recursive: true });
+  assert.equal(spawnSync("git", ["init", "-q"], { cwd: dir }).status, 0, "git init");
+  cpSync(join(ROOT, ".claude/hooks/progress.mjs"), join(dir, ".claude/hooks/progress.mjs"));
+  writeFileSync(join(dir, "PROGRESS.md"), "# Build log\n\n<!-- ENTRIES (newest at the bottom) -->\n");
+  FILL(dir, "A-2");
+  const r = spawnSync("node", [join(dir, ".claude/hooks/progress.mjs")], { encoding: "utf8", cwd: join(dir, "src/deep") });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(readFileSync(join(dir, "PROGRESS.md"), "utf8"), /<!-- auto: A-2 -->/, "evidence read and entry appended at the repo root");
+});
