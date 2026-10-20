@@ -53,10 +53,6 @@ npm test                                # green: the main suite
 npm run test:workshop                   # red: the exercises (by design)
 ```
 
-Keep the folder name `sre-oncall-agent`: the guard hook uses it to recognise
-the repo. If you downloaded a ZIP, rename the unpacked folder to
-`sre-oncall-agent`.
-
 Start Claude Code in the folder (`claude`) and run `/status`: it shows the
 guard and progress hooks from `.claude/settings.json`.
 
