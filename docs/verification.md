@@ -2,7 +2,6 @@
 
 What was actually tested, on which date, and what remains unmeasured. A
 scripted happy path is not an evaluation; this file says which is which.
-(Format after `ai-developer-community/ai-sre-agent/docs/verification.md`.)
 
 ## Verified locally — 2026-10-06
 
