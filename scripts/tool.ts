@@ -66,7 +66,8 @@ export const parseAlertFile = (text: string): Record<string, string | string[]> 
 
 /**
  * True when `p` (resolved against `root`, symlinks followed) is a file path
- * strictly inside `root/dir` with the given extension. Pure apart from realpath.
+ * strictly inside `root/dir` with the given extension, and `root/dir` itself
+ * resolves inside `root`. Pure apart from realpath.
  */
 export const insideDir = (root: string, dir: string, p: string, ext: string): boolean => {
   const real = (x: string): string | undefined => {
@@ -76,9 +77,13 @@ export const insideDir = (root: string, dir: string, p: string, ext: string): bo
       return undefined;
     }
   };
+  const rootReal = real(root);
   const base = real(resolve(root, dir));
   const target = real(resolve(root, p));
-  if (!base || !target || !target.endsWith(ext)) return false;
+  if (!rootReal || !base || !target || !target.endsWith(ext)) return false;
+  // The folder itself must stay inside the repo too (a symlinked folder pointing elsewhere is refused).
+  const baseRel = relative(rootReal, base);
+  if (baseRel === "" || baseRel.startsWith("..") || isAbsolute(baseRel)) return false;
   const rel = relative(base, target);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 };
