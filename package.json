@@ -35,11 +35,12 @@
     "console": "tsx console/server.ts",
     "check": "npm run verify",
     "test:workshop": "tsx --test \"test/workshop/*.test.ts\"",
-    "test:hooks": "node test/hooks.test.mjs && node test/progress.test.mjs && node test/config.test.mjs",
+    "test:hooks": "node test/hooks.test.mjs && node test/progress.test.mjs && node test/progress-note.test.mjs && node test/config.test.mjs",
     "approve:git": "node scripts/approve.mjs",
     "check:approval": "node scripts/check-approval.mjs",
     "skill:scan": "node scripts/scan-skill.mjs",
     "progress": "node .claude/hooks/progress.mjs --status",
+    "progress:note": "node scripts/progress-note.mjs",
     "workshop:check": "node scripts/workshop-check.mjs"
   },
   "dependencies": {

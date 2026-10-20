@@ -4,6 +4,16 @@
 // whose local evidence is new. `npm run progress` prints the live checklist.
 // The hook never rewrites entries; humans fill in the "<fill in: …>" bullets.
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+
+// Work from the repo root (git, falling back to the cwd), never from the folder
+// name: participants may clone into any directory and run hooks from a subfolder.
+try {
+  const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+    encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+  }).trim();
+  if (root) process.chdir(root);
+} catch { /* not a git checkout (e.g. an unpacked ZIP): stay in the cwd */ }
 
 const FILE = "PROGRESS.md";
 

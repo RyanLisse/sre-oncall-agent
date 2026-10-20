@@ -30,6 +30,7 @@ The agent gathers evidence, proposes, verifies and communicates.
 ## Engineering
 
 - Prefer TDD: change a `node:test` in `test/` when changing `src/`. Run `npm run verify`.
+- After each assignment step, append one line to `PROGRESS.md` with `npm run progress:note -- [--kind status|decision|blocker] "<text>"`. Never edit or rewrite `PROGRESS.md` directly (Edit/Write on it are denied).
 - Runtime deps: `@anthropic-ai/claude-agent-sdk`, `zod`, Node built-ins. Nothing else.
 - Functional style: pure functions, `readonly` data, `Result` instead of throwing across modules. File I/O only in `src/lessons.ts`, `src/approval.ts`, `src/telemetry.ts` (load), `src/cli.ts`, `src/bench.ts`.
 - Strict types: no `any`, no non-null assertions in `src/`.
