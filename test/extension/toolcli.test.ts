@@ -60,3 +60,23 @@ test("bad usage exits 2", () => {
   assert.equal(tool("changes", "trap", "--window", "soon").status, 2);
   assert.equal(tool("rollback", "trap").status, 2);
 });
+
+test("only aliases and .json files under fixtures/incidents/ are accepted; nothing else is read or echoed", () => {
+  for (const bad of ["/etc/passwd", "package.json", "fixtures/incidents/../../package.json", "fixtures/telemetry/bad-deploy.json", "README.md", "__proto__", "constructor"]) {
+    const r = tool("changes", bad);
+    assert.equal(r.status, 2, bad);
+    assert.match(r.err, /incident must be one of trap \| trap-after \| inc-1001, or a \.json file under fixtures\/incidents\//, bad);
+    assert.equal(r.out, "", bad);
+    assert.doesNotMatch(r.err + r.out, /root:|"name": "sre-oncall-agent"|"scripts"|SRE on-call lab/, bad);
+  }
+  const ok = tool("changes", "fixtures/incidents/correlation-trap.json", "--window", "15m");
+  assert.equal(ok.status, 0, ok.err);
+  assert.match(ok.out, /cfg-912/);
+});
+
+test("a malformed incident under fixtures/incidents/ fails cleanly (contract errors, no stack)", () => {
+  const r = tool("changes", "fixtures/incidents/malformed.json");
+  assert.equal(r.status, 1);
+  assert.match(r.err, /^FAIL incident file fixtures\/incidents\/malformed\.json: /);
+  assert.doesNotMatch(r.err, /RangeError|at .*tool\.ts/);
+});

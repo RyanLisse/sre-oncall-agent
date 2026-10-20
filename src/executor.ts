@@ -74,7 +74,16 @@ export interface FreshOptions {
 /** The error-rate bar fresh evidence must clear. Pure. */
 export const errorRateThreshold = (baseline: number): number => Math.max(2 * baseline, 0.02);
 
-/** Mean error rate before the first breakpoint in the hour before the alert: the "normal" to return to. Pure. */
+/**
+ * Mean error rate before the first breakpoint in the hour before the alert:
+ * the "normal" to return to. Pure.
+ *
+ * Caveat: when the error rate is already high across the whole hour, there is
+ * no breakpoint, so every point counts and the "baseline" IS the elevated
+ * rate (5% all hour → baseline 0.05 → bar 0.10). The gate then only proves
+ * "no worse than before", not "healthy". In that case a human should judge
+ * the evidence, or pass an explicit baseline from a longer, known-good window.
+ */
 export const baselineErrorRate = (incident: Incident, t: Telemetry): number => {
   const since = new Date(Date.parse(incident.fired_at) - 60 * 60_000).toISOString();
   const bp = summarizeMetrics(t, since, incident.fired_at).breakpoints[0];

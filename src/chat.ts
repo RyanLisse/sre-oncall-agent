@@ -20,8 +20,8 @@ import { investigate, type AgentRun } from "./agent.js";
 import { parseStopCommand, parseWatchCommand, type WatchCommand } from "./deployWatch.js";
 import { guessTag, lessonsStore, loadLessons, renderLessons } from "./lessons.js";
 import { ONCALL_SYSTEM } from "./prompts.js";
-import { resolveRuntime, type AgentEvent } from "./runtime.js";
-import { ALLOWED_TOOLS, SERVER_NAME, createTelemetryServer, handlers } from "./tools.js";
+import { resolveRuntime, type AgentEvent, type QueryFn } from "./runtime.js";
+import { SERVER_NAME, allowedToolsFor, createTelemetryServer, handlers } from "./tools.js";
 import { listDeploys, type Telemetry } from "./telemetry.js";
 
 export type Route =
@@ -53,6 +53,8 @@ export interface AskDeps {
   readonly telemetry: Telemetry;
   readonly model?: string | undefined; // undefined/offline → deterministic summary
   readonly onEvent?: (e: AgentEvent) => void;
+  /** Test seam: replaces the SDK query for a named model. Never set in production code. */
+  readonly query?: QueryFn;
 }
 
 /** Offline: answer from the same tools, deterministically. Never pretends to be a model. */
@@ -69,6 +71,10 @@ const offlineAnswer = (text: string, t: Telemetry): string => {
     health,
     `Latest deploys: ${d.map((x) => `${x.id} ${x.version} ${x.at.slice(11, 19)}`).join(" · ") || "none in telemetry"}.`,
     errs.length ? `Latest errors: ${errs.map((e) => e.msg).join(" | ")}` : "No error-level log lines.",
+    // EXT: telemetry that records changes gets them listed too (all kinds, not only deploys)
+    ...(t.changes !== undefined
+      ? [`Latest changes (all kinds): ${h.list_changes({}).slice(-3).reverse().map((c) => `${c.id} ${c.kind} ${c.target} ${c.at.slice(11, 19)}`).join(" · ") || "none recorded"}.`]
+      : []),
     `You asked: "${text}". For a full diagnosis with a proposal, send "Investigate: <what you see>".`,
   ].join("\n");
 };
@@ -78,13 +84,15 @@ export const ask = async (text: string, deps: AskDeps): Promise<string> => {
   const rt = resolveRuntime(deps.telemetry, deps.model);
   if (rt.model === undefined) return offlineAnswer(text, deps.telemetry);
   const lessons = renderLessons(await loadLessons(lessonsStore()), guessTag(text));
+  // Read-only tools only: the W5 four, plus list_changes/get_trace when the telemetry carries changes or traces.
+  const tools = allowedToolsFor(deps.telemetry);
   let answer = "";
-  for await (const e of rt.query({
+  for await (const e of (deps.query ?? rt.query)({
     prompt: `${text}\n\n${lessons}`,
     options: {
       systemPrompt: `${ONCALL_SYSTEM}\n\nMode: QUESTION. The operator asked a question. Answer in plain prose with evidence references. Do NOT return the JSON verdict and do NOT propose a mitigation; if they want one, tell them to send "Investigate: …".`,
       mcpServers: { [SERVER_NAME]: createTelemetryServer(deps.telemetry) },
-      tools: [...ALLOWED_TOOLS], allowedTools: [...ALLOWED_TOOLS],
+      tools: [...tools], allowedTools: [...tools],
       permissionMode: "dontAsk", settingSources: [], maxTurns: 8, maxBudgetUsd: 0.3,
       ...(rt.model ? { model: rt.model } : {}),
     },
