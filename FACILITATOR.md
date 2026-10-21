@@ -70,6 +70,21 @@ Skip it if the afternoon runs long — the runtime gate is the core lesson.
 - **A8** — execute button stays disabled: approval pending or name empty; a name is required and it must match *this* incident + `rollback`. Restart the console after the executor edit. Allow about two minutes for recovery checks. `LANDED` is not closure: the human marks mitigated, then resolves in A9. Do not mark `NOT LANDED` as recovered.
 - **A9** — lessons entry without provenance: notes must include incident id, date and the human's name (the console does this — free-form edits do not count). `/handoff` writes `HANDOFF.md` — check it exists.
 
+## If recovery says NOT LANDED
+
+The full and double checks must both pass. Only the half check may fail.
+The healthy shop still emits occasional transient errors. A successful
+rollback is not a promise that both metric checks pass.
+
+In one rehearsal, the executor verified three checkouts on `v2.14.0`.
+The checks were `0`, `0.0125`, and `0`, against a `0.005` limit. The full
+check failed, so `NOT LANDED` was correct. Keep that incident active.
+Inspect the failed metric window and logs. Investigate or escalate. Do not
+repeat rollback to obtain a green recording or lower the recovery limit.
+
+Use this result to teach the safe stop. The captured `LANDED` slide is a
+separate successful run, not evidence that this incident recovered.
+
 ## Repeat the demo without deleting participant work
 
 Stop traffic, shop and console with Ctrl+C in their own terminals.

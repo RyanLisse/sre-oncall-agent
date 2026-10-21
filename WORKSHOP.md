@@ -175,9 +175,12 @@ mitigated. And confirm chat still refuses *"roll back now"* — a button, not a
 sentence.
 
 Restart the console after you change the executor. Keep traffic running
-during execution. The watch takes about two minutes. An early check can fail
-before recovery appears. Read the final result. If it says `NOT LANDED`, do
-not mark the incident mitigated. Inspect the fresh evidence first.
+during execution. The watch takes about two minutes. The half check can fail,
+but the full and double checks must both pass. The healthy demo still has
+occasional transient errors. A successful rollback can therefore end in
+`NOT LANDED`. Read the final result. If it says `NOT LANDED`, do not mark the
+incident mitigated. Inspect the failed metric window and logs, then investigate
+or escalate. Do not execute rollback again just to get a green result.
 `LANDED` does not close the incident. You mark it mitigated, then resolve it
 with your name and notes in A9.
 
