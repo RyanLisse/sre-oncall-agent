@@ -47,7 +47,6 @@ You need:
 git clone <repo-url> sre-oncall-agent   # the URL your facilitator gives you
 cd sre-oncall-agent
 git checkout workshop/start             # the lab branch
-git switch -c my/workshop-5              # your own working branch
 npm ci
 npm run fixtures
 npm test                                # green: the main suite
