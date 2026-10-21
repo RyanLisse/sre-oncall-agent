@@ -31,7 +31,7 @@ export interface MessageRow {
   readonly id: number;
   readonly incident_id: string;
   readonly role: "user" | "agent" | "system";
-  readonly kind: "text" | "diagnosis" | "tool" | "watch" | "approval" | "executor" | "error";
+  readonly kind: "text" | "diagnosis" | "tool" | "watch" | "approval" | "executor" | "error" | "recovery";
   readonly text: string;
   readonly at: string;
 }
@@ -63,7 +63,7 @@ export class Store {
     return this.db.prepare("SELECT * FROM incidents WHERE id = ?").get(id) as IncidentRow | undefined;
   }
   list(): IncidentRow[] {
-    return this.db.prepare("SELECT * FROM incidents ORDER BY updated_at DESC").all() as unknown as IncidentRow[];
+    return this.db.prepare("SELECT * FROM incidents ORDER BY updated_at DESC, rowid DESC").all() as unknown as IncidentRow[];
   }
   /** State transitions. `by` is required for every arrow into a closed state. */
   setState(id: string, state: State, by: string): IncidentRow {

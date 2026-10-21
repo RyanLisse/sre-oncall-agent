@@ -32,6 +32,7 @@
   .appr{border-radius:10px;padding:10px 14px;font-size:13px;border:1px solid var(--line)} .appr.pending{background:var(--warnbg);color:var(--warn)} .appr.approved{background:var(--okbg);color:var(--ok)} .appr.rejected{background:var(--badbg);color:var(--bad)}
   footer{padding:14px 32px 22px} .box{max-width:900px;margin:0 auto;border:1px solid var(--line);border-radius:14px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.04)}
   .box textarea{border:0;outline:0;resize:none;font:inherit;width:100%;min-height:44px} .box .bar{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)} .send{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;border:0;cursor:pointer;font-size:16px}
+  .next{border:2px solid var(--accent);border-radius:12px;padding:12px 16px;margin-bottom:6px} .next.wait{border-color:var(--line);color:var(--muted)} .next.bad{border-color:var(--bad);background:var(--badbg);color:var(--bad)} .next h3{margin:0;font-size:16px} .next p{margin:4px 0 0;font-size:14px;white-space:pre-wrap} .next small{font-size:12px;color:var(--muted)}
   .note{font-size:12.5px;color:var(--muted);text-align:center;margin-top:18px}
 </style>
 </head>
@@ -58,7 +59,7 @@
 </main>
 <script>
 const $ = (s) => document.querySelector(s);
-let incidents = [], sel = null, msgs = [];
+let incidents = [], sel = null, msgs = [], nxt = null;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = (iso) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const api = (p, b) => fetch("/api" + p, b ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) } : {}).then((r) => r.json());
@@ -86,17 +87,17 @@ function renderOverview() {
 function renderDiag(v, approval, inc) {
   const ev = (v.evidence || []).map((e) => `<li><code>${esc(e.source)}:${esc(e.ref)}</code> — ${esc(e.note)}</li>`).join("");
   const a = approval ? `<div class="appr ${approval.decision}">${approval.decision === "pending" ? "⏳ Pending: a named human must approve or reject this exact proposal." : `${approval.decision === "approved" ? "✓ Approved" : "✗ Rejected"} by ${esc(approval.decided_by)} · ${fmt(approval.decided_at)}`}</div>` : "";
-  const canAct = approval && approval.decision === "pending" && inc.state !== "resolved";
+  const ok = (a) => (nxt && nxt.allowed.includes(a) ? "" : "disabled");
   return `<div class="diag"><h4><span class="tag">#${esc(v.tag)}</span><span class="tag sev ${v.severity}">${v.severity}</span><span class="tag">confidence ${v.confidence}</span></h4>
   <dl><dt>What's happening</dt><dd>${esc(v.hypothesis)}</dd><dt>Customer impact</dt><dd>${esc(v.customer_impact ?? "")}</dd><dt>Root cause</dt><dd><ul>${ev}</ul></dd><dt>Blast radius</dt><dd>${esc(v.blast_radius)}</dd><dt>Proposed fix</dt><dd><b>${esc(v.proposal)}</b> — watch <code>${esc(v.watch_metric)}</code> afterwards</dd><dt>Ruled out</dt><dd>${(v.ruled_out || []).map(esc).join("<br>") || "(nothing)"}</dd><dt>Would change my mind</dt><dd>${esc(v.would_change_my_mind)}</dd><dt>Data gaps</dt><dd>${(v.data_gaps || []).length ? `<span style="color:var(--warn)">${(v.data_gaps||[]).map(esc).join("<br>")}</span>` : "none — every query answered"}</dd></dl>
   <div class="actions">${a}</div>
   <div class="actions">
     <input id="by" placeholder="your name" value="${esc(localStorage.by || "")}">
-    <button class="btn ok" id="approve" ${canAct ? "" : "disabled"}>Approve ${esc(v.proposal)}</button>
-    <button class="btn bad" id="reject" ${canAct ? "" : "disabled"}>Reject</button>
-    <button class="btn" id="execute" ${approval && approval.decision === "approved" && v.proposal === "rollback" ? "" : "disabled"} title="separate executor: recomputes target from telemetry, rolls back, collects fresh evidence">Execute rollback</button>
-    <button class="btn" id="mitigated" ${inc.state === "resolved" ? "disabled" : ""}>Mark mitigated</button>
-    <button class="btn primary" id="resolve" ${inc.state === "resolved" ? "disabled" : ""}>Resolve with notes…</button>
+    <button class="btn ok" id="approve" ${ok("approve")}>Approve ${esc(v.proposal)}</button>
+    <button class="btn bad" id="reject" ${ok("reject")}>Reject</button>
+    <button class="btn" id="execute" ${ok("execute")} title="separate executor: recomputes target from telemetry, rolls back, collects fresh evidence">Execute rollback</button>
+    <button class="btn" id="mitigated" ${ok("mitigated")}>Mark mitigated</button>
+    <button class="btn primary" id="resolve" ${ok("resolve")}>Resolve with notes…</button>
   </div><div class="actions" id="resolveBox" style="display:none;width:100%"><textarea id="notes" placeholder="What did you actually do? This becomes the lesson, with your name and this incident id." style="flex:1;min-height:60px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit"></textarea><button class="btn primary" id="resolveGo">Save &amp; resolve</button></div></div>`;
 }
 
@@ -107,10 +108,12 @@ function renderIncident() {
   for (const m of msgs) { if (m.kind === "diagnosis") lastDiag = JSON.parse(m.text); if (m.kind === "approval") lastAppr = JSON.parse(m.text); }
   const html = msgs.map((m) => {
     if (m.kind === "diagnosis") return renderDiag(JSON.parse(m.text), lastAppr, inc);
-    if (m.kind === "approval") return "";
+    if (m.kind === "approval" || m.kind === "recovery") return "";
     return `<div class="msg ${m.kind === "text" ? m.role : m.kind}">${esc(m.text)}</div>`;
   }).join("");
-  $("#body").innerHTML = `<div class="msgs">${html || `<div class="empty"><h1>What needs a closer look?</h1><p>New alerts arrive here automatically. You can also ask the agent to investigate.</p><button class="sugg" data-q="How is production doing?">How is production doing? ↗</button><button class="sugg" data-q="Watch the next deployment for five minutes.">Watch the next deployment for five minutes. ↗</button><button class="sugg" data-q="Investigate: customers report checkout errors">Investigate: customers report checkout errors ↗</button></div>`}</div>`;
+  const cls = !nxt ? "" : nxt.title.startsWith("NOT LANDED") ? "bad" : nxt.allowed.length === 0 ? "wait" : "";
+  const banner = nxt ? `<div class="next ${cls}" id="next"><small>Next allowed step · ${nxt.allowed.length ? "buttons: " + nxt.allowed.join(", ") : "no button now"}</small><h3>${esc(nxt.title)}</h3><p>${esc(nxt.detail)}</p></div>` : "";
+  $("#body").innerHTML = `<div class="msgs">${banner}${html || `<div class="empty"><h1>What needs a closer look?</h1><p>New alerts arrive here automatically. You can also ask the agent to investigate.</p><button class="sugg" data-q="How is production doing?">How is production doing? ↗</button><button class="sugg" data-q="Watch the next deployment for five minutes.">Watch the next deployment for five minutes. ↗</button><button class="sugg" data-q="Investigate: customers report checkout errors">Investigate: customers report checkout errors ↗</button></div>`}</div>`;
   document.querySelectorAll(".sugg").forEach((b) => b.onclick = () => send(b.dataset.q));
   const by = () => { const v = $("#by")?.value.trim() || ""; localStorage.by = v; return v; };
   $("#approve") && ($("#approve").onclick = async () => { const r = await api(`/incidents/${sel}/approve`, { by: by() }); if (r.error) alert(r.error); });
@@ -122,7 +125,7 @@ function renderIncident() {
   $("#body").scrollTop = $("#body").scrollHeight;
 }
 
-async function open(id) { sel = id; const r = await api(`/incidents/${id}`); msgs = r.messages; renderSidebar(); renderIncident(); }
+async function open(id) { sel = id; const r = await api(`/incidents/${id}`); msgs = r.messages; nxt = r.next; renderSidebar(); renderIncident(); }
 async function send(text) {
   text = (text ?? $("#input").value).trim(); if (!text) return; $("#input").value = "";
   if (!sel) { const row = await api("/incidents", { title: text, investigate: false }); sel = row.id; msgs = []; }
@@ -138,8 +141,8 @@ if (params.get("static")) {
   api("/incidents").then(async (l) => { incidents = l; renderSidebar(); const id = params.get("incident"); if (id) await open(id); else renderOverview(); });
 } else {
   const es = new EventSource("/api/stream");
-  es.addEventListener("incidents", (e) => { incidents = JSON.parse(e.data); renderSidebar(); if (sel === null) renderOverview(); else renderIncident(); });
-  es.addEventListener("message", (e) => { const m = JSON.parse(e.data); if (m.incident_id === sel) { msgs.push(m); renderIncident(); } });
+  es.addEventListener("incidents", (e) => { incidents = JSON.parse(e.data); renderSidebar(); if (sel === null) renderOverview(); else void open(sel); });
+  es.addEventListener("message", (e) => { const m = JSON.parse(e.data); if (m.incident_id === sel) void open(sel); });
   setInterval(health, 10000);
 }
 health();

@@ -9,6 +9,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "start": "node scripts/start.mjs",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test \"test/*.test.ts\"",
     "fixtures": "node fixtures/generate.mjs",
@@ -41,7 +42,11 @@
     "skill:scan": "node scripts/scan-skill.mjs",
     "progress": "node .claude/hooks/progress.mjs --status",
     "progress:note": "node scripts/progress-note.mjs",
-    "workshop:check": "node scripts/workshop-check.mjs"
+    "workshop:check": "node scripts/workshop-check.mjs",
+    "card": "node scripts/card.mjs",
+    "card:check": "node scripts/card.mjs --check",
+    "hub": "node scripts/hub.mjs",
+    "checkpoint": "node scripts/checkpoint.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.274",

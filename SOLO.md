@@ -237,11 +237,12 @@ can break *now*. It writes its own telemetry in the shape the agent reads —
 the agent never talks to the shop, exactly as it would read Grafana rather
 than your service.
 
-**Do (by hand):** run `npm run shop`, then `npm run console` in a second
-terminal. Open the shop at `http://localhost:4310`. Customers check out on
+**Do (by hand):** run `npm start -- --fast`. It starts the shop, the traffic
+and the console in one terminal. Open the shop at `http://localhost:4310`. Customers check out on
 their own (10 per second). Click a button under **Make something break** and
-watch the error bar cross the dashed 2% line. Within 10 s the console at
-`http://localhost:4320` raises the alert. **Reset to healthy** is a facilitator
+watch the error bar cross the dashed 2% line. After about a minute the
+console at `http://localhost:4320` raises the alert. Its banner names the next
+allowed step. **Reset to healthy** is a facilitator
 lever, not the fix.
 
 **Do (scripted):**

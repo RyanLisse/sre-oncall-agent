@@ -17,108 +17,70 @@ Everything runs on your own machine. All data is fictional.
 
 ## The scenario
 
-| Part | Command | Where |
+| Part | What it is | Where |
 | --- | --- | --- |
-| **Checkout shop** — a mock checkout API, not a storefront | `npm run shop` | `http://localhost:4310/health` |
-| **Traffic** — steady checkouts against the shop | `npm run traffic` | — |
-| **Chaos** — your lever to break the shop: a bad deploy, slow latency or errors | `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | modes: `healthy`, `bad-deploy`, `slow`, `errors` |
-| **Console** — the on-call desk: incidents, chat with the agent, approve/execute/resolve buttons, and a JSON API | `npm run console` | `http://localhost:4320` (health: `/api/health`) |
+| **Checkout shop** | a mock checkout API with a demo storefront and fault buttons | `http://localhost:4310` (health: `/health`) |
+| **Traffic** | steady checkouts against the shop | the lab terminal |
+| **Console** | the on-call desk: incidents, chat with the agent, approve/execute/resolve buttons, a JSON API | `http://localhost:4320` |
+| **Hub** | the participant card with the live next step | `http://localhost:4320/hub` |
+| **Chaos** | your lever to break the shop: a bad deploy, slow latency or errors | `npm run chaos -- deploy v2.15.0 --mode bad-deploy`, or a fault button in the shop |
+
+`npm start` runs the shop, the traffic and the console together. Breaking the
+shop is always a separate action: you choose when.
 
 The reference incident is **INC-1001** (`fixtures/incidents/bad-deploy.json`):
-the checkout error rate jumps after a deploy. The tutorial, the tests and the
-bench replay it from fixtures. When you break the live shop, the console's
-listener opens a new incident with its own id (`INC-<number>`). The listener
-uses fixed criteria (error rate above 2% or p95 above 2000 ms, sustained for
-about 5 minutes; set `AGENT_LISTEN_WINDOW_MIN=1` for a faster demo). The agent
-is never the detector.
+the checkout error rate jumps after a deploy. The tests and the bench replay
+it from fixtures. When you break the live shop, the console's listener opens a
+new incident (`INC-<number>`) after the error rate stays above 2% or p95 above
+2000 ms for about 5 minutes (1 minute with `npm start -- --fast`). The agent is
+never the detector.
 
-## Set up
+## Set up and run
 
-You need:
-
-- **Node.js 22 or newer** (check with `node --version`) and npm.
-- **Claude Code**, signed in with your own account (`claude`, then `/login`).
-  Claude Code is your builder.
-- **No API key.** The agent runs offline by default: a scripted investigator
-  drives the same tools against the same data. Its output demonstrates the
-  pipeline; it is not model evidence.
+You need **Node.js 22 or newer** and **Claude Code**, signed in with your own
+account. No API key: the agent runs offline by default, with a scripted
+investigator on the same tools and data. Its output demonstrates the pipeline;
+it is not model evidence.
 
 ```bash
-git clone <repo-url> sre-oncall-agent   # the URL your facilitator gives you
+git clone <repo-url> sre-oncall-agent        # the URL your facilitator gives you
 cd sre-oncall-agent
-git checkout workshop/start             # the lab branch
-npm ci
-npm run fixtures
-npm test                                # green: the main suite
-npm run test:workshop                   # red: the exercises (by design)
+git switch -c my/workshop-5 w5-core-start     # your own branch, from the starter
+npm start -- --fast                           # checks, installs, starts the lab
 ```
 
-Start Claude Code in the folder (`claude`) and run `/status`: it shows the
+Keep that terminal open; Ctrl+C stops everything. Use a second terminal for
+the rest. Start Claude Code there (`claude`) and run `/status`: it shows the
 guard and progress hooks from `.claude/settings.json`.
 
-## Run it
+| Command | What it does |
+| --- | --- |
+| `npm run hub` | open the participant card (live when the lab runs) |
+| `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | break the shop on purpose |
+| `npm run checkpoint -- core-2` | a solved copy in `.lab/checkpoints/`, your files untouched |
+| `npm run doctor` | preflight check |
+| `npm run demo` | the whole loop on a bad deploy, about 2 minutes, no console |
+| `npm run progress` | which assignments already have file evidence |
 
-Three terminals:
+## The assignment: three core tasks
 
-```bash
-npm run shop                                        # 1 · the checkout shop on :4310
-npm run traffic                                     # 2 · traffic
-npm run console                                     # 3 · the console on :4320
-```
+| Core | You do |
+| --- | --- |
+| **1 · Investigate the evidence** | Break the shop, let the console raise the incident, check every reference in the diagnosis against the data. |
+| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first; prove it with the tests, the bench and the trace. |
+| **3 · Judge the recovery** | Rebuild the approval gate, approve with your name, read the recovery checks, then close or stop. |
 
-Keep all three terminals running. Use a fourth terminal to break the shop:
-
-```bash
-npm run chaos -- deploy v2.15.0 --mode bad-deploy   # a bad deploy
-npm run chaos -- degrade --mode slow                # the same kind of fault, no deploy record
-```
-
-Other useful commands:
-
-```bash
-npm run demo                 # the whole loop on a bad deploy, about 2 minutes
-npm run doctor               # preflight check
-npm run progress             # which assignments already have evidence
-npm run workshop:check       # the TODO markers you still have to fill in
-npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run   # INC-1001 from fixtures
-```
+The steps, with what you should see and what to do when you are stuck, are on
+**[CARD.md](CARD.md)**. The facilitator's guide is **[WORKSHOP.md](WORKSHOP.md)**.
+Working alone? Follow **[SOLO.md](SOLO.md)**. Optional depth (intent, spec,
+your own guard rule, a bench case, the git gate, a hackathon intent) is at the
+bottom of the card.
 
 ## The file flow
 
-Each step of the AI SDLC leaves one file behind. Write them in this order:
-
-1. **`intent.md`** — who the agent serves, the boundary, and three checks a
-   stranger can verify.
-2. **`docs/spec.md`** — the contract the code must meet.
-3. **`docs/plan.md`** — the steps, smallest first, and the checks.
-4. **`PROGRESS.md`** — the build log: append-only. The progress hook appends
-   an entry when it sees file or code-pattern evidence for an assignment.
-   This is not a test result. Add your own results with
-   `npm run progress:note -- "A3: contract tests passed"` after you run them.
-   Nobody rewrites old lines.
-5. **`REVIEW.md`** — the review checklist you run before you share a change.
-
-## The assignment
-
-Build the agent piece by piece, test first: **Intent → Spec → Design/controls
-→ Build → Test/evals → Gate → Maintain.** The `workshop/start` branch has
-four pieces removed (`TODO(A3/A4/A5/A8)`); the red tests in `test/workshop/`
-turn green as you rebuild them.
-
-| # | Assignment |
-| --- | --- |
-| A1 | Setup check: install, green main suite, console up, Claude Code connected |
-| A2 | Write your team `intent.md` |
-| A3 | Spec + contract: the evidence rules and the new `customer_impact` field, test-first |
-| A4 | Controls: chat refuses mutations again; add your own guard rule by hand |
-| A5 | Build the read-only `list_deploys` tool |
-| A6 | Diagnose a live incident from the console |
-| A7 | Pass the bench and add one case; the ratchet only goes up |
-| A8 | The gate: the executor acts only on a NAMED human approval |
-| A9 | Maintain: resolve the incident with notes that become a lesson |
-
-The full steps, catch-up commands and step tags are in
-**[WORKSHOP.md](WORKSHOP.md)**. Working alone? Follow **[SOLO.md](SOLO.md)**.
+Each step of the AI SDLC leaves one file behind: `intent.md` → `docs/spec.md`
+→ `docs/plan.md` → `PROGRESS.md` (append-only: `npm run progress:note -- "…"`)
+→ `REVIEW.md`.
 
 ## The rules
 

@@ -121,7 +121,11 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     };
   }
 
-  const deploy = deployBehind(t, bp.ts);
+  // Data before theory: only a deploy that list_deploys actually returned may be cited.
+  const behind = deployBehind(t, bp.ts);
+  const deploy = behind && deploys.some((d) => d.id === behind.id) ? behind : undefined;
+  // Only rule out a bad deploy when list_deploys answered; an empty answer is a data gap, not evidence.
+  const noDeployBehind = deploys.length > 0 ? [`bad deploy: no deploy within 15 min before ${bp.ts}`] : [];
   const logs = h.search_logs({ level: "error", since: minus(bp.ts, 2), until: incident.fired_at, limit: 3 });
   if (logs.length === 0) gaps.push("search_logs: no error lines within 2 min of the breakpoint");
   const logEvidence = logs.slice(0, 1).map((l) => ({ source: "logs" as const, ref: l.ts, note: l.msg }));
@@ -169,7 +173,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
       evidence: [{ source: "metrics", ref: bp.ts, note: `p95 ${bp.from} → ${bp.to} ms` }, ...logEvidence],
       blast_radius: `every ${t.service} request slower; nothing failing (error_rate ${metrics.error_rate_last})`,
       proposal: logEvidence.length > 0 ? "scale" : "investigate-more",
-      ruled_out: [`bad deploy: no deploy within 15 min before ${bp.ts}`],
+      ruled_out: noDeployBehind,
       would_change_my_mind: "a deploy or config change in the window, or latency confined to one endpoint",
       data_gaps: gaps,
       watch_metric: "p95_ms",
@@ -186,7 +190,7 @@ export const offlineVerdict = (incident: Incident, t: Telemetry): Verdict => {
     evidence: [{ source: "metrics", ref: bp.ts, note: `error_rate ${bp.from} → ${bp.to}` }, ...logEvidence],
     blast_radius: `error_rate ${metrics.error_rate_last} on ${t.service}; cause unknown`,
     proposal: "investigate-more",
-    ruled_out: [`bad deploy: no deploy within 15 min before ${bp.ts}`, "latency: p95 flat"],
+    ruled_out: [...noDeployBehind, "latency: p95 flat"],
     would_change_my_mind: "an error log line naming the failing dependency or endpoint",
     data_gaps: gaps,
     watch_metric: "error_rate",
@@ -209,10 +213,12 @@ export const offlineQuery =
     const h = handlers(t);
     const since = incident.fired_at ? minus(incident.fired_at, 60) : undefined;
     const bp0 = h.summarize_metrics({ since, until: incident.fired_at }).breakpoints[0];
-    const behind = bp0 ? deployBehind(t, bp0.ts) : undefined;
+    const listed = h.list_deploys({ since, until: incident.fired_at });
+    const near = bp0 ? deployBehind(t, bp0.ts) : undefined;
+    const behind = near && listed.some((d) => d.id === near.id) ? near : undefined;
     const outputs: Record<ToolName, unknown> = {
       summarize_metrics: h.summarize_metrics({ since, until: incident.fired_at }),
-      list_deploys: h.list_deploys({ since, until: incident.fired_at }),
+      list_deploys: listed,
       get_diff: behind ? h.get_diff({ deploy: behind.id }) : { error: "no deploy lines up with the breakpoint — not called in anger" },
       search_logs: h.search_logs({ level: "error", since, until: incident.fired_at, limit: 5 }),
     };

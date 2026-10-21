@@ -37,6 +37,7 @@ jobs:
       - run: npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
       - run: npm run investigate -- fixtures/incidents/adversarial.json --dry-run
       - run: npm run course:check
+      - run: npm run card:check
 
   workshop-start:
     name: workshop/start is cut correctly

@@ -118,3 +118,25 @@ test("extractTrace ignores the SDK's StructuredOutput tool and subagent-internal
   ];
   assert.deepEqual(extractTrace(events), []);
 });
+
+test("data before theory: every deploys:<id> the offline verdict cites came back from list_deploys", async () => {
+  const { handlers } = await import("../src/tools.js");
+  const cases: [string, string][] = [
+    ["bad-deploy", "2026-10-05T03:50:00Z"], ["slow-dependency", "2026-10-05T03:43:00Z"],
+    ["noisy-alert", "2026-10-05T03:51:00Z"], ["mystery-errors", "2026-10-05T03:55:00Z"],
+  ];
+  for (const [name, at] of cases) {
+    const t = await load(name);
+    const listed = new Set(handlers(t).list_deploys({ since: new Date(Date.parse(at) - 3_600_000).toISOString(), until: at }).map((d) => d.id));
+    const cited = offlineVerdict(incident("INC-1", at), t).evidence.filter((e) => e.source === "deploys" || e.source === "diff").map((e) => e.ref);
+    for (const ref of cited) assert.ok(listed.has(ref), `${name}: cites ${ref} but list_deploys returned ${[...listed].join(",") || "nothing"}`);
+  }
+});
+
+test("a missing signal is unknown: with no deploys listed, a bad deploy is a data gap, never ruled out", async () => {
+  const t = { ...(await load("bad-deploy")), deploys: [] };
+  const v = offlineVerdict(incident("INC-1", "2026-10-05T03:50:00Z"), t);
+  assert.equal(v.proposal, "investigate-more");
+  assert.ok(v.data_gaps.some((g) => g.startsWith("list_deploys")));
+  assert.equal(v.ruled_out.some((r) => /bad deploy/.test(r)), false, v.ruled_out.join(" | "));
+});
