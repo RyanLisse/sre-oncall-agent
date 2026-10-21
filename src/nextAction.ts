@@ -33,7 +33,12 @@ export const nextAction = (state: State, msgs: readonly Msg[]): Next => {
     return { title: "NOT LANDED: keep the incident open", detail: `Failed ${failed || "full or double"}; recovery limit ${actions.recovery.report.limit}. Keep the incident open and investigate.`, allowed: [] };
   }
   if (actions.canResolve) return { title: "Resolve with notes", detail: actions.next, allowed: ["resolve"] };
-  if (actions.canMitigate) return { title: "LANDED: mark mitigated", detail: actions.next, allowed: ["mitigated"] };
+  if (actions.canMitigate) {
+    const landed = actions.recovery.status === "complete" && actions.recovery.report.landed;
+    return landed
+      ? { title: "LANDED: mark mitigated", detail: actions.next, allowed: ["mitigated"] }
+      : { title: "Review manual mitigation", detail: actions.next, allowed: ["mitigated"] };
+  }
   if (actions.canDecide) return { title: "Approve or reject the proposal", detail: actions.next, allowed: ["approve", "reject"] };
   if (actions.canExecute) return { title: "Execute the approved rollback", detail: actions.next, allowed: ["execute"] };
   if (!msgs.some((m) => m.kind === "diagnosis")) return { title: "Wait for the investigation", detail: "No diagnosis yet. Ask in chat: Investigate: …", allowed: [] };

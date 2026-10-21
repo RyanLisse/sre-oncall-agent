@@ -9,7 +9,7 @@ The slides explain. This card is for doing. Each step says what you do, what you
 Create the isolated starter from committed HEAD. Keep the lab terminal open. Use a second terminal for everything else.
 
 ```bash
-git clone <repository URL>
+git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start
 cd .lab/checkpoints/start
@@ -27,9 +27,9 @@ npm start -- --fast
 
 **Goal:** Break the shop, let the console raise an incident, and check every claim in the diagnosis against the data. Find what the agent cannot see.
 
-Slides: practice slides 32 and 35. Replaces A1 + A6.
+Slides: Core 1: Investigate the evidence · Core 1: Check the claims. Replaces A1 + A6.
 
-### 1.1 Break the shop in your second terminal: `npm run chaos -- deploy v2.15.0 --mode bad-deploy`
+### 1.1 Break the shop once: click `Bad deploy v2.15.0` in the shop OR run `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in your second terminal. Do not do both.
 
 - **See:** After about one minute a new incident appears in the console sidebar. You did not open it; the deterministic listener did.
 - **Check:** `curl 127.0.0.1:4320/api/incidents` shows one incident with source "alert".
@@ -57,36 +57,36 @@ Slides: practice slides 32 and 35. Replaces A1 + A6.
 
 **Goal:** Rebuild the read-only `list_deploys` tool test-first, prove it with the tests and the bench, and watch the diagnosis change.
 
-Slides: practice slides 47 and 51. Replaces A5 + A7.
+Slides: Core 2: Build a change safely · Core 2: Prove it on the live incident. Replaces A5 + A7.
 
 ### 2.1 Run the red test: `npx tsx --test test/workshop/tools.test.ts`
 
 - **See:** The test fails: `list_deploys` returns nothing. `npm run bench` fails too: without deploys the agent misses the bad deploy.
 - **Check:** Read the failing assertion before you change code. Say in one sentence why it fails.
-- **Stuck?** Search for `TODO(A5)` in `src/tools.ts`. There are two places.
+- **Stuck?** Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore its handler binding AND the MCP registration; the registration has an explanatory comment, not a second TODO marker.
 
 ### 2.2 Build `list_deploys` in `src/tools.ts` with Claude Code or by hand. Bind the handler AND register the tool.
 
-- **See:** `test/workshop/tools.test.ts` is green.
-- **Check:** `npm run typecheck && npm test && npm run bench` all pass. The bench prints `PASS bench`.
+- **See:** `test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.
+- **Check:** `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass. The bench prints `PASS bench`. Executor tests remain expected to fail until Core 3 restores the approval gate.
 - **Stuck?** The tool still returns `[]`: you did only one of the two halves.
 
 ### 2.3 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
 
 - **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap, and the banner says Approve or reject “rollback”.
 - **Check:** The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- "Core 2: …"`
-- **Stuck?** Incident gone? You stopped the lab, so the shop is healthy again. Break it again and wait for a new incident.
+- **Stuck?** Incident gone? Incident history persists in SQLite, while the shop resets on restart. Do not restart the launcher to reload code; saving auto-reloads the console. For a fresh repeat, use a new disposable checkpoint copy; do not rebreak a stale incident.
 
 ## Core 3 · Judge the recovery
 
 **Goal:** Rebuild the approval gate, sign the rollback with your name, and decide from the recovery checks whether the incident may close.
 
-Slides: practice slides 60 and 63. Replaces A8 + A9.
+Slides: Core 3: Judge the recovery · Core 3: Close it, or stop safely. Replaces A8 + A9.
 
 ### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Rebuild `checkApproval` in `src/executor.ts` (`TODO(A8)`).
 
 - **See:** The test is green. The executor now refuses to act without a named approval for this incident and this proposal.
-- **Check:** `npm run typecheck && npm test` pass. The console reloads by itself.
+- **Check:** `npm run verify` and `npm run test:workshop` pass before a human approves the rollback. The console reloads by itself.
 - **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.
 
 ### 3.2 Open your incident. The banner says Approve or reject “rollback”. Type your name. Click Approve, then Execute rollback.
@@ -97,7 +97,7 @@ Slides: practice slides 60 and 63. Replaces A8 + A9.
 
 ### 3.3 LANDED: click Mark mitigated, then Resolve with notes. NOT LANDED: do not close. Read the failed check, then investigate in chat or escalate.
 
-- **See:** After you resolve, the banner says Closed and Execute stays disabled.
+- **See:** After you resolve, the next-step detail says Resolved and directs you to the notes and lesson. Execute stays disabled.
 - **Check:** `lessons/lessons.md` has a new entry with your name and the incident id. Record it: `npm run progress:note -- "Core 3: …"`
 - **Stuck?** Never execute again to get a green result. NOT LANDED is a correct, safe stop.
 

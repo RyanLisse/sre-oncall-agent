@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { nextAction, type Msg } from "../src/nextAction.js";
+import { incidentActions } from "../src/recovery.js";
 
 const diag = (proposal = "rollback"): Msg => ({ kind: "diagnosis", text: JSON.stringify({ proposal }) });
 const appr = (decision: string): Msg => ({ kind: "approval", text: JSON.stringify({ decision }) });
@@ -64,8 +65,30 @@ test("a mitigated incident allows only resolve with notes", () => {
 });
 
 test("an approved non-rollback proposal is carried out outside the agent, then mitigated", () => {
-  assert.deepEqual(nextAction("active", [diag("scale"), appr("approved")]).allowed, ["mitigated"]);
-  assert.deepEqual(nextAction("mitigated", [diag("scale"), appr("approved")]).allowed, ["resolve"]);
+  const msgs = [diag("scale"), appr("approved")];
+  const manual = nextAction("active", msgs);
+  assert.deepEqual(manual.allowed, ["mitigated"]);
+  assert.equal(manual.title, "Review manual mitigation");
+  assert.doesNotMatch(manual.title, /LANDED/);
+  assert.equal(manual.detail, incidentActions({ state: "active" }, msgs).next);
+  assert.deepEqual(nextAction("mitigated", msgs).allowed, ["resolve"]);
+});
+
+test("pending and rejected manual proposals cannot mitigate or resolve", () => {
+  const pending = [diag("scale"), appr("pending")];
+  const pendingAction = nextAction("active", pending);
+  assert.deepEqual(pendingAction.allowed, ["approve", "reject"]);
+  assert.match(pendingAction.title, /approve or reject/i);
+  assert.deepEqual(nextAction("mitigated", pending).allowed, []);
+
+  const rejected = [diag("scale"), appr("rejected")];
+  assert.deepEqual(nextAction("active", rejected).allowed, []);
+  assert.deepEqual(nextAction("mitigated", rejected).allowed, []);
+});
+
+test("an invalid proposal cannot expose an approval control", () => {
+  const n = nextAction("active", [diag("deploy-all-prod"), appr("pending")]);
+  assert.deepEqual(n.allowed, []);
 });
 
 test("legacy or malformed recovery records fail closed; stale incidents behave as active", () => {

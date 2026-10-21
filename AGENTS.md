@@ -6,7 +6,7 @@ The canonical participant route is generated from `workshop.json`:
 approval, execution, mitigation, resolution, or pushing.
 
 ```bash
-git clone <repository URL>
+git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start
 cd .lab/checkpoints/start

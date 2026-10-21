@@ -4,6 +4,7 @@ import { appendFileSync, cpSync, existsSync, mkdtempSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 import test from "node:test";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,6 +27,18 @@ const seedFixture = (fixture, corruptFile) => {
   git(fixture, "config", "user.name", "Checkpoint test");
   git(fixture, "add", ".");
   git(fixture, "commit", "-qm", "fixture");
+};
+const assertFailClosedA8 = (executor) => {
+  const stub = executor.match(/export const checkApproval = \(_record: ApprovalRecord, _incident: Incident\): Result<ApprovalRecord> =>\n  fail\(\["TODO\(A8\): rebuild the named human approval gate before execution"\]\);/);
+  assert.ok(stub, "checkpoint must contain the expected A8 stub");
+  const runnable = stub[0]
+    .replace("export const ", "const ")
+    .replace("(_record: ApprovalRecord, _incident: Incident): Result<ApprovalRecord>", "(_record, _incident)");
+  const result = runInNewContext(`${runnable}\ncheckApproval({ proposal: "rollback", decision: "approved", decided_by: "named-human" }, { incident_id: "INC-1001" })`, {
+    fail: (errors) => ({ ok: false, errors }),
+  });
+  assert.equal(result.ok, false);
+  assert.deepEqual(Array.from(result.errors), ["TODO(A8): rebuild the named human approval gate before execution"]);
 };
 
 test("checkpoint cuts come from committed HEAD and refuse overwrite", () => {
@@ -54,6 +67,7 @@ test("checkpoint cuts come from committed HEAD and refuse overwrite", () => {
         assert.equal(tools, committedTools);
         assert.equal((executor.match(/TODO\(A8\)/g) ?? []).length, 1);
         assert.match(executor, /fail\(\["TODO\(A8\): rebuild the named human approval gate before execution"\]\)/);
+        assertFailClosedA8(executor);
       } else {
         assert.equal((tools.match(/TODO\(A5\)/g) ?? []).length, 1);
         assert.doesNotMatch(tools, /uncommitted parent-only marker/);
@@ -61,6 +75,7 @@ test("checkpoint cuts come from committed HEAD and refuse overwrite", () => {
         assert.doesNotMatch(tools, /tool\(\s*"list_deploys"/);
         assert.equal((executor.match(/TODO\(A8\)/g) ?? []).length, 1);
         assert.match(executor, /fail\(\["TODO\(A8\): rebuild the named human approval gate before execution"\]\)/);
+        assertFailClosedA8(executor);
       }
     }
     const nestedStart = join(fixture, ".lab", "checkpoints", "start");

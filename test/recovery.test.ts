@@ -32,6 +32,38 @@ test("approval, execution, recovery, mitigation and resolution are separate step
   assert.match(resolved.next, /Resolved/);
 });
 
+test("manual mitigation and resolution require an approved valid proposal and ready recovery", () => {
+  const manual = (proposal: string, decision: string, recovery?: Recovery) => [
+    message("diagnosis", { proposal }), message("approval", { decision }),
+    ...(recovery ? [message("recovery", recovery)] : []),
+  ];
+  for (const decision of ["pending", "rejected"]) {
+    const pendingOrRejected = incidentActions(incident, manual("scale", decision));
+    assert.equal(pendingOrRejected.canDecide, decision === "pending");
+    assert.equal(pendingOrRejected.canMitigate, false);
+    assert.equal(incidentActions({ ...incident, state: "mitigated" }, manual("scale", decision)).canResolve, false);
+  }
+  const approved = manual("scale", "approved");
+  assert.equal(incidentActions(incident, approved).canMitigate, true);
+  assert.equal(incidentActions({ ...incident, state: "mitigated" }, approved).canResolve, true);
+  for (const recovery of [{ status: "running" } as const, completed(true)]) {
+    assert.equal(incidentActions(incident, manual("scale", "approved", recovery)).canMitigate, false);
+    assert.equal(incidentActions({ ...incident, state: "mitigated" }, manual("scale", "approved", recovery)).canResolve, false);
+  }
+  const invalid = incidentActions(incident, manual("not-a-proposal", "pending"));
+  assert.equal(invalid.canDecide, false);
+  assert.equal(invalid.canMitigate, false);
+});
+
+test("pending and rejected rollback approvals expose no recovery action controls", () => {
+  for (const decision of ["pending", "rejected"]) {
+    const actions = incidentActions(incident, records(decision, completed(true)));
+    assert.equal(actions.canExecute, false);
+    assert.equal(actions.canMitigate, false);
+    assert.equal(incidentActions({ ...incident, state: "mitigated" }, records(decision, completed(true))).canResolve, false);
+  }
+});
+
 test("in-flight, failed, interrupted and malformed recovery never authorize retry or closure", () => {
   for (const recovery of [{ status: "running" } as const, { status: "blocked", reason: "Interrupted" } as const, completed(false)]) {
     const actions = incidentActions(incident, records("approved", recovery));

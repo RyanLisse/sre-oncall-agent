@@ -4,7 +4,7 @@ Use the generated [CARD.md](CARD.md) or the live
 [hub](http://127.0.0.1:4320/hub); both are generated from `workshop.json`.
 
 ```bash
-git clone <repository URL>
+git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start
 cd .lab/checkpoints/start

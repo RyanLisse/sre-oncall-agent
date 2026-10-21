@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROPOSALS } from "./contract.js";
 import type { IncidentRow, MessageRow } from "./store.js";
 import type { Check, WatchReport } from "./watch.js";
 
@@ -68,23 +69,25 @@ export const completedRecovery = (
 export const incidentActions = (incident: Pick<IncidentRow, "state">, messages: readonly Pick<MessageRow, "kind" | "text">[]) => {
   const recovery = recoveryFrom(messages);
   const diagnosis = messages.filter((m) => m.kind === "diagnosis").at(-1);
-  const proposal = z.object({ proposal: z.string() }).safeParse(json(diagnosis?.text ?? ""));
+  const proposal = z.object({ proposal: z.enum(PROPOSALS) }).safeParse(json(diagnosis?.text ?? ""));
   const approval = messages.filter((m) => m.kind === "approval").at(-1);
   const decision = z.object({ decision: z.enum(["pending", "approved", "rejected"]) }).safeParse(json(approval?.text ?? ""));
   const rollback = proposal.success && proposal.data.proposal === "rollback";
+  const approved = decision.success && decision.data.decision === "approved";
   const active = incident.state === "active" || incident.state === "stale";
   const recovered = recovery.status === "complete" && recovery.report.landed;
-  const canDecide = active && recovery.status === "ready" && decision.success && decision.data.decision === "pending";
-  const canExecute = active && rollback && recovery.status === "ready" && decision.success && decision.data.decision === "approved";
-  const canMitigate = active && proposal.success && (rollback ? recovered : recovery.status === "ready");
-  const canResolve = incident.state === "mitigated" && (rollback ? recovered : recovery.status === "ready");
+  const canDecide = active && proposal.success && recovery.status === "ready" && decision.success && decision.data.decision === "pending";
+  const canExecute = active && rollback && recovery.status === "ready" && approved;
+  const canMitigate = active && proposal.success && approved && (rollback ? recovered : recovery.status === "ready");
+  const canResolve = incident.state === "mitigated" && proposal.success && approved && (rollback ? recovered : recovery.status === "ready");
   let next = "Investigate the evidence. No proposal is ready yet.";
   if (incident.state === "resolved") next = "Resolved. Read the notes and lesson. Start a new incident for a new problem.";
   else if (recovery.status === "running") next = "Wait for execution and all three recovery checks. Do not execute again.";
   else if (recovery.status === "blocked") next = recovery.reason;
   else if (recovery.status === "complete" && !recovery.report.landed) next = "NOT LANDED. Inspect the failed full or double check and logs. Investigate or escalate; do not close or retry rollback for a green result.";
   else if (canResolve) next = "Write what actually happened. A named human can now resolve with notes.";
-  else if (recovered) next = "LANDED is not closure. Review the checks, then mark mitigated with your name.";
+  else if (canMitigate && recovered) next = "LANDED is not closure. Review the checks, then mark mitigated with your name.";
+  else if (canMitigate) next = "Approved. Carry out the manual mitigation outside the agent, then mark it mitigated with your name.";
   else if (canDecide) next = "Read the diagnosis and evidence. Enter your name to approve or reject this proposal.";
   else if (canExecute) next = "Approved. A human can now start the separate rollback executor once.";
   else if (proposal.success) next = "Investigate or escalate to the service owner. This console executes only an approved rollback; other actions are manual.";

@@ -1,5 +1,8 @@
 # Workshop 5 — build the AI SRE agent (AI-native SDLC)
 
+This is the workshop overview. For the facilitator run sheet and timing, see
+[FACILITATOR.md](FACILITATOR.md).
+
 The team path through this repo. You do **three core tasks**. Everything else
 is optional depth. The loop you learn: **Intent → Spec → Design/controls →
 Build → Test/evals → Gate → Maintain.**
@@ -16,7 +19,7 @@ Everything runs offline. No API key is needed: the scripted runtime
 ## Set up once
 
 ```bash
-git clone <repository URL>               # the URL your facilitator gives you
+git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start                # make the current committed starter copy
 cd .lab/checkpoints/start
@@ -37,7 +40,7 @@ terminal: `npm run chaos -- deploy v2.15.0 --mode bad-deploy`.
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
 | **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Find the deploy the agent cannot see (its data gap). | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
-| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). Re-investigate: the gap closes, the proposal becomes `rollback`. | `test/workshop/tools.test.ts` green, `npm run typecheck && npm test && npm run bench` pass, `list_deploys` in the trace | A5, A7 |
+| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). Re-investigate: the gap closes, the proposal becomes `rollback`. | `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass; A8 valid-approval assertion remains red until Core 3; `list_deploys` in the trace | A5, A7 |
 | **3 · Judge the recovery** | Rebuild the approval gate (`TODO(A8)` in `src/executor.ts`). Approve with your name, execute, read the recovery checks, then mitigate and resolve, or stop on NOT LANDED. | `test/workshop/executor.test.ts` green, a lesson in `lessons/lessons.md` with your name | A8, A9 |
 
 The steps are on the card. Run `npm run workshop:check` to see the two
