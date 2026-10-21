@@ -237,7 +237,14 @@ can break *now*. It writes its own telemetry in the shape the agent reads —
 the agent never talks to the shop, exactly as it would read Grafana rather
 than your service.
 
-**Do:**
+**Do (by hand):** run `npm run shop`, then `npm run console` in a second
+terminal. Open the shop at `http://localhost:4310`. Customers check out on
+their own (10 per second). Click a button under **Make something break** and
+watch the error bar cross the dashed 2% line. Within 10 s the console at
+`http://localhost:4320` raises the alert. **Reset to healthy** is a facilitator
+lever, not the fix.
+
+**Do (scripted):**
 
 ```text
 npm run doctor

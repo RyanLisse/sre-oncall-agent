@@ -3,6 +3,7 @@
  * ---------------------------------------------------------------------------
  * A tiny HTTP server that behaves like the service the agent watches:
  *
+ *   GET  /                    → demo/shop.html: storefront, simulated customers, fault buttons
  *   POST /checkout            → { ok, order_id, revision, ms } or 500
  *   GET  /health              → { revision, mode, uptime_s }
  *   GET  /admin/state         → current revision + mode
@@ -23,7 +24,7 @@
  *   npm run shop                    (port 4310, AGENT_SHOP_PORT to change)
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -177,6 +178,7 @@ if (process.argv[1]?.endsWith("shop.ts") || process.argv[1]?.endsWith("shop.js")
       setTimeout(() => send(res, r.status, r.payload), Math.min(r.ms, 3200)); // real latency, capped
       return;
     }
+    if (req.method === "GET" && url === "/") { res.writeHead(200, { "content-type": "text/html; charset=utf-8" }); return res.end(readFileSync(join(here, "shop.html"))); }
     if (req.method === "GET" && url === "/health") return send(res, 200, { revision: state.version, mode: state.mode, uptime_s: Math.round((Date.now() - state.started) / 1000) });
     if (req.method === "GET" && url === "/admin/state") return send(res, 200, { revision: state.version, mode: state.mode, deploys: state.deploys });
     if (req.method === "POST" && url === "/admin/deploy") {
