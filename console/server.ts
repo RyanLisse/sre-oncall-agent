@@ -39,6 +39,7 @@ import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
 import { loadTelemetry, summarizeMetrics, type Telemetry } from "../src/telemetry.js";
 import { watchMetric } from "../src/watch.js";
+import { completedRecovery, incidentActions, recoveryFrom, type Recovery } from "../src/recovery.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.AGENT_CONSOLE_PORT ?? 4320);
@@ -47,6 +48,12 @@ const TELEMETRY = process.env.AGENT_TELEMETRY ?? (process.env.AGENT_DEMO_DATA ? 
 const MODEL = process.env.AGENT_MODEL; // undefined → offline
 const APPROVALS = process.env.AGENT_APPROVALS_DIR ?? "approvals";
 const store = new Store();
+const triaging = new Set<string>();
+for (const incident of store.list()) {
+  if (recoveryFrom(store.messages(incident.id)).status === "running") {
+    store.add(incident.id, "system", "recovery", JSON.stringify({ status: "blocked", reason: "Execution or recovery was interrupted. Inspect the shop and saved evidence; do not repeat rollback or close this incident." }));
+  }
+}
 
 // ── SSE fan-out ──────────────────────────────────────────────────────────
 const clients = new Set<ServerResponse>();
@@ -87,6 +94,12 @@ const loadIncident = (row: IncidentRow): { incident: Incident; telemetry: string
 
 // ── the triage loop (shared by all three intake paths) ───────────────────
 const triage = async (row: IncidentRow, alert: string) => {
+  const current = store.get(row.id);
+  if (triaging.has(row.id) || deciding.has(row.id) || closing.has(row.id)
+    || row.state === "resolved" || current?.state === "resolved"
+    || recoveryFrom(store.messages(row.id)).status !== "ready") return;
+  triaging.add(row.id);
+  try {
   const t = await telemetry();
   if (!t) { say(row.id, "system", "error", `no telemetry at ${TELEMETRY} — start the shop (npm run shop) or set AGENT_TELEMETRY`); return; }
   const file = await incidentFileFor(row, alert, t);
@@ -106,7 +119,10 @@ const triage = async (row: IncidentRow, alert: string) => {
   await writeApproval(APPROVALS, approval);
   say(row.id, "system", "approval", JSON.stringify(approval));
   if (run.lessonFile) say(row.id, "system", "text", `lesson proposed → ${run.lessonFile}`);
-  broadcast("incidents", store.list());
+  } finally {
+    triaging.delete(row.id);
+    broadcast("incidents", store.list());
+  }
 };
 
 // ── the deterministic alert listener ─────────────────────────────────────
@@ -136,6 +152,10 @@ const listen = async () => {
 const json = (res: ServerResponse, status: number, data: unknown) => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(data)); };
 const body = (req: IncomingMessage): Promise<Record<string, unknown>> => new Promise((r) => { let s = ""; req.on("data", (c: Buffer) => (s += c)); req.on("end", () => { try { r(JSON.parse(s || "{}")); } catch { r({}); } }); });
 const watches = new Map<string, AbortController>();
+const executing = new Set<string>();
+const deciding = new Set<string>();
+const closing = new Set<string>();
+const recordRecovery = (id: string, recovery: Recovery) => say(id, "system", "recovery", JSON.stringify(recovery));
 
 // ── routes ───────────────────────────────────────────────────────────────
 const server = createServer(async (req, res) => {
@@ -178,13 +198,19 @@ const server = createServer(async (req, res) => {
     const [, id, action] = m;
     const row = store.get(id as string);
     if (!row) return json(res, 404, { error: "no such incident" });
-    if (req.method === "GET" && !action) return json(res, 200, { incident: row, messages: store.messages(row.id) });
+    const messages = store.messages(row.id);
+    const actions = incidentActions(row, messages);
+    if (req.method === "GET" && !action) return json(res, 200, { incident: row, messages, actions: triaging.has(row.id)
+      ? { ...actions, canDecide: false, canExecute: false, canMitigate: false, canResolve: false, next: "Wait for the investigation to finish. Read the evidence before deciding." } : actions });
 
     if (req.method === "POST" && action === "chat") {
       const text = String((await body(req)).text ?? "").trim();
+      const route = routeMessage(text);
+      if (route.kind === "investigate" && (row.state === "resolved" || recoveryFrom(store.messages(row.id)).status !== "ready" || executing.has(row.id))) {
+        return json(res, 409, { error: "Keep this incident's execution evidence. Start a new investigation to gather more evidence." });
+      }
       say(row.id, "user", "text", text);
       json(res, 202, { ok: true });
-      const route = routeMessage(text);
       const t = await telemetry();
       if (route.kind === "refused") return void say(row.id, "agent", "error", route.reason);
       if (route.kind === "stop") { watches.get(row.id)?.abort(); return void say(row.id, "agent", "watch", "Stopping the deployment watch."); }
@@ -206,6 +232,9 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "POST" && (action === "approve" || action === "reject")) {
       const by = String((await body(req)).by ?? "").trim();
+      if (triaging.has(row.id) || deciding.has(row.id) || !incidentActions(store.get(row.id) ?? row, store.messages(row.id)).canDecide) return json(res, 409, { error: "This proposal cannot be decided now. Refresh the incident." });
+      deciding.add(row.id);
+      try {
       const existing = await readApproval(APPROVALS, row.id);
       if (!existing.ok) return json(res, 400, { error: "no pending approval — investigate first" });
       const signed = decide(existing.value, action === "approve" ? "approved" : "rejected", by, new Date().toISOString());
@@ -213,36 +242,56 @@ const server = createServer(async (req, res) => {
       await writeApproval(APPROVALS, signed.value);
       say(row.id, "user", "approval", JSON.stringify(signed.value));
       return json(res, 200, signed.value);
+      } finally { deciding.delete(row.id); }
     }
     if (req.method === "POST" && action === "execute") {
+      if (triaging.has(row.id) || executing.has(row.id) || !actions.canExecute) return json(res, 409, { error: triaging.has(row.id) ? "Wait for the investigation to finish." : actions.next });
       const f = loadIncident(row);
       if (!f) return json(res, 400, { error: "no investigation on this incident" });
+      executing.add(row.id);
+      recordRecovery(row.id, { status: "running" });
       json(res, 202, { ok: true });
+      try {
       const fixAt = new Date().toISOString();
       const r = await execute(f.incident, { shopUrl: SHOP, approvalsDir: APPROVALS, telemetryPath: f.telemetry, log: (l) => say(row.id, "system", "executor", l) });
-      if (!r.ok) return void say(row.id, "system", "error", `REFUSED executor\n- ${r.errors.join("\n- ")}`);
+      if (!r.ok) {
+        recordRecovery(row.id, { status: "blocked", reason: `Executor refused: ${r.errors.join("; ")}. Inspect the evidence; do not retry blindly.` });
+        return;
+      }
       say(row.id, "system", "executor", `applied ${r.value.plan.from_version} → ${r.value.plan.to_version} with ${r.value.evidence.verified_ok} verified checkouts. Watching the metric land (3 checks) …`);
-      const metric = JSON.parse(store.messages(row.id).find((x) => x.kind === "diagnosis")?.text ?? "{}").watch_metric === "p95_ms" ? "p95_ms" : "error_rate";
+      const metric = JSON.parse(messages.filter((x) => x.kind === "diagnosis").at(-1)?.text ?? "{}").watch_metric === "p95_ms" ? "p95_ms" : "error_rate";
       const windowMs = Number(process.env.AGENT_WATCH_WINDOW_MS ?? 60_000);
       // Three bounded checks at half / full / double the window — not a polling loop.
       const delays = [windowMs / 2, windowMs / 2, windowMs];
       for (const [i, label] of (["half", "full", "double"] as const).entries()) {
         await new Promise((r2) => setTimeout(r2, delays[i]));
-        const t = await telemetry(); if (!t) break;
+        const t = await telemetry();
+        if (!t) {
+          recordRecovery(row.id, { status: "blocked", reason: `Missing telemetry at the ${label} check. Recovery is unknown. Keep the incident open and investigate; do not repeat rollback.` });
+          return;
+        }
         const w = watchMetric(t, metric, f.incident.fired_at, fixAt, windowMs / 60_000);
         const c = w.checks[i];
         say(row.id, "agent", "watch", `${label} check @${c?.at.slice(11, 19)}: ${metric} = ${c?.value ?? "no data"} (baseline ${w.baseline}, limit ${w.limit}) ${c?.ok ? "✓" : "✗"}`);
-        if (label === "double") say(row.id, "agent", "text", w.landed ? "LANDED. Only a human marks this resolved." : "NOT LANDED. The metric did not return to baseline within the window — do not close; investigate further or escalate per routing.");
+        if (label === "double") recordRecovery(row.id, completedRecovery(w));
       }
+      } catch (error) {
+        recordRecovery(row.id, { status: "blocked", reason: `Execution or recovery failed: ${(error as Error).message}. Keep the incident open and inspect the evidence.` });
+      } finally { executing.delete(row.id); }
       return;
     }
     if (req.method === "POST" && action === "state") {
       const b = await body(req);
       const by = String(b.by ?? "").trim();
       const notes = String(b.notes ?? "").trim();
+      if (b.state !== "mitigated" && b.state !== "resolved") return json(res, 400, { error: "Choose mitigated or resolved. Closed incidents cannot be reopened here." });
+      if (!by) return json(res, 400, { error: "A named human is required to mitigate or resolve." });
+      if (closing.has(row.id)) return json(res, 409, { error: "Resolution is being saved. Wait for the result." });
+      const current = incidentActions(store.get(row.id) ?? row, store.messages(row.id));
+      if (triaging.has(row.id) || (b.state === "mitigated" ? !current.canMitigate : !current.canResolve)) return json(res, 409, { error: triaging.has(row.id) ? "Wait for the investigation to finish." : current.next });
       if (b.state === "resolved" && notes.length === 0) return json(res, 400, { error: "resolution notes are required — they become the lesson" });
+      closing.add(row.id);
       try {
-        const r = store.setState(row.id, b.state as IncidentRow["state"], by);
         if (b.state === "resolved") {
           const diag = store.messages(row.id).filter((x) => x.kind === "diagnosis").pop();
           const rec = diag ? (JSON.parse(diag.text) as Recommendation) : undefined;
@@ -251,8 +300,10 @@ const server = createServer(async (req, res) => {
           say(row.id, "user", "text", `Resolution notes: ${notes}`);
           say(row.id, "system", "text", `lesson written → ${path} (human-authored, provenance ${row.id} by ${by})`);
         }
+        const r = store.setState(row.id, b.state, by);
         broadcast("incidents", store.list()); return json(res, 200, r);
       } catch (e) { return json(res, 400, { error: (e as Error).message }); }
+      finally { closing.delete(row.id); }
     }
   }
   json(res, 404, { error: "not found" });

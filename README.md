@@ -32,94 +32,70 @@ uses fixed criteria (error rate above 2% or p95 above 2000 ms, sustained for
 about 5 minutes; set `AGENT_LISTEN_WINDOW_MIN=1` for a faster demo). The agent
 is never the detector.
 
-## Set up
+## Start here
 
-You need:
+| You are | Open | First action |
+| --- | --- | --- |
+| Participant | [Participant card](PARTICIPANT.md) | Extract `starter.zip`, run `npm start` |
+| Facilitator | [Run sheet](FACILITATOR.md) | Build and rehearse the starter and checkpoint packages |
+| Coding agent | [AGENTS.md](AGENTS.md), then [CLAUDE.md](CLAUDE.md) | Identify the copy and read the human boundaries |
 
-- **Node.js 22 or newer** (check with `node --version`) and npm.
-- **Claude Code**, signed in with your own account (`claude`, then `/login`).
-  Claude Code is your builder.
-- **No API key.** The agent runs offline by default: a scripted investigator
-  drives the same tools against the same data. Its output demonstrates the
-  pipeline; it is not model evidence.
+You need Node.js 22+ with `node:sqlite` support and npm. The first start installs
+missing dependencies, so npm access is needed once. The lab runtime is offline.
+No Git, API key, or Claude Code login is required for the core tasks.
 
-```bash
-git clone <repo-url> sre-oncall-agent   # the URL your facilitator gives you
-cd sre-oncall-agent
-git checkout workshop/start             # the lab branch
-git switch -c my/workshop-5              # your own working branch
-npm ci
-npm run fixtures
-npm test                                # green: the main suite
-npm run test:workshop                   # red: the exercises (by design)
+## Run the lab
+
+In the extracted starter folder, beside `package.json`:
+
+```text
+npm start
 ```
 
-Start Claude Code in the folder (`claude`) and run `/status`: it shows the
-guard and progress hooks from `.claude/settings.json`.
+Open **http://localhost:4320**. Keep the launcher running. It starts shop,
+traffic, and console, but never injects a fault or approves an action.
+For one-minute detection instead of five, use `npm start -- --fast`.
+Recovery policy is unchanged. Stop with Ctrl+C. Restart after source edits.
 
-## Run it
+When Core task 3 tells you to, run this once in a second terminal:
 
-Three terminals:
-
-```bash
-npm run shop                                        # 1 · the checkout shop on :4310
-npm run traffic                                     # 2 · traffic
-npm run console                                     # 3 · the console on :4320
+```text
+npm run chaos -- deploy v2.15.0 --mode bad-deploy
 ```
 
-Keep all three terminals running. Use a fourth terminal to break the shop:
+The three core tasks are **read evidence**, **build and test one read-only
+tool**, and **judge live recovery**. Follow [WORKSHOP.md](WORKSHOP.md).
+A safe stop after NOT LANDED is a valid result. A human decides in the console.
 
-```bash
-npm run chaos -- deploy v2.15.0 --mode bad-deploy   # a bad deploy
-npm run chaos -- degrade --mode slow                # the same kind of fault, no deploy record
+## Choose the right copy
+
+The facilitator runs `npm run workshop:pack -- --output ../workshop5-pack`
+from a clean, committed reference checkout. The output contains:
+
+- `starter.zip`: only the A5 read-only tool exercise is incomplete. Controls remain implemented.
+- `checkpoint.zip`: solved code for explicit catch-up or facilitator demonstrations.
+- A manifest recording the source commit.
+
+Each archive has its own root folder and WORKSHOP-PACKAGE.md label. Extract
+into new, separate folders. Never overwrite participant work or copy runtime
+records between copies. A GitHub source ZIP is the reference, not this starter.
+
+The historical `workshop/start` branch and `w5-step-*` tags remain available
+for [optional A1–A9 depth](WORKSHOP-ADVANCED.md). They contain deliberate
+control gaps and older guides. Do not mix them with the core package.
+[SOLO.md](SOLO.md) retains the full self-study sequence.
+
+## Record evidence
+
+Use `intent.md` for your boundary and checks. Keep fixture and live observations
+separate in `docs/diagnosis-live.md`. Record actual command results with:
+
+```text
+npm run progress:note -- "Core 2: focused tool tests passed"
 ```
 
-Other useful commands:
-
-```bash
-npm run demo                 # the whole loop on a bad deploy, about 2 minutes
-npm run doctor               # preflight check
-npm run progress             # which assignments already have evidence
-npm run workshop:check       # the TODO markers you still have to fill in
-npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run   # INC-1001 from fixtures
-```
-
-## The file flow
-
-Each step of the AI SDLC leaves one file behind. Write them in this order:
-
-1. **`intent.md`** — who the agent serves, the boundary, and three checks a
-   stranger can verify.
-2. **`docs/spec.md`** — the contract the code must meet.
-3. **`docs/plan.md`** — the steps, smallest first, and the checks.
-4. **`PROGRESS.md`** — the build log: append-only. The progress hook appends
-   an entry when it sees file or code-pattern evidence for an assignment.
-   This is not a test result. Add your own results with
-   `npm run progress:note -- "A3: contract tests passed"` after you run them.
-   Nobody rewrites old lines.
-5. **`REVIEW.md`** — the review checklist you run before you share a change.
-
-## The assignment
-
-Build the agent piece by piece, test first: **Intent → Spec → Design/controls
-→ Build → Test/evals → Gate → Maintain.** The `workshop/start` branch has
-four pieces removed (`TODO(A3/A4/A5/A8)`); the red tests in `test/workshop/`
-turn green as you rebuild them.
-
-| # | Assignment |
-| --- | --- |
-| A1 | Setup check: install, green main suite, console up, Claude Code connected |
-| A2 | Write your team `intent.md` |
-| A3 | Spec + contract: the evidence rules and the new `customer_impact` field, test-first |
-| A4 | Controls: chat refuses mutations again; add your own guard rule by hand |
-| A5 | Build the read-only `list_deploys` tool |
-| A6 | Diagnose a live incident from the console |
-| A7 | Pass the bench and add one case; the ratchet only goes up |
-| A8 | The gate: the executor acts only on a NAMED human approval |
-| A9 | Maintain: resolve the incident with notes that become a lesson |
-
-The full steps, catch-up commands and step tags are in
-**[WORKSHOP.md](WORKSHOP.md)**. Working alone? Follow **[SOLO.md](SOLO.md)**.
+Never edit PROGRESS.md directly. `npm run progress` checks file patterns;
+it does not run tests. The participant card lists the real verification commands.
 
 ## The rules
 

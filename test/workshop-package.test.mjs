@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -53,6 +54,15 @@ test("package builder emits clearly rooted starter and checkpoint archives from 
     assert.equal(result.status, 0, result.stderr);
     const starter = join(output, "starter.zip");
     const checkpoint = join(output, "checkpoint.zip");
+    const manifest = JSON.parse(readFileSync(join(output, "manifest.json"), "utf8"));
+    assert.equal(manifest.sourceCommit, git(dir, ["rev-parse", "HEAD"]).trim());
+    assert.deepEqual(manifest.archives.map(({ name, kind }) => ({ name, kind })), [
+      { name: "starter.zip", kind: "starter" },
+      { name: "checkpoint.zip", kind: "checkpoint" },
+    ]);
+    for (const entry of manifest.archives) {
+      assert.equal(entry.sha256, createHash("sha256").update(readFileSync(join(output, entry.name))).digest("hex"));
+    }
     for (const [zip, prefix] of [[starter, "starter/"], [checkpoint, "checkpoint/"]]) {
       const names = zipNames(zip);
       assert.ok(names.length > 0);

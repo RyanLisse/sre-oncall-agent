@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const usage = () => {
   console.log(`Build the offline Workshop 5 participant packages.
@@ -13,9 +14,10 @@ Usage:
 
 The command requires Git, reads committed HEAD only, and refuses a relevant
 dirty worktree or an existing destination. It writes starter.zip (the bounded
-A5 list_deploys exercise) and checkpoint.zip (the solved HEAD). Each archive
-has its own starter/ or checkpoint/ root folder. Participants do not need Git
-to use an archive; npm start is optional local launcher tooling.`);
+A5 list_deploys exercise), checkpoint.zip (the solved HEAD), and manifest.json
+with the source commit and each archive's SHA-256. Each archive has its own
+starter/ or checkpoint/ root folder. Participants do not need Git to use an
+archive; npm start is optional local launcher tooling.`);
 };
 
 const fail = (message) => {
@@ -171,6 +173,12 @@ const main = () => {
   } finally {
     rmSync(indexDir, { recursive: true, force: true });
   }
+  const archives = ["starter", "checkpoint"].map((kind) => {
+    const name = `${kind}.zip`;
+    const digest = createHash("sha256").update(readFileSync(join(destination, name))).digest("hex");
+    return { name, kind, sha256: digest };
+  });
+  writeFileSync(join(destination, "manifest.json"), `${JSON.stringify({ sourceCommit: sha, archives }, null, 2)}\n`);
   console.log(`Wrote starter.zip and checkpoint.zip to ${destination}`);
   console.log(`Source HEAD: ${sha}`);
 };

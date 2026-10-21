@@ -134,6 +134,12 @@ const runCommand = (command, args, options = {}) =>
     });
   });
 
+const dependencyInstallSpec = (env = process.env, platform = process.platform) => {
+  if (platform !== "win32") return { command: "npm", args: ["ci"] };
+  if (env.npm_execpath) return { command: process.execPath, args: [env.npm_execpath, "ci"] };
+  return { command: env.ComSpec ?? env.COMSPEC ?? "cmd.exe", args: ["/d", "/s", "/c", "npm ci"] };
+};
+
 const ensureRuntime = async () => {
   const major = Number(process.versions.node.split(".")[0]);
   if (major < 22) {
@@ -152,9 +158,9 @@ const ensureDependencies = async () => {
   );
   if (!missing) return;
   console.log("Dependencies are missing; running npm ci once.");
-  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+  const install = dependencyInstallSpec();
   try {
-    await runCommand(npmCommand, ["ci"]);
+    await runCommand(install.command, install.args);
   } catch (error) {
     fail(`npm ci could not install dependencies: ${error.message}. Run npm ci from the workshop directory and retry.`);
   }
@@ -239,7 +245,7 @@ const waitForReady = async (session, url, label) => {
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
-export { archiveTelemetry, parsePort, preflightPorts, validateLocalOverrides };
+export { archiveTelemetry, dependencyInstallSpec, parsePort, preflightPorts, validateLocalOverrides };
 
 const main = async () => {
   const options = parseArgs(process.argv.slice(2));

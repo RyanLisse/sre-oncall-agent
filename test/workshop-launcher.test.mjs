@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
+import { dependencyInstallSpec } from "../scripts/start-workshop.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const launcher = join(root, "scripts", "start-workshop.mjs");
@@ -74,4 +75,15 @@ test("launcher refuses a busy shop port without killing its owner", async () => 
   } finally {
     await new Promise((resolveClose) => busy.close(resolveClose));
   }
+});
+
+test("Windows dependency installation invokes npm through Node or a static cmd fallback", () => {
+  assert.deepEqual(
+    dependencyInstallSpec({ npm_execpath: "C:\\node\\node_modules\\npm\\bin\\npm-cli.js" }, "win32"),
+    { command: process.execPath, args: ["C:\\node\\node_modules\\npm\\bin\\npm-cli.js", "ci"] },
+  );
+  assert.deepEqual(
+    dependencyInstallSpec({ ComSpec: "C:\\Windows\\System32\\cmd.exe" }, "win32"),
+    { command: "C:\\Windows\\System32\\cmd.exe", args: ["/d", "/s", "/c", "npm ci"] },
+  );
 });
