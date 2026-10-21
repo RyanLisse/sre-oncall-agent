@@ -31,7 +31,7 @@ export interface MessageRow {
   readonly id: number;
   readonly incident_id: string;
   readonly role: "user" | "agent" | "system";
-  readonly kind: "text" | "diagnosis" | "tool" | "watch" | "approval" | "executor" | "error";
+  readonly kind: "text" | "diagnosis" | "tool" | "watch" | "approval" | "executor" | "error" | "recovery";
   readonly text: string;
   readonly at: string;
 }

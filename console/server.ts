@@ -34,6 +34,7 @@ import { ask, investigateFromChat, routeMessage } from "../src/chat.js";
 import { parseIncident, type Incident } from "../src/contract.js";
 import { runWatch } from "../src/deployWatch.js";
 import { execute } from "../src/executor.js";
+import { nextAction, type Action } from "../src/nextAction.js";
 import { appendResolutionLesson, lessonsStore, renderResolutionLesson } from "../src/lessons.js";
 import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
@@ -136,6 +137,16 @@ const listen = async () => {
 const json = (res: ServerResponse, status: number, data: unknown) => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(data)); };
 const body = (req: IncomingMessage): Promise<Record<string, unknown>> => new Promise((r) => { let s = ""; req.on("data", (c: Buffer) => (s += c)); req.on("end", () => { try { r(JSON.parse(s || "{}")); } catch { r({}); } }); });
 const watches = new Map<string, AbortController>();
+/** Executor calls in flight: a second click while the first runs is refused. */
+const executing = new Set<string>();
+const next = (row: IncidentRow) => nextAction(row.state, store.messages(row.id));
+/** Refuse any button that is not the next allowed action. */
+const allowed = (res: ServerResponse, row: IncidentRow, action: Action): boolean => {
+  const n = next(row);
+  if (n.allowed.includes(action) && !executing.has(row.id)) return true;
+  json(res, 409, { error: `not allowed now: ${action}. Next: ${n.title}`, next: n });
+  return false;
+};
 
 // ── routes ───────────────────────────────────────────────────────────────
 const server = createServer(async (req, res) => {
@@ -178,7 +189,7 @@ const server = createServer(async (req, res) => {
     const [, id, action] = m;
     const row = store.get(id as string);
     if (!row) return json(res, 404, { error: "no such incident" });
-    if (req.method === "GET" && !action) return json(res, 200, { incident: row, messages: store.messages(row.id) });
+    if (req.method === "GET" && !action) return json(res, 200, { incident: row, messages: store.messages(row.id), next: executing.has(row.id) ? { title: "Wait: the executor is running", detail: "Verifying checkouts on the rolled-back version.", allowed: [] } : next(row) });
 
     if (req.method === "POST" && action === "chat") {
       const text = String((await body(req)).text ?? "").trim();
@@ -205,6 +216,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && (action === "approve" || action === "reject")) {
+      if (!allowed(res, row, action)) return;
       const by = String((await body(req)).by ?? "").trim();
       const existing = await readApproval(APPROVALS, row.id);
       if (!existing.ok) return json(res, 400, { error: "no pending approval — investigate first" });
@@ -217,10 +229,14 @@ const server = createServer(async (req, res) => {
     if (req.method === "POST" && action === "execute") {
       const f = loadIncident(row);
       if (!f) return json(res, 400, { error: "no investigation on this incident" });
+      if (!allowed(res, row, "execute")) return;
+      executing.add(row.id); broadcast("incidents", store.list());
       json(res, 202, { ok: true });
       const fixAt = new Date().toISOString();
       const r = await execute(f.incident, { shopUrl: SHOP, approvalsDir: APPROVALS, telemetryPath: f.telemetry, log: (l) => say(row.id, "system", "executor", l) });
-      if (!r.ok) return void say(row.id, "system", "error", `REFUSED executor\n- ${r.errors.join("\n- ")}`);
+      executing.delete(row.id);
+      if (!r.ok) { say(row.id, "system", "error", `REFUSED executor\n- ${r.errors.join("\n- ")}`); return void broadcast("incidents", store.list()); }
+      say(row.id, "system", "recovery", JSON.stringify({ phase: "running" }));
       say(row.id, "system", "executor", `applied ${r.value.plan.from_version} → ${r.value.plan.to_version} with ${r.value.evidence.verified_ok} verified checkouts. Watching the metric land (3 checks) …`);
       const metric = JSON.parse(store.messages(row.id).find((x) => x.kind === "diagnosis")?.text ?? "{}").watch_metric === "p95_ms" ? "p95_ms" : "error_rate";
       const windowMs = Number(process.env.AGENT_WATCH_WINDOW_MS ?? 60_000);
@@ -228,16 +244,25 @@ const server = createServer(async (req, res) => {
       const delays = [windowMs / 2, windowMs / 2, windowMs];
       for (const [i, label] of (["half", "full", "double"] as const).entries()) {
         await new Promise((r2) => setTimeout(r2, delays[i]));
-        const t = await telemetry(); if (!t) break;
+        const t = await telemetry();
+        if (!t) { say(row.id, "system", "recovery", JSON.stringify({ phase: "done", landed: false, failed: [`${label} check: no telemetry at ${TELEMETRY}`] })); broadcast("incidents", store.list()); break; }
         const w = watchMetric(t, metric, f.incident.fired_at, fixAt, windowMs / 60_000);
         const c = w.checks[i];
         say(row.id, "agent", "watch", `${label} check @${c?.at.slice(11, 19)}: ${metric} = ${c?.value ?? "no data"} (baseline ${w.baseline}, limit ${w.limit}) ${c?.ok ? "✓" : "✗"}`);
-        if (label === "double") say(row.id, "agent", "text", w.landed ? "LANDED. Only a human marks this resolved." : "NOT LANDED. The metric did not return to baseline within the window — do not close; investigate further or escalate per routing.");
+        if (label === "double") {
+          say(row.id, "agent", "text", w.landed
+            ? "LANDED. The full and double checks passed. Only a human marks this mitigated and resolved."
+            : `NOT LANDED. The full and double checks must both pass; the half check may fail.\nFailed:\n- ${w.failed.join("\n- ")}\nDo not close and do not execute again. Read the metric window and logs, then investigate or escalate.`);
+          say(row.id, "system", "recovery", JSON.stringify({ phase: "done", landed: w.landed, failed: w.failed }));
+          broadcast("incidents", store.list());
+        }
       }
       return;
     }
     if (req.method === "POST" && action === "state") {
       const b = await body(req);
+      if (b.state !== "mitigated" && b.state !== "resolved") return json(res, 400, { error: "state must be mitigated or resolved" });
+      if (!allowed(res, row, b.state === "resolved" ? "resolve" : "mitigated")) return;
       const by = String(b.by ?? "").trim();
       const notes = String(b.notes ?? "").trim();
       if (b.state === "resolved" && notes.length === 0) return json(res, 400, { error: "resolution notes are required — they become the lesson" });
