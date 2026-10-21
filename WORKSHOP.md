@@ -11,24 +11,42 @@ optional (`AGENT_MODEL=<name>`).
 
 ## Setup
 
+Keep this guide open on the repository's default branch in your browser.
+The starter branch and checkpoint tags contain older copies of the guide.
+Use those refs for code, not for the current instructions.
+
 ```bash
 git clone <repo-url>            # the URL your facilitator gives you
 cd sre-oncall-agent
 git checkout workshop/start
-npm ci && npm run fixtures
+git switch -c my/workshop-5
+npm ci
+npm run fixtures
 npm test                        # green: the main suite
 npm run test:workshop           # red: the exercises (by design)
 npm run console                 # http://localhost:4320
 ```
 
-`workshop/start` has four pieces removed (the TODO(A3/A4/A5/A8) markers —
-`npm run workshop:check` lists them). `npm test` stays green; the red tests
+`workshop/start` has five cut markers across A3, A4, A5 and A8 —
+`npm run workshop:check` lists them. `npm test` stays green; the red tests
 live in `test/workshop/`. `npm run progress` shows which assignments already
 have evidence.
 
-Behind? Catch up with `git checkout w5-step-N -- <files>` — each tag is the
-solved state after assignment N (see the table). `git diff w5-step-N w5-step-M`
-shows exactly one step.
+Work on your own branch. Do not push to the shared `workshop/start` branch.
+The empty console is correct at A1. The shop is an HTTP API, not a storefront.
+Open the console at `http://localhost:4320`. The shop health response is at
+`http://localhost:4310/health` once you start the shop in A6.
+
+Behind? First commit your work, or use `git stash push -u -m "before catch-up"`.
+Then use the exact tag and file list in the table below. The command replaces
+those files and stages them. Read `git diff --cached` before you continue.
+The numeric tag suffix is not the assignment number: A3 uses `w5-step-2-spec-contract`.
+Do not copy approvals or lessons from a solved state. Make your own records.
+
+`npm run progress` checks for files and code patterns. It does not run tests
+or prove that the UI works. Record the commands and results yourself:
+`npm run progress:note -- "A3: contract tests passed; dry run accepted"`.
+Only write that note after you have run those checks.
 
 ## Two gates — don't confuse them
 
@@ -50,8 +68,8 @@ shows exactly one step.
 | A5 | Build a read-only tool | `git checkout w5-step-4-build-tool -- src/tools.ts` | `w5-step-4-build-tool` |
 | A6 | Diagnose a live incident | `git checkout w5-step-5-diagnose -- docs/diagnosis-live.md` | `w5-step-5-diagnose` |
 | A7 | Pass the bench. Add a case. | `git checkout w5-step-6-eval -- bench/cases.json` | `w5-step-6-eval` |
-| A8 | The gate: approve with your name | `git checkout w5-step-7-gate -- src/executor.ts approvals/` | `w5-step-7-gate` |
-| A9 | Maintain + your hackathon intent.md | `git checkout w5-step-8-maintain -- lessons/lessons.md docs/hackathon-intent.md` | `w5-step-8-maintain` |
+| A8 | The gate: approve with your name | `git checkout w5-step-7-gate -- src/executor.ts` | `w5-step-7-gate` |
+| A9 | Maintain + your hackathon intent.md | `git checkout w5-step-8-maintain -- docs/hackathon-intent.md` then write your own resolution notes | `w5-step-8-maintain` |
 
 ## A1 — Setup check
 
@@ -77,10 +95,13 @@ test-first. `test/workshop/contract.test.ts` is red now. Write down the
 contract in `docs/spec.md`, then make it pass in `src/contract.ts`
 (`TODO(A3)`). `customer_impact` is required, so add it to the offline
 verdicts in `src/runtime.ts` and the verdict fixtures in
-`test/contract.test.ts` too. With only `src/contract.ts` changed, `npm test`
-shows 5 failures and the dry run prints `FAIL contract`. The console must
+`test/contract.test.ts` too. Changing only `src/contract.ts` leaves these
+verdicts incomplete. The console must
 still render a diagnosis — run one in
 `npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run`.
+Run only the A3 tests while you build: `npx tsx --test test/workshop/contract.test.ts`.
+Other assignment tests remain red until you implement those assignments.
+Restart the console after code changes. It does not reload source files.
 
 ## A4 — Wire and prove the controls
 
@@ -103,14 +124,34 @@ investigation and see `list_deploys` in the trace.
 
 **Goal:** the full loop on live telemetry.
 
-- Terminal 1: `npm run shop` (the checkout service, `localhost:4310`)
-- Terminal 2: `npm run traffic`, then `npm run chaos -- deploy v2.15.0 --mode bad-deploy`
+- First finish A3, A4 and A5. Restart the console to load your changes.
+- Terminal 1: `npm run console` (keep it running).
+- Terminal 2: `npm run shop` (keep it running).
+- Terminal 3: `npm run traffic` (keep it running).
+- Terminal 4: `npm run chaos -- deploy v2.15.0 --mode bad-deploy`.
 - The console raises the incident (deterministic listener) after the error
   rate stays above 2% for about 5 minutes (`AGENT_LISTEN_WINDOW_MIN=1` for a
-  faster demo). Open it: read the diagnosis and match every evidence ref to
-  the trace line of the tool that produced it.
+  faster demo). Live incident IDs differ from the fixture's `INC-1001`.
+  Open the incident. The trace shows tool names and inputs, not returned IDs.
+  Read the references in the diagnosis and find the matching entries in
+  `demo/data/telemetry.json`. References are text, not clickable links.
 - In chat, challenge it: *"Could this be something other than the deployment?"*
+- Offline chat returns a scripted summary, not a new model investigation.
+  Compare `ruled_out` and `would_change_my_mind` in the diagnosis.
 - Save the diagnosis to `docs/diagnosis-live.md` (template header there).
+
+The default detection window is five minutes. For a one-minute demo, stop
+the console with Ctrl+C, then use the command for your shell:
+
+| Shell | Console command |
+| --- | --- |
+| bash or zsh | `AGENT_LISTEN_WINDOW_MIN=1 npm run console` |
+| PowerShell | `$env:AGENT_LISTEN_WINDOW_MIN='1'; npm run console` |
+| cmd | `set "AGENT_LISTEN_WINDOW_MIN=1" && npm run console` |
+
+This changes detection only. Recovery checks still take about two minutes.
+If no incident opens, check that traffic and the shop are running and that
+the console header shows telemetry. An empty incident list is not proof of health.
 
 ## A7 — Pass the bench. Add a case.
 
@@ -133,8 +174,16 @@ your name → Execute → watch the three verified checkouts → **LANDED** → 
 mitigated. And confirm chat still refuses *"roll back now"* — a button, not a
 sentence.
 
+Restart the console after you change the executor. Keep traffic running
+during execution. The watch takes about two minutes. An early check can fail
+before recovery appears. Read the final result. If it says `NOT LANDED`, do
+not mark the incident mitigated. Inspect the fresh evidence first.
+`LANDED` does not close the incident. You mark it mitigated, then resolve it
+with your name and notes in A9.
+
 **Optional second half — the git gate.** Branch `fix/<your-name>` off your
-work and try to push it: the guard hook denies the push. Your *neighbour* — a
+work and ask the agent to push it: the guard hook denies that tool call.
+The hook does not intercept raw git commands in a human terminal. Your *neighbour* — a
 named human — runs `npm run approve:git -- <their-name> fix/<your-name>
 "<reason>"` in their own terminal; `npm run check:approval` then passes. The
 agent may never run that command itself.
@@ -150,6 +199,7 @@ it writes a clipboard-ready `HANDOFF.md`.
 
 ## Solved states
 
-`w5-step-8-maintain` equals `main`'s behaviour — same tests pass, same bench.
+`w5-step-8-maintain` is the pinned solved workshop reference. `main` may
+include later changes. Verify both rather than assuming they are identical.
 Every step tag is an ancestor of the next, so a diff shows exactly one
 assignment.

@@ -19,7 +19,7 @@ Everything runs on your own machine. All data is fictional.
 
 | Part | Command | Where |
 | --- | --- | --- |
-| **Checkout shop** — a mock checkout service that writes its own telemetry | `npm run shop` | `http://localhost:4310` |
+| **Checkout shop** — a mock checkout API, not a storefront | `npm run shop` | `http://localhost:4310/health` |
 | **Traffic** — steady checkouts against the shop | `npm run traffic` | — |
 | **Chaos** — your lever to break the shop: a bad deploy, slow latency or errors | `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | modes: `healthy`, `bad-deploy`, `slow`, `errors` |
 | **Console** — the on-call desk: incidents, chat with the agent, approve/execute/resolve buttons, and a JSON API | `npm run console` | `http://localhost:4320` (health: `/api/health`) |
@@ -47,7 +47,8 @@ You need:
 git clone <repo-url> sre-oncall-agent   # the URL your facilitator gives you
 cd sre-oncall-agent
 git checkout workshop/start             # the lab branch
-npm install
+git switch -c my/workshop-5              # your own working branch
+npm ci
 npm run fixtures
 npm test                                # green: the main suite
 npm run test:workshop                   # red: the exercises (by design)
@@ -66,7 +67,7 @@ npm run traffic                                     # 2 · traffic
 npm run console                                     # 3 · the console on :4320
 ```
 
-Then break the shop and watch the console:
+Keep all three terminals running. Use a fourth terminal to break the shop:
 
 ```bash
 npm run chaos -- deploy v2.15.0 --mode bad-deploy   # a bad deploy
@@ -92,8 +93,10 @@ Each step of the AI SDLC leaves one file behind. Write them in this order:
 2. **`docs/spec.md`** — the contract the code must meet.
 3. **`docs/plan.md`** — the steps, smallest first, and the checks.
 4. **`PROGRESS.md`** — the build log: append-only. The progress hook appends
-   an entry when it sees local evidence for an assignment; you add your own
-   lines at the bottom. Nobody rewrites old lines.
+   an entry when it sees file or code-pattern evidence for an assignment.
+   This is not a test result. Add your own results with
+   `npm run progress:note -- "A3: contract tests passed"` after you run them.
+   Nobody rewrites old lines.
 5. **`REVIEW.md`** — the review checklist you run before you share a change.
 
 ## The assignment
