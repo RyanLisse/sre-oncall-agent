@@ -107,7 +107,7 @@ const starterTools = (source) => {
     fail("src/tools.ts does not match the expected A5 source shape; starter transformation was not applied.");
   }
   return source
-    .replace(handler, `  // TODO(A5): bind listDeploys(t, args.since, args.until)\n  list_deploys: () => [],`)
+    .replace(handler, `  // TODO(A5): bind listDeploys(t, args.since, args.until)\n  list_deploys: (_args: { since?: string | undefined; until?: string | undefined }) => [] as ReturnType<typeof listDeploys>,`)
     .replace(registration, `      // TODO(A5): register tool("list_deploys", …) here`);
 };
 

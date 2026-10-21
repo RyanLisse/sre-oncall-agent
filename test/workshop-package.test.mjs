@@ -73,7 +73,7 @@ test("package builder emits clearly rooted starter and checkpoint archives from 
     }
     const starterSource = zipText(starter, "starter/src/tools.ts");
     assert.match(starterSource, /TODO\(A5\)/);
-    assert.match(starterSource, /list_deploys: \(\) => \[\]/);
+    assert.match(starterSource, /list_deploys: \(_args: .*?\) => \[\] as ReturnType<typeof listDeploys>/);
     assert.doesNotMatch(starterSource, /^\s*tool\(\s*"list_deploys"/m);
     assert.match(zipText(checkpoint, "checkpoint/src/tools.ts"), /list_deploys: \(args/);
   } finally {
