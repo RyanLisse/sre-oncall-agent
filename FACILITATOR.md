@@ -38,11 +38,11 @@ three cores and the optional depth.
 | 11:28–11:43 | Core 1: Investigate the evidence | **Core 1** (part 1) | shop broken by the participant; incident raised by the listener; data gap on `list_deploys` |
 | 11:47–12:00 | Core 1: Check the claims | **Core 1** (part 2) | every reference checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
 | 12:00–13:00 | Lunch | Lunch | — |
-| 13:30–13:50 | Optional depth: Your guard rule | Go deeper (A4) · catch-up buffer for core 1 | optional |
+| 13:30–13:50 | Go deeper: your own guard rule (optional) | Go deeper (A4) · catch-up buffer for core 1 | optional |
 | 14:00–14:15 | Core 2: Build a change safely | **Core 2** | `test/workshop/tools.test.ts` green |
 | 14:15–14:40 | Core 2: Prove it on the live incident | **Core 2** (prove it) | focused tool test + typecheck + `PASS bench`; A8 valid-approval assertion remains expected red until Core 3; `list_deploys` in the trace |
 | 14:40–14:55 | Break | Break | — |
-| 15:04–15:15 | Optional depth: A bench case and the ratchet | Go deeper (A7) | optional |
+| 15:04–15:15 | Go deeper: a bench case and the ratchet (optional) | Go deeper (A7) | optional |
 | 15:18–15:35 | Core 3: Judge the recovery | **Core 3** (gate + execute) | `test/workshop/executor.test.ts` green; approved with a name; recovery running |
 | 15:35–15:50 | Core 3: Close it, or stop safely | **Core 3** (judge + close) | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
 | 15:50–16:00 | Close, skills pack, hackathon bridge | Close | `docs/hackathon-intent.md` is optional depth |
@@ -56,8 +56,10 @@ The gaps between boxes are the deck's talk and demo segments.
   install Node 22+.
 - **Core 1** — no incident: the lab terminal must show traffic lines. Use one
   fault trigger only: click **Bad deploy v2.15.0** in the shop OR run the
-  chaos CLI, never both. The shop's checkout counter is local to its process
-  and resets with the shop; the console reads persisted SQLite telemetry.
+  chaos CLI, never both. The shop UI counters cover this browser's checkout
+  requests over the last 30 seconds, not the terminal's traffic. Its chart
+  covers 60 seconds. The console reads server telemetry from
+  `demo/data/telemetry.json`; incident history is stored separately in SQLite.
   Never click Reset to force a green counter or treat it as recovery evidence.
   Without
   `--fast` detection takes five minutes. Check `curl 127.0.0.1:4320/api/incidents`.

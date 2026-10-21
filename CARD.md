@@ -73,7 +73,7 @@ Slides: Core 2: Build a change safely · Core 2: Prove it on the live incident. 
 
 ### 2.3 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
 
-- **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap, and the banner says Approve or reject “rollback”.
+- **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap. The next-step banner asks you to read the evidence before a named approval or rejection.
 - **Check:** The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- "Core 2: …"`
 - **Stuck?** Incident gone? Incident history persists in SQLite, while the shop resets on restart. Do not restart the launcher to reload code; saving auto-reloads the console. For a fresh repeat, use a new disposable checkpoint copy; do not rebreak a stale incident.
 
@@ -89,9 +89,9 @@ Slides: Core 3: Judge the recovery · Core 3: Close it, or stop safely. Replaces
 - **Check:** `npm run verify` and `npm run test:workshop` pass before a human approves the rollback. The console reloads by itself.
 - **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.
 
-### 3.2 Open your incident. The banner says Approve or reject “rollback”. Type your name. Click Approve, then Execute rollback.
+### 3.2 Open your incident and read the diagnosis and evidence. Type your name. Click Approve, then Execute rollback.
 
-- **See:** The banner says Wait: recovery checks are running. About two minutes later it says LANDED or NOT LANDED.
+- **See:** The banner asks you to wait for execution and all three recovery checks. About two minutes later, inspect LANDED or NOT LANDED and the recovery table.
 - **Check:** The half check may fail. The full and double checks must both pass. On NOT LANDED the banner names the failed check, its value and the limit.
 - **Stuck?** A button is grey: the banner says which step is allowed now. The server refuses every other button.
 
