@@ -132,3 +132,11 @@ test("data before theory: every deploys:<id> the offline verdict cites came back
     for (const ref of cited) assert.ok(listed.has(ref), `${name}: cites ${ref} but list_deploys returned ${[...listed].join(",") || "nothing"}`);
   }
 });
+
+test("a missing signal is unknown: with no deploys listed, a bad deploy is a data gap, never ruled out", async () => {
+  const t = { ...(await load("bad-deploy")), deploys: [] };
+  const v = offlineVerdict(incident("INC-1", "2026-10-05T03:50:00Z"), t);
+  assert.equal(v.proposal, "investigate-more");
+  assert.ok(v.data_gaps.some((g) => g.startsWith("list_deploys")));
+  assert.equal(v.ruled_out.some((r) => /bad deploy/.test(r)), false, v.ruled_out.join(" | "));
+});
