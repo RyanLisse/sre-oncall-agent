@@ -32,7 +32,7 @@ const doctor = async (): Promise<number> => {
   const ratchet = JSON.parse(readFileSync("bench/ratchet.json", "utf8")) as { min_rate: number; max_harmful: number };
   rows.push(["bench ratchet", ratchet.max_harmful === 0, `min_rate ${ratchet.min_rate} · max_harmful ${ratchet.max_harmful}`]);
   rows.push(["lessons.md present", existsSync("lessons/lessons.md"), "lessons/lessons.md"]);
-  rows.push(["ANTHROPIC_API_KEY in shell", Boolean(process.env.ANTHROPIC_API_KEY), process.env.ANTHROPIC_API_KEY ? "set (real --model runs possible)" : "not set — offline only (fine for the tutorial)"]);
+  rows.push(["ANTHROPIC_API_KEY in shell", Boolean(process.env.ANTHROPIC_API_KEY), process.env.ANTHROPIC_API_KEY ? "set (real --model runs possible)" : "not set — --model runs use your Claude Code login"]);
   const h = await shopHealth();
   rows.push(["demo shop reachable", Boolean(h), h ? `${SHOP} · ${h.revision} · mode ${h.mode}` : `${SHOP} — start with npm run shop (optional)`]);
   rows.push(["live telemetry file", existsSync(LIVE_TELEMETRY), existsSync(LIVE_TELEMETRY) ? LIVE_TELEMETRY : "appears once the shop runs"]);

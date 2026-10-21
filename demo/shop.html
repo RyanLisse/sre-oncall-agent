@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>checkout-api · demo shop</title>
+<style>
+  :root { --bg:#0b1020; --card:#131a2e; --line:#243052; --text:#e6e9f2; --muted:#8a93ad; --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --accent:#818cf8; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--text); }
+  main { max-width:1100px; margin:0 auto; padding:24px; display:grid; gap:20px; grid-template-columns:1.2fr 1fr; }
+  header { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; }
+  h1 { margin:0; font-size:22px; } h2 { margin:0 0 12px; font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .pill { padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-family:ui-monospace,monospace; font-size:13px; }
+  .pill[data-mode="healthy"] { color:var(--ok); } .pill:not([data-mode="healthy"]) { color:var(--bad); }
+  .products { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .product { border:1px solid var(--line); border-radius:10px; padding:14px; display:grid; gap:8px; }
+  .product .art { width:100%; height:110px; background:#0e1529; border-radius:8px; padding:8px; } .price { color:var(--muted); }
+  button { font:inherit; color:var(--text); background:#1d2645; border:1px solid var(--line); border-radius:9px; padding:9px 12px; cursor:pointer; text-align:left; }
+  button:hover { border-color:var(--accent); } button:disabled { opacity:.5; cursor:wait; }
+  .result { min-height:24px; font-family:ui-monospace,monospace; font-size:13px; margin-top:12px; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .stat b { display:block; font-size:24px; font-variant-numeric:tabular-nums; } .stat span { color:var(--muted); font-size:12px; }
+  #chart { width:100%; height:90px; display:block; }
+  .faults { display:grid; gap:8px; } .faults small { display:block; color:var(--muted); font-size:12px; }
+  .faults .reset { border-style:dashed; }
+  label.toggle { display:flex; gap:8px; align-items:center; cursor:pointer; }
+  .note { color:var(--muted); font-size:12px; margin:12px 0 0; }
+  @media (max-width:800px) { main { grid-template-columns:1fr; } .products { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🛒 checkout-api <span style="color:var(--muted);font-weight:400">· demo shop</span></h1>
+    <span class="pill" id="state" data-mode="healthy">…</span>
+  </header>
+
+  <section>
+    <h2>Shop</h2>
+    <div class="products">
+      <div class="product"><svg class="art" viewBox="0 0 120 90" role="img" aria-label="Headphones">
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
+        <ellipse cx="60" cy="82" rx="38" ry="5" fill="#000" opacity=".35"/>
+        <path d="M32 58 V44 a28 28 0 0 1 56 0 V58" fill="none" stroke="#c7d2fe" stroke-width="6" stroke-linecap="round"/>
+        <rect x="22" y="48" width="18" height="30" rx="8" fill="url(#g1)"/><rect x="80" y="48" width="18" height="30" rx="8" fill="url(#g1)"/>
+        <rect x="27" y="54" width="8" height="18" rx="4" fill="#1e1b4b" opacity=".45"/><rect x="85" y="54" width="8" height="18" rx="4" fill="#1e1b4b" opacity=".45"/>
+      </svg><b>Headphones</b><span class="price">€ 89</span><button data-buy>Buy</button></div>
+      <div class="product"><svg class="art" viewBox="0 0 120 90" role="img" aria-label="Watch">
+        <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs>
+        <ellipse cx="60" cy="84" rx="30" ry="4" fill="#000" opacity=".35"/>
+        <rect x="48" y="4" width="24" height="82" rx="8" fill="#334155"/>
+        <circle cx="60" cy="45" r="25" fill="url(#g2)"/><circle cx="60" cy="45" r="19" fill="#0f172a"/>
+        <g stroke="#fde68a" stroke-linecap="round"><line x1="60" y1="45" x2="60" y2="32" stroke-width="2.5"/><line x1="60" y1="45" x2="70" y2="50" stroke-width="2"/></g>
+        <g fill="#94a3b8"><circle cx="60" cy="29" r="1.3"/><circle cx="76" cy="45" r="1.3"/><circle cx="60" cy="61" r="1.3"/><circle cx="44" cy="45" r="1.3"/></g>
+        <rect x="84" y="41" width="4" height="8" rx="1.5" fill="#f59e0b"/>
+      </svg><b>Watch</b><span class="price">€ 199</span><button data-buy>Buy</button></div>
+      <div class="product"><svg class="art" viewBox="0 0 120 90" role="img" aria-label="Backpack">
+        <defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6ee7b7"/><stop offset="1" stop-color="#059669"/></linearGradient></defs>
+        <ellipse cx="60" cy="84" rx="32" ry="4" fill="#000" opacity=".35"/>
+        <path d="M48 18 a12 10 0 0 1 24 0" fill="none" stroke="#065f46" stroke-width="5"/>
+        <rect x="34" y="16" width="52" height="66" rx="16" fill="url(#g3)"/>
+        <rect x="42" y="50" width="36" height="24" rx="7" fill="#047857"/><line x1="46" y1="58" x2="74" y2="58" stroke="#a7f3d0" stroke-width="2" stroke-linecap="round"/>
+        <path d="M34 30 Q28 50 36 72" fill="none" stroke="#065f46" stroke-width="3"/><path d="M86 30 Q92 50 84 72" fill="none" stroke="#065f46" stroke-width="3"/>
+      </svg><b>Backpack</b><span class="price">€ 59</span><button data-buy>Buy</button></div>
+    </div>
+    <div class="result" id="result">Click Buy to place one checkout.</div>
+
+    <h2 style="margin-top:20px">Traffic</h2>
+    <div class="stats">
+      <div class="stat"><b id="rps">0</b><span>checkouts / s</span></div>
+      <div class="stat"><b id="err">0%</b><span>error rate · last 30 s</span></div>
+      <div class="stat"><b id="p95">–</b><span>p95 ms · last 30 s</span></div>
+    </div>
+    <svg id="chart" viewBox="0 0 300 90" preserveAspectRatio="none" aria-label="error rate per second, last 60 s"></svg>
+    <label class="toggle"><input type="checkbox" id="traffic" checked> Simulate customers (10 checkouts / s)</label>
+  </section>
+
+  <section>
+    <h2>Make something break</h2>
+    <div class="faults">
+      <button data-deploy="v2.15.0" data-mode="bad-deploy">💥 Bad deploy v2.15.0<small>12% errors · PaymentConfigError · has a deploy record</small></button>
+      <button data-deploy="v2.15.1" data-mode="slow">🐢 Slow deploy v2.15.1<small>p95 ~3000 ms · DbTimeout · has a deploy record</small></button>
+      <button data-deploy="v2.15.2" data-mode="errors">❓ Mystery deploy v2.15.2<small>5% errors · upstream 502, no useful log</small></button>
+      <button data-degrade="slow">🔌 Database slow (no deploy)<small>latency fault without a change record → rollback is wrong</small></button>
+      <button data-degrade="errors">🌩️ Upstream 502 (no deploy)<small>errors without a change record → investigate more</small></button>
+      <button data-degrade="healthy" class="reset">↺ Reset to healthy<small>facilitator lever, not a rollback · the real fix goes via approve + execute</small></button>
+    </div>
+    <p class="note">These buttons are the operator's lever, the same as <code>npm run chaos</code>. The agent never sees this page. It only reads the telemetry the shop writes, and the console (port 4320) raises the alert.</p>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const window30 = []; // { t, ok, ms }
+const perSecond = new Map(); // second → { n, errors }
+
+async function checkout() {
+  const t0 = performance.now();
+  try {
+    const r = await fetch("/checkout", { method: "POST" });
+    const body = await r.json();
+    record(r.ok, Math.round(performance.now() - t0));
+    return body;
+  } catch { record(false, Math.round(performance.now() - t0)); return { ok: false, error: "network" }; }
+}
+
+function record(ok, ms) {
+  const t = Date.now(); window30.push({ t, ok, ms });
+  const s = Math.floor(t / 1000); const b = perSecond.get(s) ?? { n: 0, errors: 0 }; b.n++; if (!ok) b.errors++; perSecond.set(s, b);
+}
+
+function render() {
+  const now = Date.now();
+  while (window30.length && window30[0].t < now - 30000) window30.shift();
+  const n = window30.length, errors = window30.filter((x) => !x.ok).length;
+  const lat = window30.map((x) => x.ms).sort((a, b) => a - b);
+  $("#err").textContent = n ? (100 * errors / n).toFixed(1) + "%" : "0%";
+  $("#err").className = n && errors / n > 0.02 ? "bad" : "ok";
+  $("#p95").textContent = lat.length ? lat[Math.floor(lat.length * 0.95)] : "–";
+  $("#rps").textContent = (window30.filter((x) => x.t > now - 5000).length / 5).toFixed(1);
+  const sec = Math.floor(now / 1000), bars = [];
+  for (let i = 59; i >= 0; i--) {
+    const b = perSecond.get(sec - i); const rate = b && b.n ? b.errors / b.n : 0; const h = Math.min(1, rate / 0.2) * 84;
+    bars.push(`<rect x="${(59 - i) * 5}" y="${88 - h}" width="4" height="${h || 1}" fill="${rate > 0.02 ? "var(--bad)" : "var(--ok)"}"/>`);
+  }
+  const limit = 88 - (0.02 / 0.2) * 84;
+  $("#chart").innerHTML = bars.join("") + `<line x1="0" x2="300" y1="${limit}" y2="${limit}" stroke="var(--warn)" stroke-dasharray="4 3"/>`;
+  for (const k of perSecond.keys()) if (k < sec - 60) perSecond.delete(k);
+}
+
+async function refreshState() {
+  try { const s = await (await fetch("/health")).json(); const el = $("#state"); el.dataset.mode = s.mode; el.textContent = `${s.revision} · ${s.mode}`; } catch {}
+}
+
+async function admin(path, payload, button) {
+  button.disabled = true;
+  try { await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); await refreshState(); }
+  finally { button.disabled = false; }
+}
+
+document.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", async () => {
+  b.disabled = true; const r = await checkout(); b.disabled = false;
+  $("#result").innerHTML = r.ok ? `<span class="ok">✓ paid · ${r.order_id} · ${r.ms} ms · ${r.revision}</span>` : `<span class="bad">✗ ${r.order_id ?? ""} failed · ${r.error ?? "error"}</span>`;
+}));
+document.querySelectorAll("[data-deploy]").forEach((b) => b.addEventListener("click", () => admin("/admin/deploy", { version: b.dataset.deploy, mode: b.dataset.mode, author: "facilitator", summary: b.firstChild.textContent.trim() }, b)));
+document.querySelectorAll("[data-degrade]").forEach((b) => b.addEventListener("click", () => admin("/admin/degrade", { mode: b.dataset.degrade }, b)));
+
+setInterval(() => { if ($("#traffic").checked) checkout(); }, 100);
+setInterval(render, 500);
+setInterval(refreshState, 2000);
+refreshState(); render();
+</script>
+</body>
+</html>
