@@ -38,8 +38,8 @@ import { appendResolutionLesson, lessonsStore, renderResolutionLesson } from "..
 import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
 import { loadTelemetry, summarizeMetrics, type Telemetry } from "../src/telemetry.js";
-import { watchMetric } from "../src/watch.js";
-import { completedRecovery, incidentActions, recoveryFrom, type Recovery } from "../src/recovery.js";
+import { watchMetric, type Check } from "../src/watch.js";
+import { captureRecoveryCheck, completedRecovery, incidentActions, recoveryFrom, type Recovery } from "../src/recovery.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.AGENT_CONSOLE_PORT ?? 4320);
@@ -253,14 +253,21 @@ const server = createServer(async (req, res) => {
       json(res, 202, { ok: true });
       try {
       const fixAt = new Date().toISOString();
+      const metric = JSON.parse(messages.filter((x) => x.kind === "diagnosis").at(-1)?.text ?? "{}").watch_metric === "p95_ms" ? "p95_ms" : "error_rate";
+      const windowMs = Number(process.env.AGENT_WATCH_WINDOW_MS ?? 60_000);
+      const initial = await telemetry();
+      if (!initial) {
+        recordRecovery(row.id, { status: "blocked", reason: "Missing telemetry before execution. Recovery is unknown; inspect the evidence." });
+        return;
+      }
+      const reference = watchMetric(initial, metric, f.incident.fired_at, fixAt, windowMs / 60_000);
+      const observed: Check[] = [];
       const r = await execute(f.incident, { shopUrl: SHOP, approvalsDir: APPROVALS, telemetryPath: f.telemetry, log: (l) => say(row.id, "system", "executor", l) });
       if (!r.ok) {
         recordRecovery(row.id, { status: "blocked", reason: `Executor refused: ${r.errors.join("; ")}. Inspect the evidence; do not retry blindly.` });
         return;
       }
       say(row.id, "system", "executor", `applied ${r.value.plan.from_version} → ${r.value.plan.to_version} with ${r.value.evidence.verified_ok} verified checkouts. Watching the metric land (3 checks) …`);
-      const metric = JSON.parse(messages.filter((x) => x.kind === "diagnosis").at(-1)?.text ?? "{}").watch_metric === "p95_ms" ? "p95_ms" : "error_rate";
-      const windowMs = Number(process.env.AGENT_WATCH_WINDOW_MS ?? 60_000);
       // Three bounded checks at half / full / double the window — not a polling loop.
       const delays = [windowMs / 2, windowMs / 2, windowMs];
       for (const [i, label] of (["half", "full", "double"] as const).entries()) {
@@ -271,9 +278,14 @@ const server = createServer(async (req, res) => {
           return;
         }
         const w = watchMetric(t, metric, f.incident.fired_at, fixAt, windowMs / 60_000);
-        const c = w.checks[i];
-        say(row.id, "agent", "watch", `${label} check @${c?.at.slice(11, 19)}: ${metric} = ${c?.value ?? "no data"} (baseline ${w.baseline}, limit ${w.limit}) ${c?.ok ? "✓" : "✗"}`);
-        if (label === "double") recordRecovery(row.id, completedRecovery(w));
+        const c = captureRecoveryCheck(w, label, reference.limit);
+        if (!c) {
+          recordRecovery(row.id, { status: "blocked", reason: `Missing ${label} recovery check. Keep the incident open and investigate.` });
+          return;
+        }
+        observed.push(c);
+        say(row.id, "agent", "watch", `${label} check @${c.at.slice(11, 19)}: ${metric} = ${c.value ?? "no data"} (baseline ${reference.baseline}, limit ${reference.limit}) ${c.ok ? "✓" : "✗"}`);
+        if (label === "double") recordRecovery(row.id, completedRecovery(reference, observed));
       }
       } catch (error) {
         recordRecovery(row.id, { status: "blocked", reason: `Execution or recovery failed: ${(error as Error).message}. Keep the incident open and inspect the evidence.` });
@@ -311,7 +323,7 @@ const server = createServer(async (req, res) => {
 
 setInterval(() => { void listen(); }, Number(process.env.AGENT_LISTEN_MS ?? 10_000)).unref();
 setInterval(() => { const s = store.flagStale(); if (s.length) broadcast("incidents", store.list()); }, 60_000).unref();
-server.listen(PORT, () => {
+server.listen(PORT, "127.0.0.1", () => {
   console.log(`▶ on-call console  http://localhost:${PORT}`);
   console.log(`  shop ${SHOP} · telemetry ${TELEMETRY} · model ${MODEL ?? "offline"} · listening for alerts every 10 s`);
   console.log(`  alert webhook: curl -XPOST localhost:${PORT}/api/alerts -d '{"alert":"Error rate 12% on checkout"}'`);

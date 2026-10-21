@@ -14,7 +14,7 @@
   .sect { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; margin-top:8px } .pill{background:#e7e5e4;border-radius:10px;padding:0 8px;font-size:12px}
   .inc { padding:8px 10px; border-radius:8px; cursor:pointer; display:flex; gap:10px; align-items:flex-start } .inc:hover{background:#f0efed} .inc.sel{background:#fff;border:1px solid var(--line)}
   .dot{width:8px;height:8px;border-radius:50%;margin-top:7px;flex:none} .dot.active{background:var(--bad)} .dot.stale{background:var(--warn)} .dot.mitigated{background:#2563eb} .dot.resolved{background:var(--ok)}
-  .inc .t{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .inc .d{font-size:12px;color:var(--muted)}
+  .inc > div{min-width:0;flex:1}.inc .t{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .inc .d{font-size:12px;color:var(--muted)}
   .listen { margin-top:auto; font-size:13px; color:var(--muted); display:flex; gap:8px; align-items:center } .listen i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
   main { display:grid; grid-template-rows:auto minmax(0,1fr) auto; height:100vh; min-height:0; }
   header { padding:18px 32px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:14px } header b{color:var(--text)}
@@ -124,9 +124,10 @@ function renderIncident() {
     return `<div class="msg ${m.kind === "text" ? m.role : m.kind}">${esc(m.text)}</div>`;
   }).join("");
   const scroll = $("#body").scrollTop;
+  const followBottom = $("#body").scrollHeight - $("#body").clientHeight - scroll < 40;
   const activeInput = document.activeElement;
   const draft = { by: $("#by")?.value, notes: $("#notes")?.value, open: $("#resolveBox")?.style.display === "flex", focus: activeInput?.id, start: activeInput?.selectionStart, end: activeInput?.selectionEnd };
-  $("#body").innerHTML = `<div class="msgs"><section class="next" aria-label="Next allowed action"><h2>Next step · ${esc(inc.state)}</h2><p>${esc(actions?.next || "Loading incident controls…")}</p><div class="steps">Evidence → named approval → separate execution → recovery checks → human mitigation → human resolution</div></section>${renderRecovery()}${html || `<div class="empty"><h1>What needs a closer look?</h1><p>New alerts arrive here automatically. You can also ask the agent to investigate.</p><button class="sugg" data-q="How is production doing?">How is production doing? ↗</button><button class="sugg" data-q="Watch the next deployment for five minutes.">Watch the next deployment for five minutes. ↗</button><button class="sugg" data-q="Investigate: customers report checkout errors">Investigate: customers report checkout errors ↗</button></div>`}</div>`;
+  $("#body").innerHTML = `<div class="msgs"><section class="next" aria-label="Next allowed action"><h2>Next step · ${esc(inc.state)}</h2><p>${esc(actions?.next || "Loading incident controls…")}</p><div class="steps">Evidence → named approval → separate execution → recovery checks → human mitigation → human resolution</div></section>${html || `<div class="empty"><h1>What needs a closer look?</h1><p>New alerts arrive here automatically. You can also ask the agent to investigate.</p><button class="sugg" data-q="How is production doing?">How is production doing? ↗</button><button class="sugg" data-q="Watch the next deployment for five minutes.">Watch the next deployment for five minutes. ↗</button><button class="sugg" data-q="Investigate: customers report checkout errors">Investigate: customers report checkout errors ↗</button></div>`}${renderRecovery()}</div>`;
   if (draft.by !== undefined && $("#by")) $("#by").value = draft.by;
   if (draft.notes !== undefined && $("#notes")) $("#notes").value = draft.notes;
   if (draft.open && actions?.canResolve) $("#resolveBox").style.display = "flex";
@@ -139,7 +140,7 @@ function renderIncident() {
   $("#mitigated") && ($("#mitigated").onclick = async () => { const r = await api(`/incidents/${sel}/state`, { state: "mitigated", by: by() }); if (r.error) alert(r.error); });
   $("#resolve") && ($("#resolve").onclick = () => { $("#resolveBox").style.display = "flex"; $("#notes").focus(); });
   $("#resolveGo") && ($("#resolveGo").onclick = async () => { const r = await api(`/incidents/${sel}/state`, { state: "resolved", by: by(), notes: $("#notes").value }); if (r.error) alert(r.error); });
-  $("#body").scrollTop = scroll;
+  $("#body").scrollTop = followBottom && draft.focus !== "by" && draft.focus !== "notes" ? $("#body").scrollHeight : scroll;
 }
 
 async function refreshIncident() {

@@ -83,18 +83,30 @@ test("package builder emits clearly rooted starter and checkpoint archives from 
 
 test("package builder rejects relevant dirty source but ignores inherited progress state", () => {
   const dir = fixtureRepo();
+  const outputs = mkdtempSync(join(tmpdir(), "workshop-pack-outputs-"));
   try {
     writeFileSync(join(dir, "src", "tools.ts"), `${toolsSource}\n// dirty\n`);
-    const dirty = runBuilder(dir, join(dir, "dirty-output"));
+    const dirty = runBuilder(dir, join(outputs, "dirty-output"));
     assert.equal(dirty.status, 1);
-    assert.match(dirty.stderr, /Relevant tracked files are dirty/);
+    assert.match(dirty.stderr, /files are dirty/);
 
     writeFileSync(join(dir, "src", "tools.ts"), toolsSource);
     writeFileSync(join(dir, "PROGRESS.md"), "new local note\n");
-    const progressOnly = runBuilder(dir, join(dir, "progress-output"));
+    const progressOnly = runBuilder(dir, join(outputs, "progress-output"));
     assert.equal(progressOnly.status, 0, progressOnly.stderr);
+
+    writeFileSync(join(dir, "draft-guide.md"), "# Uncommitted guide\n");
+    const untrackedGuide = runBuilder(dir, join(outputs, "untracked-output"));
+    assert.equal(untrackedGuide.status, 1);
+    assert.match(untrackedGuide.stderr, /Relevant files are dirty/);
+
+    rmSync(join(dir, "draft-guide.md"));
+    writeFileSync(join(dir, "demo", "data", "local.json"), "{}\n");
+    const runtimeOnly = runBuilder(dir, join(outputs, "runtime-output"));
+    assert.equal(runtimeOnly.status, 0, runtimeOnly.stderr);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+    rmSync(outputs, { recursive: true, force: true });
   }
 });
 

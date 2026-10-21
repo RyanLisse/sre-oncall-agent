@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, cpSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, cpSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -36,6 +36,17 @@ test("no PROGRESS.md → silent exit", () => {
   mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
   cpSync(join(ROOT, ".claude/hooks/progress.mjs"), join(dir, ".claude/hooks/progress.mjs"));
   assert.equal(run(dir).status, 0);
+  assert.equal(existsSync(join(dir, "PROGRESS.md")), false);
+});
+
+test("--status prints the checklist without creating a missing PROGRESS.md", () => {
+  const dir = mkdtempSync(join(tmpdir(), "w5-progress-status-none-"));
+  mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
+  cpSync(join(ROOT, ".claude/hooks/progress.mjs"), join(dir, ".claude/hooks/progress.mjs"));
+  const result = run(dir, ["--status"]);
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /0\/9 assignments with evidence/);
+  assert.equal(existsSync(join(dir, "PROGRESS.md")), false);
 });
 
 test("--status prints N/9 with a checklist", () => {

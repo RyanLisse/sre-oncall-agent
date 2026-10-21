@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { createServer } from "node:net";
-import { tmpdir } from "node:os";
+import { networkInterfaces, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { Store } from "../src/store.js";
@@ -41,6 +41,13 @@ test("console API enforces resolved, recovery and named-human gates", { timeout:
   await new Promise<void>((resolveReady, reject) => {
     child.stdout.on("data", (chunk: Buffer) => { if (chunk.toString().includes("on-call console")) resolveReady(); });
     child.once("error", reject); child.once("exit", code => reject(new Error(`Console exited ${code}`)));
+  });
+  const nonLoopback = Object.values(networkInterfaces()).flat().find(info => info && !info.internal && info.family === "IPv4");
+  await t.test("console is unreachable via a non-loopback interface", {
+    skip: nonLoopback ? false : "no non-loopback IPv4 interface",
+  }, async () => {
+    assert.ok(nonLoopback);
+    await assert.rejects(fetch(`http://${nonLoopback.address}:${port}/api/health`, { signal: AbortSignal.timeout(2_000) }));
   });
   const post = (label: string, action: string, body: unknown = {}) => {
     const id = Object.entries(ids).find(([key]) => label === `INC-${key.toUpperCase()}`)?.[1];

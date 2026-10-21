@@ -69,13 +69,23 @@ const archiveExcluded = (path) =>
   path.endsWith(".log");
 
 const dirtyRelevantPaths = (root) => {
-  const status = git(root, ["status", "--porcelain=v1", "--untracked-files=all"]);
-  return status
-    .split("\n")
-    .filter(Boolean)
-    .filter((line) => !line.startsWith("??"))
-    .map((line) => line.slice(3).split(" -> ").at(-1).replaceAll("\\", "/"))
-    .filter((path) => !archiveExcluded(path));
+  const status = git(root, ["status", "--porcelain=v1", "--untracked-files=all", "-z"]);
+  const entries = status.split("\0");
+  const paths = [];
+  for (let i = 0; i < entries.length; i += 1) {
+    const entry = entries[i];
+    if (!entry) continue;
+    const code = entry.slice(0, 2);
+    paths.push(entry.slice(3).replaceAll("\\", "/"));
+    if (code.includes("R") || code.includes("C")) {
+      const original = entries[i + 1];
+      if (original) {
+        paths.push(original.replaceAll("\\", "/"));
+        i += 1;
+      }
+    }
+  }
+  return paths.filter((path) => !archiveExcluded(path));
 };
 
 const trackedPaths = (root) => git(root, ["ls-files", "-z"]).split("\0").filter(Boolean);
@@ -161,7 +171,7 @@ const main = () => {
   const destination = resolve(process.cwd(), options.output);
   if (existsSync(destination)) fail(`Destination already exists: ${destination}. Choose a new directory; existing packages are never overwritten.`);
   const dirty = dirtyRelevantPaths(root);
-  if (dirty.length) fail(`Relevant tracked files are dirty: ${dirty.join(", ")}. Commit them before packaging; packages are built from HEAD only.`);
+  if (dirty.length) fail(`Relevant files are dirty: ${dirty.join(", ")}. Commit them before packaging; packages are built from HEAD only.`);
   const sha = git(root, ["rev-parse", "HEAD"]);
   const source = git(root, ["show", "HEAD:src/tools.ts"]);
   const transformed = starterTools(source);

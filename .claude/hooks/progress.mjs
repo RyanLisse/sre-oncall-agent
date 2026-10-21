@@ -121,9 +121,6 @@ function entry(step) {
   return `\n## ${stamp()} — ${step.title} (${step.key})\n<!-- auto: ${step.key} -->\n\n- **What shipped:** ${step.shipped}\n- **Why it mattered:** <fill in: what this step proves about the AI SDLC>\n- **How, and what was rejected:** <fill in>\n- **Validation:** ${step.validation}\n- **Deliberately not done:** <fill in>\n`;
 }
 
-if (!existsSync(FILE)) process.exit(0); // no PROGRESS.md yet: stay silent
-const done = readFileSync(FILE, "utf8");
-
 if (process.argv.includes("--status")) {
   const rows = evidence();
   const n = rows.filter((s) => s.done).length;
@@ -131,6 +128,9 @@ if (process.argv.includes("--status")) {
   for (const s of rows) console.log(`${s.done ? "✓" : "·"} ${s.key} ${s.name} — ${s.done ? s.title : "open: " + s.hint}`);
   process.exit(0);
 }
+
+if (!existsSync(FILE)) process.exit(0); // no PROGRESS.md yet: stay silent
+const done = readFileSync(FILE, "utf8");
 
 for (const s of evidence()) {
   if (s.done && !done.includes(`<!-- auto: ${s.key} -->`)) appendFileSync(FILE, entry(s));

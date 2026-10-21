@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { IncidentRow, MessageRow } from "./store.js";
-import type { WatchReport } from "./watch.js";
+import type { Check, WatchReport } from "./watch.js";
 
 const checkSchema = z.object({
   label: z.enum(["half", "full", "double"]), at: z.string(),
@@ -31,7 +31,20 @@ export const recoveryFrom = (messages: readonly MessageRow[]): Recovery => {
   return { status: "ready" };
 };
 
-export const completedRecovery = (report: WatchReport): Recovery => ({ status: "complete", report });
+export const captureRecoveryCheck = (report: WatchReport, label: Check["label"], limit: number): Check | undefined => {
+  const check = report.checks.find((c) => c.label === label);
+  return check && { ...check, ok: check.value !== undefined && check.value <= limit };
+};
+
+export const completedRecovery = (
+  reference: Pick<WatchReport, "metric" | "baseline" | "limit">, observed: readonly Check[],
+): Recovery => {
+  const checks = observed.map((c) => ({ ...c }));
+  const landed = ["full", "double"].every((label) => checks.some((c) => c.label === label && c.ok));
+  return { status: "complete", report: { ...reference, checks, landed,
+    message: landed ? "LANDED. A human must still review and close." : "NOT LANDED. Keep the incident open and investigate.",
+  } };
+};
 
 export const incidentActions = (incident: IncidentRow, messages: readonly MessageRow[]) => {
   const recovery = recoveryFrom(messages);
