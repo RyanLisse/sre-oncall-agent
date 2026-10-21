@@ -6,9 +6,26 @@ import { createServer } from "node:net";
 import { networkInterfaces, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
+import { runInNewContext } from "node:vm";
 import { Store } from "../src/store.js";
 import { parseIncident } from "../src/contract.js";
 import { z } from "zod";
+
+test("recovery instructions distinguish active, mitigated and resolved incidents", async () => {
+  const source = await readFile("console/index.html", "utf8");
+  const renderer = source.slice(source.indexOf("function renderRecovery("), source.indexOf("function renderIncident("));
+  for (const [state, expected] of [["active", "human review required"], ["mitigated", "resolution pending"], ["resolved", "incident resolved"]] as const) {
+    const html: unknown = runInNewContext(renderer + "\nrenderRecovery(state)", {
+      state, esc: String, actions: { recovery: { status: "complete", report: {
+        landed: true, metric: "error_rate", baseline: 0, limit: 0.005, checks: [],
+      } } },
+    });
+    assert.ok(typeof html === "string");
+    assert.ok(html.includes(expected));
+    if (state !== "active") assert.doesNotMatch(html, /must still mark mitigated/);
+    if (state === "resolved") assert.doesNotMatch(html, /resolve with notes/i);
+  }
+});
 
 test("console API enforces resolved, recovery and named-human gates", { timeout: 30_000 }, async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "console-gates-"));
