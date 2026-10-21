@@ -68,7 +68,7 @@ Slides: practice slides 47 and 51. Replaces A5 + A7.
 - **Check:** `npm run typecheck && npm test && npm run bench` all pass. The bench prints `PASS bench`.
 - **Stuck?** The tool still returns `[]`: you did only one of the two halves.
 
-### 2.3 Save. In the same incident, ask in chat: `Investigate: checkout errors after the deploy`
+### 2.3 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
 
 - **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap, and the banner says Approve or reject “rollback”.
 - **Check:** The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- "Core 2: …"`

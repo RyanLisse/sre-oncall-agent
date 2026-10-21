@@ -84,7 +84,7 @@
           "stuck": "The tool still returns `[]`: you did only one of the two halves."
         },
         {
-          "do": "Save. In the same incident, ask in chat: `Investigate: checkout errors after the deploy`",
+          "do": "Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`",
           "see": "The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap, and the banner says Approve or reject “rollback”.",
           "check": "The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- \"Core 2: …\"`",
           "stuck": "Incident gone? You stopped the lab, so the shop is healthy again. Break it again and wait for a new incident."
