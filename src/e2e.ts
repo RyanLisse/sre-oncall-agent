@@ -1,7 +1,7 @@
 /**
  * e2e.ts — headless verification of the real-model path (after cwc-workshops' e2e.py)
  * ---------------------------------------------------------------------------
- *   npm run e2e                     needs ANTHROPIC_API_KEY in the shell; costs a few cents
+ *   npm run e2e                     uses your Claude Code login, or ANTHROPIC_API_KEY when set
  *   npm run e2e -- --model opus
  *
  * Runs the bad-deploy fixture through the REAL Claude Agent SDK and asserts the
@@ -21,7 +21,6 @@ import { resolveRuntime } from "./runtime.js";
 import { loadTelemetry } from "./telemetry.js";
 
 const model = process.argv.includes("--model") ? process.argv[process.argv.indexOf("--model") + 1] : "sonnet";
-if (!process.env.ANTHROPIC_API_KEY) { console.error("FAIL e2e: ANTHROPIC_API_KEY not set in this shell"); process.exit(1); }
 
 const run = async (file: string) => {
   const f = JSON.parse(await readFile(file, "utf8")) as { incident: unknown; telemetry: string };
