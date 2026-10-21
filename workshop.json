@@ -17,7 +17,7 @@
       "id": "core-1",
       "name": "Investigate the evidence",
       "goal": "Break the shop, let the console raise an incident, and check every claim in the diagnosis against the data.",
-      "slides": "Use case and console (slides 15–22)",
+      "slides": "practice slides 32 and 35",
       "replaces": ["A1", "A6"],
       "steps": [
         {
@@ -50,7 +50,7 @@
       "id": "core-2",
       "name": "Build a change safely and test it",
       "goal": "Rebuild the read-only list_deploys tool test-first, prove it with the tests and the bench, and see it in the trace.",
-      "slides": "Build 1 and Test (slides 37–56)",
+      "slides": "practice slides 47 and 51",
       "replaces": ["A5", "A7"],
       "steps": [
         {
@@ -77,7 +77,7 @@
       "id": "core-3",
       "name": "Judge the recovery",
       "goal": "Rebuild the approval gate, sign the rollback with your name, and decide from the recovery checks whether the incident may close.",
-      "slides": "Deploy and Maintain (slides 57–63)",
+      "slides": "practice slides 60 and 63",
       "replaces": ["A8", "A9"],
       "steps": [
         {

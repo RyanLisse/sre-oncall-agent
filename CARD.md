@@ -24,7 +24,7 @@ npm start -- --fast
 
 **Goal:** Break the shop, let the console raise an incident, and check every claim in the diagnosis against the data.
 
-Slides: Use case and console (slides 15–22). Replaces A1 + A6.
+Slides: practice slides 32 and 35. Replaces A1 + A6.
 
 ### 1.1 Break the shop in your second terminal: `npm run chaos -- deploy v2.15.0 --mode bad-deploy`
 
@@ -54,7 +54,7 @@ Slides: Use case and console (slides 15–22). Replaces A1 + A6.
 
 **Goal:** Rebuild the read-only list_deploys tool test-first, prove it with the tests and the bench, and see it in the trace.
 
-Slides: Build 1 and Test (slides 37–56). Replaces A5 + A7.
+Slides: practice slides 47 and 51. Replaces A5 + A7.
 
 ### 2.1 Run the red test: `npx tsx --test test/workshop/tools.test.ts`
 
@@ -78,7 +78,7 @@ Slides: Build 1 and Test (slides 37–56). Replaces A5 + A7.
 
 **Goal:** Rebuild the approval gate, sign the rollback with your name, and decide from the recovery checks whether the incident may close.
 
-Slides: Deploy and Maintain (slides 57–63). Replaces A8 + A9.
+Slides: practice slides 60 and 63. Replaces A8 + A9.
 
 ### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Rebuild `checkApproval` in `src/executor.ts` (`TODO(A8)`).
 

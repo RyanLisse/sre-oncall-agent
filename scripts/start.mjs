@@ -71,11 +71,12 @@ console.log(`
 \x1b[1m✓ Lab running.\x1b[0m Keep this terminal open. Ctrl+C stops everything.
 
   Console   http://localhost:${CONSOLE_PORT}
-  Shop      http://localhost:${SHOP_PORT}/health   (an API, not a storefront)
+  Shop      http://localhost:${SHOP_PORT}         (storefront + fault buttons; health: /health)
   Hub       npm run hub                  (participant card, slides, docs)
 
   Detection window: ${fast ? "1 minute (--fast)" : "5 minutes (npm start -- --fast for 1 minute)"}
 
-  Break the shop in a SECOND terminal, when you choose to:
+  Break the shop when you choose to, in a SECOND terminal:
     npm run chaos -- deploy v2.15.0 --mode bad-deploy
+  or with a fault button in the shop.
 `);

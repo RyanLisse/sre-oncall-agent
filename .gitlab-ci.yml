@@ -17,3 +17,4 @@ test:
     - npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
     - npm run investigate -- fixtures/incidents/slow-dependency.json --dry-run
     - npm run course:check
+    - npm run card:check
