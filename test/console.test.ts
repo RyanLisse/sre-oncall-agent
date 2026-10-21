@@ -38,7 +38,12 @@ test("console API enforces resolved, recovery and named-human gates", { timeout:
     store.add(id, "agent", "diagnosis", JSON.stringify({ proposal: "rollback" }));
     store.add(id, "system", "approval", JSON.stringify({ decision: "approved" }));
     if (landed !== undefined) store.add(id, "system", "recovery", JSON.stringify({ status: "complete", report: {
-      metric: "error_rate", baseline: 0, limit: 0.005, checks: [], landed, message: landed ? "LANDED" : "NOT LANDED",
+      metric: "error_rate", baseline: 0, limit: 0.005,
+      checks: [
+        { label: "full", at: "2026-10-05T03:56:00.000Z", value: landed ? 0 : 0.0125, ok: landed },
+        { label: "double", at: "2026-10-05T04:00:00.000Z", value: 0, ok: true },
+      ],
+      landed, message: landed ? "LANDED" : "NOT LANDED",
     } }));
   };
   const ids = { closed: "INC-901", failed: "INC-902", landed: "INC-903", once: "INC-904", interrupted: "INC-905" };

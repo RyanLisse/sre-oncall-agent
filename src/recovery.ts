@@ -9,6 +9,25 @@ const checkSchema = z.object({
 const reportSchema = z.object({
   metric: z.enum(["error_rate", "p95_ms"]), baseline: z.number(), limit: z.number(),
   checks: z.array(checkSchema).readonly(), landed: z.boolean(), message: z.string(),
+}).superRefine((report, context) => {
+  const full = report.checks.filter((check) => check.label === "full");
+  const double = report.checks.filter((check) => check.label === "double");
+  if (full.length !== 1 || double.length !== 1) {
+    context.addIssue({ code: "custom", message: "Recovery requires exactly one observed full and double check." });
+    return;
+  }
+  const fullCheck = full.at(0);
+  const doubleCheck = double.at(0);
+  if (!fullCheck || !doubleCheck) {
+    context.addIssue({ code: "custom", message: "Recovery full and double observations are missing." });
+    return;
+  }
+  const passes = (check: (typeof report.checks)[number]) =>
+    check.ok && check.value !== undefined && check.value <= report.limit;
+  if (report.checks.some((check) => check.ok && !passes(check))
+    || report.landed !== (passes(fullCheck) && passes(doubleCheck))) {
+    context.addIssue({ code: "custom", message: "Recovery landing status must match the observed full and double checks." });
+  }
 });
 const recoverySchema = z.discriminatedUnion("status", [
   z.object({ status: z.literal("ready") }),
@@ -19,7 +38,7 @@ const recoverySchema = z.discriminatedUnion("status", [
 export type Recovery = z.infer<typeof recoverySchema>;
 
 const json = (text: string): unknown => { try { return JSON.parse(text); } catch { return null; } };
-export const recoveryFrom = (messages: readonly MessageRow[]): Recovery => {
+export const recoveryFrom = (messages: readonly Pick<MessageRow, "kind" | "text">[]): Recovery => {
   const saved = messages.filter((m) => m.kind === "recovery").at(-1);
   if (saved) {
     const parsed = recoverySchema.safeParse(json(saved.text));
@@ -46,7 +65,7 @@ export const completedRecovery = (
   } };
 };
 
-export const incidentActions = (incident: IncidentRow, messages: readonly MessageRow[]) => {
+export const incidentActions = (incident: Pick<IncidentRow, "state">, messages: readonly Pick<MessageRow, "kind" | "text">[]) => {
   const recovery = recoveryFrom(messages);
   const diagnosis = messages.filter((m) => m.kind === "diagnosis").at(-1);
   const proposal = z.object({ proposal: z.string() }).safeParse(json(diagnosis?.text ?? ""));

@@ -17,85 +17,75 @@ Everything runs on your own machine. All data is fictional.
 
 ## The scenario
 
-| Part | Command | Where |
+| Part | What it is | Where |
 | --- | --- | --- |
-| **Checkout shop** — a mock checkout API, not a storefront | `npm run shop` | `http://localhost:4310/health` |
-| **Traffic** — steady checkouts against the shop | `npm run traffic` | — |
-| **Chaos** — your lever to break the shop: a bad deploy, slow latency or errors | `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | modes: `healthy`, `bad-deploy`, `slow`, `errors` |
-| **Console** — the on-call desk: incidents, chat with the agent, approve/execute/resolve buttons, and a JSON API | `npm run console` | `http://localhost:4320` (health: `/api/health`) |
+| **Checkout shop** | a mock checkout API with a demo storefront and fault buttons | `http://127.0.0.1:4310` (health: `/health`) |
+| **Traffic** | steady checkouts against the shop | the lab terminal |
+| **Console** | the on-call desk: incidents, chat with the agent, approve/execute/resolve buttons, a JSON API | `http://127.0.0.1:4320` |
+| **Hub** | the participant card with the live next step | `http://127.0.0.1:4320/hub` |
+| **Chaos** | your lever to break the shop: a bad deploy, slow latency or errors | `npm run chaos -- deploy v2.15.0 --mode bad-deploy`, or a fault button in the shop |
+
+`npm start` runs the shop, the traffic and the console together. Breaking the
+shop is always a separate action: you choose when.
 
 The reference incident is **INC-1001** (`fixtures/incidents/bad-deploy.json`):
-the checkout error rate jumps after a deploy. The tutorial, the tests and the
-bench replay it from fixtures. When you break the live shop, the console's
-listener opens a new incident with its own id (`INC-<number>`). The listener
-uses fixed criteria (error rate above 2% or p95 above 2000 ms, sustained for
-about 5 minutes; set `AGENT_LISTEN_WINDOW_MIN=1` for a faster demo). The agent
-is never the detector.
+the checkout error rate jumps after a deploy. The tests and the bench replay
+it from fixtures. When you break the live shop, the console's listener opens a
+new incident (`INC-<number>`) after the error rate stays above 2% or p95 above
+2000 ms for about 5 minutes (1 minute with `npm start -- --fast`). The agent is
+never the detector.
 
-## Start here
+## Set up and run
 
-| You are | Open | First action |
-| --- | --- | --- |
-| Participant | [Participant card](PARTICIPANT.md) | Extract `starter.zip`, run `npm start` |
-| Facilitator | [Run sheet](FACILITATOR.md) | Build and rehearse the starter and checkpoint packages |
-| Coding agent | [AGENTS.md](AGENTS.md), then [CLAUDE.md](CLAUDE.md) | Identify the copy and read the human boundaries |
+You need **Node.js 22 or newer** and **Claude Code**, signed in with your own
+account. No API key: the agent runs offline by default, with a scripted
+investigator on the same tools and data. Its output demonstrates the pipeline;
+it is not model evidence.
 
-You need Node.js 22+ with `node:sqlite` support and npm. The first start installs
-missing dependencies, so npm access is needed once. The lab runtime is offline.
-No Git, API key, or Claude Code login is required for the core tasks.
-
-## Run the lab
-
-In the extracted starter folder, beside `package.json`:
-
-```text
-npm start
+```bash
+git clone <repository URL>                    # the URL your facilitator gives you
+cd sre-oncall-agent
+npm run checkpoint -- start                    # current committed starter copy
+cd .lab/checkpoints/start
+npm start -- --fast                           # checks, installs, starts the lab
 ```
 
-Open **http://localhost:4320**. Keep the launcher running. It starts shop,
-traffic, and console, but never injects a fault or approves an action.
-For one-minute detection instead of five, use `npm start -- --fast`.
-Recovery policy is unchanged. Stop with Ctrl+C. Restart after source edits.
+Keep that terminal open; Ctrl+C stops only processes started by that launcher.
+Use a second terminal for the rest. Start Claude Code there (`claude`) and run `/status`: it shows the
+guard and progress hooks from `.claude/settings.json`.
 
-When Core task 3 tells you to, run this once in a second terminal:
+| Command | What it does |
+| --- | --- |
+| `npm run hub` | open the participant card (live when the lab runs) |
+| `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | break the shop on purpose |
+| `npm run checkpoint -- core-2` | current-HEAD copy with the fail-closed A8 gate; your files untouched |
+| `npm run checkpoint -- core-3` | solved current source in `.lab/checkpoints/`, your files untouched |
+| `npm run doctor` | preflight check |
+| `npm run demo` | the whole loop on a bad deploy, about 2 minutes, no console |
+| `npm run progress` | which assignments already have file evidence |
 
-```text
-npm run chaos -- deploy v2.15.0 --mode bad-deploy
-```
+## The assignment: three core tasks
 
-The three core tasks are **read evidence**, **build and test one read-only
-tool**, and **judge live recovery**. Follow [WORKSHOP.md](WORKSHOP.md).
-A safe stop after NOT LANDED is a valid result. A human decides in the console.
+| Core | You do |
+| --- | --- |
+| **1 · Investigate the evidence** | Break the shop, let the console raise the incident, check every reference in the diagnosis against the data. |
+| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first; prove it with the tests, the bench and the trace. |
+| **3 · Judge the recovery** | Rebuild the approval gate, approve with your name, read the recovery checks, then close or stop. |
 
-## Choose the right copy
+The steps, with what you should see and what to do when you are stuck, are on
+**[CARD.md](CARD.md)**. The facilitator's guide is **[WORKSHOP.md](WORKSHOP.md)**.
+Working alone? Follow **[SOLO.md](SOLO.md)**. Optional depth (intent, spec,
+your own guard rule, a bench case, the git gate, a hackathon intent) is at the
+bottom of the card.
 
-The facilitator runs `npm run workshop:pack -- --output ../workshop5-pack`
-from a clean, committed reference checkout. The output contains:
+Historical `w5-core-*` tags are archived references only. The current
+safety-tested starter is generated from committed `HEAD` by `npm run checkpoint`.
 
-- `starter.zip`: only the A5 read-only tool exercise is incomplete. Controls remain implemented.
-- `checkpoint.zip`: solved code for explicit catch-up or facilitator demonstrations.
-- A manifest recording the source commit.
+## The file flow
 
-Each archive has its own root folder and WORKSHOP-PACKAGE.md label. Extract
-into new, separate folders. Never overwrite participant work or copy runtime
-records between copies. A GitHub source ZIP is the reference, not this starter.
-
-The historical `workshop/start` branch and `w5-step-*` tags remain available
-for [optional A1–A9 depth](WORKSHOP-ADVANCED.md). They contain deliberate
-control gaps and older guides. Do not mix them with the core package.
-[SOLO.md](SOLO.md) retains the full self-study sequence.
-
-## Record evidence
-
-Use `intent.md` for your boundary and checks. Keep fixture and live observations
-separate in `docs/diagnosis-live.md`. Record actual command results with:
-
-```text
-npm run progress:note -- "Core 2: focused tool tests passed"
-```
-
-Never edit PROGRESS.md directly. `npm run progress` checks file patterns;
-it does not run tests. The participant card lists the real verification commands.
+Each step of the AI SDLC leaves one file behind: `intent.md` → `docs/spec.md`
+→ `docs/plan.md` → `PROGRESS.md` (append-only: `npm run progress:note -- "…"`)
+→ `REVIEW.md`.
 
 ## The rules
 

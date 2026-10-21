@@ -4,10 +4,10 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
-import { dependencyInstallSpec } from "../scripts/start-workshop.mjs";
+import { dependencyInstallSpec } from "../scripts/start.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const launcher = join(root, "scripts", "start-workshop.mjs");
+const launcher = join(root, "scripts", "start.mjs");
 
 const run = (args, extraEnv = {}) => {
   const env = { ...process.env, ...extraEnv };

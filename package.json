@@ -9,10 +9,10 @@
     "node": ">=22"
   },
   "scripts": {
+    "start": "node scripts/start.mjs",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test \"test/*.test.ts\"",
     "fixtures": "node fixtures/generate.mjs",
-    "start": "node scripts/start-workshop.mjs",
     "investigate": "tsx src/cli.ts",
     "approve": "tsx src/cli.ts --approve",
     "reject": "tsx src/cli.ts --reject",
@@ -36,7 +36,7 @@
     "console": "tsx console/server.ts",
     "check": "npm run verify",
     "test:workshop": "tsx --test \"test/workshop/*.test.ts\"",
-    "test:workshop-support": "node --test test/workshop-launcher.test.mjs test/workshop-package.test.mjs",
+    "test:workshop-support": "node --test test/workshop-launcher.test.mjs test/checkpoint.test.mjs",
     "test:hooks": "node test/hooks.test.mjs && node test/progress.test.mjs && node test/progress-note.test.mjs && node test/config.test.mjs && npm run test:workshop-support",
     "approve:git": "node scripts/approve.mjs",
     "check:approval": "node scripts/check-approval.mjs",
@@ -44,7 +44,10 @@
     "progress": "node .claude/hooks/progress.mjs --status",
     "progress:note": "node scripts/progress-note.mjs",
     "workshop:check": "node scripts/workshop-check.mjs",
-    "workshop:pack": "node scripts/package-workshop.mjs"
+    "card": "node scripts/card.mjs",
+    "card:check": "node scripts/card.mjs --check",
+    "hub": "node scripts/hub.mjs",
+    "checkpoint": "node scripts/checkpoint.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.274",

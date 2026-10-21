@@ -1,8 +1,18 @@
 # Claude Code — project instructions
 
-AI SRE first responder on the Claude Agent SDK. Start with `SOLO.md` and
-`README.md`. Read `fixtures/incidents/*.json` and `bench/cases.json` before
-changing behaviour.
+AI SRE first responder on the Claude Agent SDK. Read `fixtures/incidents/*.json`
+and `bench/cases.json` before changing behaviour.
+
+## Where things are
+
+| You need | Read |
+| --- | --- |
+| What participants do, step by step | `CARD.md` (generated from `workshop.json` by `npm run card`; edit the JSON, never the card) |
+| The workshop shape: three core tasks + optional depth | `WORKSHOP.md` · facilitator timing: `FACILITATOR.md` · solo: `SOLO.md` |
+| The two exercise cuts | `npm run workshop:check` (`TODO(A5)` in `src/tools.ts`, `TODO(A8)` in `src/executor.ts`) |
+| What a human may do next on an incident | `src/nextAction.ts` (the console enforces it) |
+| Start the lab | `npm start` (Ctrl+C stops all). Breaking the shop is `npm run chaos …`, never part of start. |
+| A solved state without touching the working tree | `npm run checkpoint -- <start|core-2|core-3>` → `.lab/checkpoints/<id>` |
 
 ## The division of labour (fixed, non-negotiable)
 
@@ -26,6 +36,7 @@ The agent gathers evidence, proposes, verifies and communicates.
 12. **The console detects deterministically.** The listener in `console/server.ts` evaluates fixed criteria on telemetry. Do not route detection through the model.
 13. **A missing signal is unknown, not healthy.** Tools that return nothing go in `data_gaps`; the contract refuses `high` confidence while gaps exist.
 14. **Lessons have provenance.** Agent text is proposed; human resolution notes are written with the incident id, date and name.
+15. **The console allows one next step.** `nextAction()` decides which button is legal; the server refuses the rest (409). A resolved incident is never executed again. `NOT LANDED` names the failed check and never allows mitigated.
 
 ## Engineering
 

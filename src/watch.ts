@@ -32,6 +32,8 @@ export interface WatchReport {
   readonly checks: readonly Check[];
   /** Landed = the FULL check and the DOUBLE check are both at baseline. */
   readonly landed: boolean;
+  /** One line per REQUIRED check (full, double) that failed: why, with value and limit. */
+  readonly failed: readonly string[];
   readonly message: string;
 }
 
@@ -82,7 +84,10 @@ export const watchMetric = (
     return { label, at, value, ok: value !== undefined && value <= limit };
   });
 
-  const landed = checks.filter((c) => c.label !== "half").every((c) => c.ok);
+  const failed = checks
+    .filter((c) => c.label !== "half" && !c.ok)
+    .map((c) => `${c.label} check @${c.at.slice(11, 16)}: ${metric} ${c.value === undefined ? "no data after the fix" : `${c.value} > limit ${limit}`}`);
+  const landed = failed.length === 0;
   const line = checks.map((c) => `${c.label}@${c.at.slice(11, 16)}=${c.value ?? "no data"}${c.ok ? "✓" : "✗"}`).join("  ");
   return {
     metric,
@@ -90,6 +95,7 @@ export const watchMetric = (
     limit,
     checks,
     landed,
+    failed,
     message: landed
       ? `LANDED: ${metric} back at baseline ${baseline} (limit ${limit}) — ${line}`
       : `NOT LANDED: ${metric} baseline ${baseline} (limit ${limit}) — ${line}`,

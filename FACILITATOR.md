@@ -1,89 +1,103 @@
-# Facilitate Workshop 5
+# Facilitator run sheet — Workshop 5 (one day, starts 10:00)
 
-Use one route for everyone: [three core tasks](WORKSHOP.md).
-Keep [PARTICIPANT.md](PARTICIPANT.md) beside the console.
-Give coding agents [AGENTS.md](AGENTS.md). Participants do not manage Git branches.
+The day has **three core tasks**. Everything else is optional depth. The
+slides explain; participants execute from **[CARD.md](CARD.md)** or the hub
+(`http://127.0.0.1:4320/hub`). Both are generated from `workshop.json`
+(`npm run card`). Change the steps there, never in the generated files.
 
-## Prepare the package before class
+## Prepare (the evening before)
 
-1. Use a clean, reviewed checkout of this version with Node.js 22+ and Git.
-2. Run `npm ci`, `npm run verify`, and `npm run test:workshop`.
-3. Run `npm run workshop:pack -- --output ../workshop5-pack` with a new output path.
-4. Distribute `starter.zip` and keep `checkpoint.zip` for explicit catch-up.
-   Both come from the same committed version. Keep the generated manifest.
-5. Extract each into separate fresh folders. Read WORKSHOP-PACKAGE.md in each.
-6. In the starter, run `npm start`. Confirm shop health and an empty console.
-   Run the focused tools test in a second terminal. Expect the two A5 failures.
-7. Stop the starter launcher. In the checkpoint, run `npm start` and the same
-   tools test. Expect green. Rehearse Core task 3, including safe-stop wording.
+Use two separate clones. Never present a solved clone as the starter.
 
-The first start installs missing dependencies. Prepare while npm is available.
-The offline runtime needs no API key. Use Node with `node:sqlite` support.
-Follow launcher errors for missing runtimes or occupied ports. Stop only your
-own processes. Do not close another team's console.
-
-Do not distribute an arbitrary GitHub source ZIP as the starter. It has no
-core exercise cut or label. The historical `workshop/start` branch is different:
-its controls are deliberately incomplete.
-
-## Run the day
-
-| Time | Facilitate | Accept as evidence |
+| Clone | Checkpoint | Check |
 | --- | --- | --- |
-| 10:00–10:45 | Welcome, use case, SDLC, short demo | Agent role and human boundary |
-| 10:45–11:00 | Extract starter, run `npm start` | Empty console, shop health, expected A5 failures |
-| 11:00–11:15 | Break and setup help | — |
-| 11:15–12:00 | Core 1: show a reference, then teams read evidence and write intent | Three references and verifiable intent checks |
-| 12:00–13:00 | Lunch | — |
-| 13:00–14:10 | Core 2: show the test, then teams implement the tool | Red-to-green result and verification |
-| 14:10–14:40 | Core 3: inject fault and inspect diagnosis | Live ID, trace, references, chat refusal |
-| 14:40–14:55 | Break | Keep a running demo supervised |
-| 14:55–15:35 | Core 3: human gate and recovery review | Human closure after LANDED, or safe stop |
-| 15:35–15:50 | Compare results, handoff, optional depth | Observed result, unknowns, next owner |
-| 15:50–16:00 | Questions and close | Saved work and evidence |
+| Participant route | `npm run checkpoint -- start` then `cd .lab/checkpoints/start` | the A5 tool and A8 approval exercises are intentionally incomplete; A8 fails closed |
+| Solved demo | `npm run checkpoint -- core-3` then `cd .lab/checkpoints/core-3` | `npm run verify` and `npm run test:workshop` pass |
 
-For a short demo use `npm start -- --fast`. Announce one-minute detection.
-The default is five minutes. Neither setting shortens recovery or changes
-the pass rule. Inject the bad deploy separately, once, from the second terminal.
-Restart after source edits; the launcher does not hot-reload code.
+From each clone, create the intended checkpoint, then run its launcher:
+`npm run checkpoint -- start` (or `core-3` for the solved demo), followed by
+`cd .lab/checkpoints/start` (or `core-3`) and `npm start -- --fast`. Open
+`http://127.0.0.1:4320/hub`. Ctrl+C stops only processes started by that
+launcher. Run one clone at a time on the default ports; if a port is busy,
+only stop your own workshop launcher.
 
-The slides retain optional contract, hook, bench, Git gate, and hackathon
-material. Skip optional implementation until all teams finish the core.
-[The advanced run sheet](FACILITATOR-ADVANCED.md) applies only to old tags.
+The slides: run `python3 serve.py` in the slides repo, then open
+`http://localhost:8080/workshop5.html` (presenter view:
+`workshop5-presenter.html`).
 
-## Help without erasing evidence
+## Time boxes
 
-| Symptom | Next safe action |
-| --- | --- |
-| Node or install error | Follow the launcher error. Verify Node and npm access. |
-| Port busy | Stop the copy you own. Run only one default-port launcher. |
-| A5 already green | Read the package label. Open the starter or label checkpoint work. |
-| Tool test still red | Check handler binding and MCP registration. |
-| No incident | Read shop health and traffic logs. Wait the configured detection window. |
-| Core 2 blocked | Save and stop the starter. Open a fresh checkpoint folder. |
-| Execute disabled | Read Next step. Pending, rejected, attempted, or resolved incidents cannot execute. |
-| NOT LANDED or unknown | Inspect the failed check and logs. Keep open. Accept a documented safe stop. |
+The deck keeps its order and times. The nine practice slides now carry the
+three cores and the optional depth.
 
-## Rehearse a safe stop
+| Time | Slide | Block | Expected output |
+| --- | --- | --- | --- |
+| 10:00–10:50 | 1–25 | Intro: AI-native SDLC loop, the use case, the console | participants can name the 7 phases |
+| 10:50–11:00 | 26 | **Start the lab** | checkpoint copy prints ✓ Lab running; hub opens |
+| 11:00–11:15 | 27 | Break | — |
+| 11:28–11:43 | 32 | **Core 1 · Investigate the evidence** (part 1) | shop broken by the participant; incident raised by the listener; data gap on `list_deploys` |
+| 11:47–12:00 | 35 | **Core 1** (part 2) | every reference checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
+| 12:00–13:00 | 36 | Lunch | — |
+| 13:30–13:50 | 46 | Go deeper: your own guard rule (A4) · catch-up buffer for core 1 | optional |
+| 14:00–14:15 | 47 | **Core 2 · Build a change safely and test it** | `test/workshop/tools.test.ts` green |
+| 14:15–14:40 | 51 | **Core 2** (prove it) | typecheck + tests + `PASS bench`; `list_deploys` in the trace |
+| 14:40–14:55 | 52 | Break | — |
+| 15:04–15:15 | 56 | Go deeper: a bench case and the ratchet (A7) | optional |
+| 15:18–15:35 | 60 | **Core 3 · Judge the recovery** (gate + execute) | `test/workshop/executor.test.ts` green; approved with a name; recovery running |
+| 15:35–15:50 | 63 | **Core 3** (judge + close) | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
+| 15:50–16:00 | 64–66 | Close, skills pack, hackathon bridge | `docs/hackathon-intent.md` is optional depth |
 
-Three fresh checkouts are not enough. Full and double metric checks must
-both pass. Only half may fail. Healthy traffic has transient errors, so a
-successful rollback can correctly end NOT LANDED.
+The gaps between boxes are the deck's talk and demo segments.
 
-For example, values `0`, `0.0125`, `0` against `0.005` fail the full check.
-Show the failed value and limit. Ask what the team should inspect or who
-should receive an escalation. Do not repeat rollback to get green.
+## Top failure + fix per block
 
-## Repeat with a fresh copy
+- **Start** — `npm start` stops with a port message: another copy runs. Stop
+  only your own workshop launcher; never kill an unknown process. Node too old:
+  install Node 22+.
+- **Core 1** — no incident: the lab terminal must show traffic lines. Without
+  `--fast` detection takes five minutes. Check `curl 127.0.0.1:4320/api/incidents`.
+  References are text, not links: search the data file for the timestamp.
+  Offline chat is a scripted summary, not a new model run.
+- **Core 2** — the tool returns `[]`: they bound the handler but did not
+  register `tool("list_deploys", …)`, or the reverse. The console reloads on
+  save (a reload line in the lab terminal); the shop keeps its broken state.
+  Core 1 on the starter correctly ends in `investigate-more` with a data gap:
+  the agent cannot see the deploy. That gap is the reason for core 2.
+- **Core 3** — a button is grey: read the banner. It names the one allowed
+  step. The server refuses every other button with 409. Execute is refused:
+  the approval needs a name and must match this incident and `rollback`.
+  Allow about two minutes for recovery checks; keep the lab running.
+- **Catch-up** — `npm run checkpoint -- core-2` makes a separate copy in
+  `.lab/checkpoints/core-2`. It never changes the participant's files. They
+  compare and copy one file themselves. Never `git checkout <tag> -- <files>`
+  over participant work.
 
-Stop the launcher, retain the old folder, and extract a new checkpoint copy.
-Never delete participant databases, approvals, or lessons. The launcher archives
-existing live telemetry before a new shop starts; it does not reset history.
-An interrupted execution is blocked on restart because recovery is unknown.
+## If recovery says NOT LANDED
 
-## If Claude Code is unavailable
+The console names the failed check, its value and the limit. The full and
+double checks must both pass; only the half check may fail. The healthy shop
+still emits occasional transient errors, so a correct rollback can end in
+`NOT LANDED`. Keep that incident open. Read the failed window and the logs.
+Investigate or escalate. Do not execute again to get a green result: the
+console allows no second execute. Use this to teach the safe stop.
 
-Do the TypeScript task by hand. The same tests apply. Agents can explain
-evidence and suggest edits, but humans make console decisions. Claude-specific
-skills are not prerequisites. Offline output proves integration, not model
-quality. Evidence references are text, not links.
+## Repeat the demo without deleting participant work
+
+Stop the lab with Ctrl+C. Make a new disposable copy with
+`npm run checkpoint -- core-3`, then `cd .lab/checkpoints/core-3` and
+`npm start -- --fast`. `npm run fixtures` regenerates fixture telemetry only;
+it does not reset live telemetry, console history, approvals or lessons.
+
+## No-Claude dry run (agent unavailable)
+
+Every core task is plain TypeScript + `node:test`. Participants do the two
+`TODO` markers by hand; `npm run test:workshop` still grades them. The guard
+hook is a `node` process and still works when fed stdin:
+`echo '{"tool_name":"Edit","tool_input":{"file_path":"…/bench/ratchet.json"}}' | node .claude/hooks/guard.mjs`.
+Only a human may run `npm run approve:git`, in their own terminal.
+
+## What the evidence means
+
+The offline runtime proves the scripted integration, not model quality.
+`npm run progress` checks files and code patterns; it is not a test runner.
+Ask each team to show its own command result or UI action.

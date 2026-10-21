@@ -34,6 +34,7 @@ import { ask, investigateFromChat, routeMessage } from "../src/chat.js";
 import { parseIncident, type Incident } from "../src/contract.js";
 import { runWatch } from "../src/deployWatch.js";
 import { execute } from "../src/executor.js";
+import { nextAction } from "../src/nextAction.js";
 import { appendResolutionLesson, lessonsStore, renderResolutionLesson } from "../src/lessons.js";
 import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
@@ -163,6 +164,9 @@ const server = createServer(async (req, res) => {
   const m = url.pathname.match(/^\/api\/incidents\/([^/]+)(?:\/(\w+))?$/);
 
   if (req.method === "GET" && url.pathname === "/") { res.writeHead(200, { "content-type": "text/html" }); return res.end(readFileSync(join(here, "index.html"))); }
+  if (req.method === "GET" && (url.pathname === "/hub" || url.pathname === "/hub/")) { res.writeHead(200, { "content-type": "text/html" }); return res.end(readFileSync(join(here, "..", "hub", "index.html"))); }
+  const courseFile = { "/course/index.html": "text/html", "/course/styles.css": "text/css", "/course/main.js": "text/javascript" }[url.pathname] as string | undefined;
+  if (req.method === "GET" && courseFile) { res.writeHead(200, { "content-type": courseFile }); return res.end(readFileSync(join(here, "..", url.pathname))); }
   if (req.method === "GET" && url.pathname === "/api/health") {
     const t = await telemetry();
     const shop = await fetch(`${SHOP}/health`).then((r) => r.json()).catch(() => undefined);
@@ -200,8 +204,17 @@ const server = createServer(async (req, res) => {
     if (!row) return json(res, 404, { error: "no such incident" });
     const messages = store.messages(row.id);
     const actions = incidentActions(row, messages);
-    if (req.method === "GET" && !action) return json(res, 200, { incident: row, messages, actions: triaging.has(row.id)
-      ? { ...actions, canDecide: false, canExecute: false, canMitigate: false, canResolve: false, next: "Wait for the investigation to finish. Read the evidence before deciding." } : actions });
+    if (req.method === "GET" && !action) {
+      const isTriaging = triaging.has(row.id);
+      const responseActions = isTriaging
+        ? { ...actions, canDecide: false, canExecute: false, canMitigate: false, canResolve: false, next: "Wait for the investigation to finish. Read the evidence before deciding." }
+        : actions;
+      const next = nextAction(row.state, messages);
+      const responseNext = isTriaging
+        ? { ...next, title: "Investigation in progress", detail: responseActions.next, allowed: [] }
+        : next;
+      return json(res, 200, { incident: row, messages, actions: responseActions, next: responseNext });
+    }
 
     if (req.method === "POST" && action === "chat") {
       const text = String((await body(req)).text ?? "").trim();

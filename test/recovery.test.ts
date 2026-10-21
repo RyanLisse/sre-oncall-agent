@@ -11,7 +11,7 @@ const records = (decision: string, recovery?: Recovery) => [
   message("diagnosis", { proposal: "rollback" }), message("approval", { decision }),
   ...(recovery ? [message("recovery", recovery)] : []),
 ];
-const report = (landed: boolean): WatchReport => ({ metric: "error_rate", baseline: 0, limit: 0.005,
+const report = (landed: boolean): WatchReport => ({ metric: "error_rate", baseline: 0, limit: 0.005, failed: [],
   checks: [{ label: "full", at: "t", value: landed ? 0 : 0.0125, ok: landed }, { label: "double", at: "t", value: 0, ok: true }], landed, message: landed ? "LANDED" : "NOT LANDED" });
 const completed = (landed: boolean) => { const r = report(landed); return completedRecovery(r, r.checks); };
 
@@ -42,6 +42,28 @@ test("in-flight, failed, interrupted and malformed recovery never authorize retr
   assert.equal(failed.recovery.status === "complete" && failed.recovery.report.checks[0]?.value, 0.0125);
   assert.equal(recoveryFrom([message("recovery", { status: "complete" })]).status, "blocked");
   assert.equal(recoveryFrom([message("executor", "historical execution")]).status, "blocked");
+});
+
+test("inconsistent complete records fail closed against their observed full and double values", () => {
+  const inconsistent = completed(true);
+  if (inconsistent.status !== "complete") return;
+  const malformed: Recovery = {
+    status: "complete",
+    report: {
+      ...inconsistent.report,
+      checks: [
+        { label: "full", at: "t", value: 0.0125, ok: false },
+        { label: "double", at: "t", value: 0, ok: true },
+      ],
+      landed: true,
+      message: "LANDED",
+    },
+  };
+  assert.equal(recoveryFrom([message("recovery", malformed)]).status, "blocked");
+  assert.equal(recoveryFrom([message("recovery", {
+    status: "complete",
+    report: { ...inconsistent.report, checks: [{ label: "double", at: "t", value: 0, ok: true }], landed: true },
+  })]).status, "blocked");
 });
 
 test("later bucket revisions cannot turn an observed full-check failure into recovery", async () => {
