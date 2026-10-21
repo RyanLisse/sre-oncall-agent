@@ -11,7 +11,7 @@
  */
 import { createSdkMcpServer, tool, type McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import { getDiff, listDeploys, searchLogs, summarizeMetrics, type Telemetry } from "./telemetry.js";
+import { getDiff, searchLogs, summarizeMetrics, type Deploy, type Telemetry } from "./telemetry.js";
 
 export const SERVER_NAME = "telemetry";
 export const TOOL_NAMES = ["search_logs", "summarize_metrics", "list_deploys", "get_diff"] as const;
@@ -49,8 +49,9 @@ export const handlers = (t: Telemetry) => ({
   }) => searchLogs(t, args),
   summarize_metrics: (args: { since?: string | undefined; until?: string | undefined }) =>
     summarizeMetrics(t, args.since, args.until),
-  list_deploys: (args: { since?: string | undefined; until?: string | undefined }) =>
-    listDeploys(t, args.since, args.until),
+  // TODO(A5): rebuild the list_deploys handler — bind it to listDeploys(t, …)
+  // from ./telemetry.js like the other three tools above.
+  list_deploys: (_args: { since?: string | undefined; until?: string | undefined }): readonly Deploy[] => [],
   get_diff: (args: { deploy: string }) => getDiff(t, args.deploy),
 });
 
@@ -81,15 +82,10 @@ export const createTelemetryServer = (t: Telemetry): McpSdkServerConfigWithInsta
         },
         async (args) => text(withRepro("summarize_metrics", args, h.summarize_metrics(args))),
       ),
-      tool(
-        "list_deploys",
-        "List deploys in a window, newest first: id, version, time, author, summary. Cite results as deploys:<id>.",
-        {
-          since: z.string().optional(),
-          until: z.string().optional(),
-        },
-        async (args) => text(withRepro("list_deploys", args, h.list_deploys(args))),
-      ),
+      // TODO(A5): register tool("list_deploys", …) here — read-only, cites
+      // results as deploys:<id>, takes optional {since, until}, calls
+      // h.list_deploys(args) through withRepro. test/workshop/tools.test.ts
+      // checks both halves.
       tool(
         "get_diff",
         "Unified diff for a deploy id or version. Read the change before you blame it. Cite as diff:<deploy id>.",

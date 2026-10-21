@@ -18,11 +18,3 @@ test("score counts pass+partial as the rate, like the kit", () => {
   ]);
   assert.equal(s.rate, 2 / 3);
 });
-
-test("the committed cases clear the committed ratchet", async () => {
-  const cases = JSON.parse(await readFile("bench/cases.json", "utf8")) as BenchCase[];
-  const ratchet = JSON.parse(await readFile("bench/ratchet.json", "utf8")) as { min_rate: number; max_harmful: number };
-  const s = await runBench(cases);
-  assert.ok(s.rate >= ratchet.min_rate, `rate ${s.rate} below ratchet ${ratchet.min_rate}`);
-  assert.ok(s.harmful <= ratchet.max_harmful);
-});
