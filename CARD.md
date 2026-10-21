@@ -6,7 +6,7 @@ The slides explain. This card is for doing. Each step says what you do, what you
 
 ## Start
 
-One command starts the lab. Keep that terminal open. Use a second terminal for everything else.
+One command starts the lab. Keep that terminal open. Use a second terminal for everything else. The console reloads by itself when you save code; the shop keeps running.
 
 ```bash
 npm ci
@@ -22,7 +22,7 @@ npm start -- --fast
 
 ## Core 1 · Investigate the evidence
 
-**Goal:** Break the shop, let the console raise an incident, and check every claim in the diagnosis against the data.
+**Goal:** Break the shop, let the console raise an incident, and check every claim in the diagnosis against the data. Find what the agent cannot see.
 
 Slides: practice slides 32 and 35. Replaces A1 + A6.
 
@@ -34,31 +34,31 @@ Slides: practice slides 32 and 35. Replaces A1 + A6.
 
 ### 1.2 Open the incident. Read the banner at the top, then the diagnosis.
 
-- **See:** The banner says the next allowed step. The diagnosis lists evidence references such as `metrics:<time>` and `deploys:<id>`.
-- **Check:** Find each reference in `demo/data/telemetry.json`. Every claim must match a line in the data.
-- **Stuck?** References are text, not links. Search the file for the timestamp or the deploy id.
+- **See:** The diagnosis proposes `investigate-more` with low confidence. Under Data gaps it says `list_deploys: no deploys in the window`.
+- **Check:** Find each reference in `demo/data/telemetry.json`. Then search that file for `v2.15.0`: there WAS a deploy. The agent cannot see it, and it says so.
+- **Stuck?** References are text, not links. Search the file for the timestamp.
 
 ### 1.3 Challenge the agent in chat: Could this be something other than the deployment?
 
 - **See:** Offline, the agent returns a scripted summary. It is not a new model investigation.
-- **Check:** Compare its answer with `ruled_out` and `would_change_my_mind` in the diagnosis. Note one data gap, if you see one.
+- **Check:** Compare its answer with `ruled_out` and the data gap. A missing signal is unknown, not healthy: that is why the agent does not propose a rollback.
 - **Stuck?** Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.
 
 ### 1.4 Save the diagnosis in `docs/diagnosis-live.md`. Then record what you checked: `npm run progress:note -- "Core 1: <what you verified>"`
 
 - **See:** One new line at the bottom of `PROGRESS.md`.
 - **Check:** Your note names the references you checked, not only that you did it.
-- **Stuck?** Do not approve yet. The incident waits for you in core 3.
+- **Stuck?** Do not approve. There is nothing safe to execute yet. Core 2 gives the agent its eyes back.
 
 ## Core 2 · Build a change safely and test it
 
-**Goal:** Rebuild the read-only list_deploys tool test-first, prove it with the tests and the bench, and see it in the trace.
+**Goal:** Rebuild the read-only `list_deploys` tool test-first, prove it with the tests and the bench, and watch the diagnosis change.
 
 Slides: practice slides 47 and 51. Replaces A5 + A7.
 
 ### 2.1 Run the red test: `npx tsx --test test/workshop/tools.test.ts`
 
-- **See:** The test fails. `list_deploys` returns nothing.
+- **See:** The test fails: `list_deploys` returns nothing. `npm run bench` fails too: without deploys the agent misses the bad deploy.
 - **Check:** Read the failing assertion before you change code. Say in one sentence why it fails.
 - **Stuck?** Search for `TODO(A5)` in `src/tools.ts`. There are two places.
 
@@ -68,11 +68,11 @@ Slides: practice slides 47 and 51. Replaces A5 + A7.
 - **Check:** `npm run typecheck && npm test && npm run bench` all pass. The bench prints `PASS bench`.
 - **Stuck?** The tool still returns `[]`: you did only one of the two halves.
 
-### 2.3 Restart the lab (Ctrl+C, then `npm start -- --fast`). Ask in chat: `Investigate: checkout errors after the deploy`
+### 2.3 Save. In the same incident, ask in chat: `Investigate: checkout errors after the deploy`
 
-- **See:** `list_deploys` appears in the trace of the new investigation.
-- **Check:** The new diagnosis cites `deploys:<id>`. Record it: `npm run progress:note -- "Core 2: …"`
-- **Stuck?** The console does not reload source files. Restart it after every code change.
+- **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap, and the banner says Approve or reject “rollback”.
+- **Check:** The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- "Core 2: …"`
+- **Stuck?** Incident gone? You stopped the lab, so the shop is healthy again. Break it again and wait for a new incident.
 
 ## Core 3 · Judge the recovery
 
@@ -83,10 +83,10 @@ Slides: practice slides 60 and 63. Replaces A8 + A9.
 ### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Rebuild `checkApproval` in `src/executor.ts` (`TODO(A8)`).
 
 - **See:** The test is green. The executor now refuses to act without a named approval for this incident and this proposal.
-- **Check:** `npm run typecheck && npm test` pass. Restart the lab.
+- **Check:** `npm run typecheck && npm test` pass. The console reloads by itself.
 - **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.
 
-### 3.2 Open your incident. Type your name. Click Approve, then Execute rollback.
+### 3.2 Open your incident. The banner says Approve or reject “rollback”. Type your name. Click Approve, then Execute rollback.
 
 - **See:** The banner says Wait: recovery checks are running. About two minutes later it says LANDED or NOT LANDED.
 - **Check:** The half check may fail. The full and double checks must both pass. On NOT LANDED the banner names the failed check, its value and the limit.

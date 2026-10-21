@@ -7,6 +7,7 @@
  *
  * Checks Node and dependencies first, generates fixtures when they are missing,
  * then starts the three processes in order and waits for each health URL.
+ * The console runs under tsx watch: it reloads on save, the shop keeps its state.
  * Breaking the shop stays a separate, deliberate action:
  *   npm run chaos -- deploy v2.15.0 --mode bad-deploy
  */
@@ -64,7 +65,9 @@ process.on("SIGTERM", () => stop(0));
 run("shop", ["demo/shop.ts"]);
 await waitFor(`http://localhost:${SHOP_PORT}/health`, "The shop");
 run("traffic", ["demo/chaos.ts", "traffic"]);
-run("console", ["console/server.ts"]);
+// The console reloads itself when you save src/ or console/; shop and traffic keep running,
+// so a broken shop and its open incident survive a code change.
+run("console", ["watch", "--clear-screen=false", "console/server.ts"]);
 await waitFor(`http://localhost:${CONSOLE_PORT}/api/health`, "The console");
 
 console.log(`

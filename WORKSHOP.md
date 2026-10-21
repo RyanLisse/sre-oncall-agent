@@ -23,7 +23,8 @@ npm start -- --fast                          # installs, checks, starts the lab
 ```
 
 `npm start` checks Node 22+ and the dependencies, generates the fixtures, and
-starts the shop, the traffic and the console in one terminal. Keep that
+starts the shop, the traffic and the console in one terminal. The console
+reloads itself when you save code; the shop keeps running. Keep that
 terminal open. Ctrl+C stops all three. Use a second terminal for everything
 else. `--fast` opens an incident after one minute instead of five.
 
@@ -34,8 +35,8 @@ terminal: `npm run chaos -- deploy v2.15.0 --mode bad-deploy`.
 
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
-| **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Challenge the agent in chat. | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
-| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). | `test/workshop/tools.test.ts` green, `npm run typecheck && npm test && npm run bench` pass, `list_deploys` in the trace | A5, A7 |
+| **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Find the deploy the agent cannot see (its data gap). | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
+| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). Re-investigate: the gap closes, the proposal becomes `rollback`. | `test/workshop/tools.test.ts` green, `npm run typecheck && npm test && npm run bench` pass, `list_deploys` in the trace | A5, A7 |
 | **3 · Judge the recovery** | Rebuild the approval gate (`TODO(A8)` in `src/executor.ts`). Approve with your name, execute, read the recovery checks, then mitigate and resolve, or stop on NOT LANDED. | `test/workshop/executor.test.ts` green, a lesson in `lessons/lessons.md` with your name | A8, A9 |
 
 The steps are on the card. Run `npm run workshop:check` to see the two

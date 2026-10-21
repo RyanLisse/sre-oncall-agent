@@ -32,7 +32,7 @@ three cores and the optional depth.
 | 10:00–10:50 | 1–25 | Intro: AI-native SDLC loop, the use case, the console | participants can name the 7 phases |
 | 10:50–11:00 | 26 | **Start the lab** | `npm start -- --fast` prints ✓ Lab running; hub opens |
 | 11:00–11:15 | 27 | Break | — |
-| 11:28–11:43 | 32 | **Core 1 · Investigate the evidence** (part 1) | shop broken by the participant; incident raised by the listener |
+| 11:28–11:43 | 32 | **Core 1 · Investigate the evidence** (part 1) | shop broken by the participant; incident raised by the listener; data gap on `list_deploys` |
 | 11:47–12:00 | 35 | **Core 1** (part 2) | every reference checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
 | 12:00–13:00 | 36 | Lunch | — |
 | 13:30–13:50 | 46 | Go deeper: your own guard rule (A4) · catch-up buffer for core 1 | optional |
@@ -55,8 +55,10 @@ The gaps between boxes are the deck's talk and demo segments.
   References are text, not links: search the data file for the timestamp.
   Offline chat is a scripted summary, not a new model run.
 - **Core 2** — the tool returns `[]`: they bound the handler but did not
-  register `tool("list_deploys", …)`, or the reverse. No `list_deploys` in the
-  trace: the console was not restarted after the code change.
+  register `tool("list_deploys", …)`, or the reverse. The console reloads on
+  save (a reload line in the lab terminal); the shop keeps its broken state.
+  Core 1 on the starter correctly ends in `investigate-more` with a data gap:
+  the agent cannot see the deploy. That gap is the reason for core 2.
 - **Core 3** — a button is grey: read the banner. It names the one allowed
   step. The server refuses every other button with 409. Execute is refused:
   the approval needs a name and must match this incident and `rollback`.
