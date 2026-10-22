@@ -34,8 +34,8 @@ jobs:
       - run: npm run test:workshop                         # workshop spec green on main
       - run: npm run test:hooks                            # guard + progress + settings wiring
       - run: npm run workshop:check -- --expect-solved     # no cut markers on main
-      - run: npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
-      - run: npm run investigate -- fixtures/incidents/adversarial.json --dry-run
+      - run: npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model offline
+      - run: npm run investigate -- fixtures/incidents/adversarial.json --dry-run --model offline
       - run: npm run course:check
       - run: npm run card:check
 
