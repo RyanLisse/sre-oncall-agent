@@ -1,4 +1,4 @@
-# Participant card · Workshop 5 · AI SRE first responder
+# Participant card · Workshop 5 · AI-native SDLC with Claude Code
 
 > Generated from `workshop.json` by `npm run card`. Do not edit by hand.
 
@@ -6,36 +6,52 @@ Start with the task and its reason. Read each concept just before you use it. Th
 
 ## Start
 
-Create the isolated starter from committed HEAD. Keep the lab terminal open. Use a second terminal for everything else.
+Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code before theory or edits; terminal 2 configures the SDK and runs the lab.
 
-**Why:** Use an isolated local copy so you can break the demo without touching real customers or another participant's work.
+**Why:** Practise a software delivery cycle on a local SRE agent. Claude Code helps develop the software; the separate runtime agent reads the shop telemetry. Humans accept plans, review evidence and authorize release.
 
 ```bash
 git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start
 cd .lab/checkpoints/start
+```
+
+### Claude Code first minutes
+
+In terminal 1, run `claude` in the starter before theory or edits.
+
+> Read CLAUDE.md, AGENTS.md and CARD.md. Explain the AI SDLC we will practise, its required artifacts and human decisions. Distinguish your development role from the runtime SRE agent. Name the two starter exercises. Do not edit files or run approval, execution, mitigation, resolution, commit or push commands. Wait for my review.
+
+In terminal 2, from the original clone root, configure supported SDK access as described in the setup guide, then run:
+
+```bash
+cd .lab/checkpoints/start
+npm ci
+npm run fixtures
+npm run model:check
 npm start -- --fast
 ```
 
-- **See:** ✓ Lab running. Hub: http://127.0.0.1:4320/hub · Console: http://127.0.0.1:4320 · Shop: http://127.0.0.1:4310.
-- **Check:** `curl 127.0.0.1:4320/api/health` shows `"mode":"healthy"`.
+- **See:** ✓ SDK preflight passes before fault injection, then the lab runs. Hub: http://127.0.0.1:4320/hub · Console: http://127.0.0.1:4320 · Shop: http://127.0.0.1:4310.
+- **Check:** `curl 127.0.0.1:4320/api/health` shows `"mode":"healthy"` and the selected model. `npm run model:check` must return READY before a real-model fault injection.
 - **Stuck?**
   - Port 4310 or 4320 is already in use: Another copy runs. Stop only your own workshop launcher with Ctrl+C in its terminal. Never kill an unknown process.
   - Node is too old: Install Node 22 or newer. Check with `node --version`.
   - The console header says no telemetry: Wait 20 seconds. The shop writes telemetry every few seconds while traffic runs.
+  - SDK preflight cannot authenticate: Report the missing API/provider configuration. Use `npm start -- --fast --offline` only as an explicit fallback; it is not model evidence. See `docs/claude-code.md`.
 
-## Core 1 · Investigate the evidence
+## Core 1 · Specify a change from evidence
 
-**What you do:** Break the shop, let the console raise an incident, and check every claim in the diagnosis against the data. Find what the agent cannot see.
+**What you do:** Observe the failing checkout and verify the diagnosis. Turn the missing deployment evidence into an accepted software requirement.
 
-**Why:** A plausible explanation is not permission to change a service. Find the missing signal before proposing a fix.
+**Why:** The agent needs an observable goal and a boundary before it writes code. An incident diagnosis is input to that decision, not the requirement itself.
 
-**What proves it:** A saved diagnosis with checked references and the list_deploys data gap.
+**What proves it:** docs/diagnosis-live.md contains checked observations. intent.md states the user, outcome, acceptance checks, boundary, open question and your acceptance decision.
 
-Slides: Core 1: Investigate the evidence · Core 1: Check the claims. Replaces A1 + A6.
+Slides: Core 1: Investigate the evidence · Core 1: Check the claims · Core 1: Specify the change. Replaces A1 + A2 + A6.
 
-### 1.1 Break the shop once: click `Bad deploy v2.15.0` in the shop OR run `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in your second terminal. Do not do both.
+### 1.1 Break the shop once: click `Bad deploy v2.15.0` in the shop. The CLI alternative is `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in a separate shell, never the occupied launcher terminal. Do not use both.
 
 **Before you act:** Telemetry is recorded service data. The listener opens an incident when server metrics cross a fixed limit; no model makes that decision.
 
@@ -47,16 +63,16 @@ Slides: Core 1: Investigate the evidence · Core 1: Check the claims. Replaces A
 
 **Before you act:** An evidence reference points to an observation. A data gap means unknown, not proof that nothing happened.
 
-- **See:** The diagnosis proposes `investigate-more` with low confidence. Under Data gaps it says `list_deploys: no deploys in the window`.
-- **Check:** Find each reference in `demo/data/telemetry.json`. Then search that file for `v2.15.0`: there WAS a deploy. The agent cannot see it, and it says so.
+- **See:** The model output may vary. Expect missing deploy evidence, a verified tool trace and explicit data gaps; the starter cannot see the deploy.
+- **Check:** Preserve the diagnosis and trace. Verify every cited reference in `demo/data/telemetry.json`, then search that file for `v2.15.0`: there WAS a deploy outside the starter's visible tool result.
 - **Stuck?** References are text, not links. Search the file for the timestamp.
 
 ### 1.3 Challenge the agent in chat: Could this be something other than the deployment?
 
-**Before you act:** Offline chat follows a fixed script. It does not run a fresh model investigation.
+**Before you act:** Free-text chat is not checked by the structured verdict contract. Verify its claims manually against telemetry and trace; use Investigate for a contract-validated diagnosis.
 
-- **See:** Offline, the agent returns a scripted summary. It is not a new model investigation.
-- **Check:** Compare its answer with `ruled_out` and the data gap. A missing signal is unknown, not healthy: that is why the agent does not propose a rollback.
+- **See:** Real output may vary. With the explicit offline fallback, the agent returns a scripted summary; that is not a new model investigation.
+- **Check:** Compare the answer with `ruled_out`, the trace and the data gap. If it fabricates a deploy citation or fails the contract, preserve the output and stop; do not call it success or weaken the contract.
 - **Stuck?** Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.
 
 ### 1.4 Save the diagnosis in `docs/diagnosis-live.md`. Then record what you checked: `npm run progress:note -- "Core 1: <what you verified>"`
@@ -67,67 +83,99 @@ Slides: Core 1: Investigate the evidence · Core 1: Check the claims. Replaces A
 - **Check:** Your note names the references you checked, not only that you did it.
 - **Stuck?** Do not approve. There is nothing safe to execute yet. Core 2 gives the agent its eyes back.
 
-## Core 2 · Build a change safely and test it
+### 1.5 Ask Claude Code: "Read docs/diagnosis-live.md and intent.md. Draft a scoped intent for the missing deployment evidence and human gate. Name observable acceptance checks and an open question. Do not edit code or approve anything. Wait for my review."
 
-**What you do:** Rebuild the read-only `list_deploys` tool test-first, prove it with the tests and the bench, and watch the diagnosis change.
+**Before you act:** An intent defines the outcome before the implementation. An acceptance check states what another person can observe, not that the agent feels confident.
 
-**Why:** Core 1 found a deployment the agent cannot read. Repair that evidence path instead of guessing the cause.
+- **See:** A draft `intent.md` with a user, problem, outcome, constraints and an open question. Checks cover returned deploys, empty data and the named-human gate.
+- **Check:** Review every check yourself. Link each to a test or recorded observation. Reject fabricated evidence or a plan to weaken the contract. Record your name and acceptance decision in `intent.md`.
+- **Stuck?** Use the existing intent template. Ask Claude to clarify one vague check. Do not proceed to code until you accept the scope.
 
-**What proves it:** Passing tool test, typecheck and bench; the same live incident now cites the deployment.
+## Core 2 · Design, build and verify the change
 
-Slides: Core 2: Build a change safely · Core 2: Prove it on the live incident. Replaces A5 + A7.
+**What you do:** Review a small plan, repair the read-only handler with Claude Code, and compare the implementation with the accepted intent.
 
-### 2.1 Run the red test: `npx tsx --test test/workshop/tools.test.ts`
+**Why:** A bounded plan limits accidental changes. A failing test, a passing test and a real diff show what the repair changed.
+
+**What proves it:** docs/plan.md records your design review. The tool repair has a visible diff, passing focused tests, typecheck and bench results, plus the actual live model trace or a clearly recorded runtime blocker.
+
+Slides: Before code: a small plan · Keep a reviewable baseline · Core 2: Build a change safely · Core 2: Prove it on the live incident. Replaces A5 + A7.
+
+### 2.1 Before code edits, follow the human-only baseline commands in `docs/sdlc-git.md`. In the isolated starter, create `workshop-base`, commit only the two exercise cuts, then create `fix/w5-core`.
+
+**Before you act:** The checkpoint has a solved HEAD plus unfinished exercise cuts. Without a baseline commit, restoring the solution could leave an empty code diff.
+
+- **See:** `git branch --show-current` prints `fix/w5-core`. The `workshop-base` commit contains only the A5 and A8 starter cuts.
+- **Check:** Inspect `git show --stat workshop-base`. It lists only `src/tools.ts` and `src/executor.ts`. Keep intent and evidence edits outside this baseline commit.
+- **Stuck?** Do not overwrite an existing branch or commit someone else's work. Ask the facilitator if either branch name already exists. Claude must not run the baseline commands.
+
+### 2.2 Run the red test: `npx tsx --test test/workshop/tools.test.ts`. Ask Claude Code: "Read intent.md, docs/spec.md and the failing test. Propose the smallest change in docs/plan.md. Name files, checks, risks, a rejected alternative and your stop point. Do not edit code. Wait for my review."
 
 **Before you act:** A red test exposes the missing behaviour. The bench checks scripted outcomes across fixed scenarios, not model quality.
 
 - **See:** The test fails: `list_deploys` returns nothing. `npm run bench` fails too: without deploys the agent misses the bad deploy.
-- **Check:** Read the failing assertion before you change code. Say in one sentence why it fails.
-- **Stuck?** Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore its handler binding AND the MCP registration; the registration has an explanatory comment, not a second TODO marker.
+- **Check:** Explain the failing assertion. Review the plan against your intent and the existing contract. Record your accepted scope in `docs/plan.md` before implementation.
+- **Stuck?** Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore the read-only handler binding; inspect and preserve the existing MCP registration.
 
-### 2.2 Build `list_deploys` in `src/tools.ts` with Claude Code or by hand. Bind the handler AND register the tool.
+### 2.3 Build the `list_deploys` handler in `src/tools.ts` with Claude Code or by hand. Keep the existing MCP registration intact.
 
-**Before you act:** MCP exposes named tools. The handler reads data; its binding and registration make that read-only result available.
+**Before you act:** MCP exposes named tools. The existing registration points to a handler that reads data; restore that binding only after the human reviews the small plan.
 
 - **See:** `test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.
-- **Check:** `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass. The bench prints `PASS bench`. Executor tests remain expected to fail until Core 3 restores the approval gate.
-- **Stuck?** The tool still returns `[]`: you did only one of the two halves.
+- **Check:** After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until Core 3 restores the approval gate. Save the actual commands, results and any untested paths in `docs/verify/sdlc.md`. A8 remains expected red here, so this is not yet release-ready.
+- **Stuck?** The tool still returns `[]`: inspect the handler binding and the preserved registration; do not add a second registration.
 
-### 2.3 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
+### 2.4 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
 
 **Before you act:** A trace records the tools used for a diagnosis. Re-investigation lets you compare the same incident before and after the repair.
 
-- **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap. The next-step banner asks you to read the evidence before a named approval or rejection.
-- **Check:** The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- "Core 2: …"`
+- **See:** The lab terminal prints a console reload line. Inspect the new diagnosis, its observed trace, deploy references, data gaps and proposal; real model wording and actions can vary.
+- **Check:** Verify the actual trace and references against `demo/data/telemetry.json`. If the citation is fabricated or the contract fails, preserve the output and stop. Record what you verified: `npm run progress:note -- "Core 2: ..."`
 - **Stuck?** Incident gone? Incident history persists in SQLite, while the shop resets on restart. Do not restart the launcher to reload code; saving auto-reloads the console. For a fresh repeat, use a new disposable checkpoint copy; do not rebreak a stale incident.
 
-## Core 3 · Judge the recovery
+## Core 3 · Review, release and learn from the result
 
-**What you do:** Rebuild the approval gate, sign the rollback with your name, and decide from the recovery checks whether the incident may close.
+**What you do:** Repair and test the human gate. Review the complete code change, prepare its PR and record a human release decision. Observe the local runtime and propose the next improvement.
 
-**Why:** The agent must not authorize its own action. A successful rollback is not proof that the service recovered.
+**Why:** The authoring agent cannot accept its own work. Code release and runtime recovery are different decisions, with different evidence.
 
-**What proves it:** Passing gate tests plus a justified human closure, or a documented NOT LANDED stop with the incident left open.
+**What proves it:** docs/verify/sdlc.md records actual checks, human diff review, a PR and release decision or RELEASE BLOCKED, the runtime result and one reviewed next task.
 
-Slides: Core 3: Judge the recovery · Core 3: Close it, or stop safely. Replaces A8 + A9.
+Slides: Core 3: Judge the recovery · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change. Replaces A8 + A9.
 
-### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Rebuild `checkApproval` in `src/executor.ts` (`TODO(A8)`).
+### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Ask Claude for a fail-closed plan for `checkApproval` in `src/executor.ts`. Review that plan before allowing the `TODO(A8)` repair.
 
 **Before you act:** The approval gate validates a named human decision for this incident and proposal. The starter fails closed until you rebuild it.
 
 - **See:** The test is green. The executor now refuses to act without a named approval for this incident and this proposal.
-- **Check:** `npm run verify` and `npm run test:workshop` pass before a human approves the rollback. The console reloads by itself.
+- **Check:** Run `npx tsx --test test/workshop/executor.test.ts`, `npm run verify`, `npm run test:workshop` and `npm run test:hooks`. Record actual results in `docs/verify/sdlc.md`. All must pass before the code release decision.
 - **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.
 
-### 3.2 Open your incident and read the diagnosis and evidence. Type your name. Click Approve, then Execute rollback.
+### 3.2 Ask Claude Code: "Review git diff workshop-base against intent.md, docs/plan.md and REVIEW.md. Identify functional defects, missing checks and unsupported claims. Cite files and lines. Do not edit, approve, commit, push or merge. Wait for my decision."
+
+**Before you act:** First run git status --short. Untracked files are absent from the diff: inspect them and stage only intended files by exact path yourself before requesting review. Never stage secrets. Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.
+
+- **See:** A list of findings, or an explicit no-findings result. The human has inspected the diff and evidence rather than accepting the model's conclusion.
+- **Check:** Verify every finding yourself. Request fixes and rerun affected checks when needed. Record your name, decision, residual risks and untested paths in `docs/verify/sdlc.md`.
+- **Stuck?** When working solo, review your own diff in a separate pass and record that limitation. If repository policy requires another reviewer, wait for one.
+
+### 3.3 Prepare the PR text with Claude Code, then follow `docs/sdlc-git.md` in your own terminal. A human commits, signs the Git gate, pushes to the learner repo and opens a PR from `fix/w5-core` into `workshop-base`.
+
+**Before you act:** A Git approval authorizes publication of a code change. It does not approve a shop rollback. Never push the training baseline to the upstream project.
+
+- **See:** A PR with a meaningful repair diff, accepted intent, actual checks and known limitations. If remote access or a required reviewer is missing, the record says `RELEASE BLOCKED`.
+- **Check:** A human checks the current head, CI and required review before merging. Record the PR and merge commit, or the exact blocker. A local reload is a development check, not a production deployment.
+- **Stuck?** No publication access: prepare the PR text and document the blocker. You may continue local runtime observation as a test, but must not claim a release or bypass branch protection.
+
+### 3.4 After code review, inspect the current incident and its actual proposal. Only if the evidence supports an allowed action, a named human clicks Approve and then the separate Execute control. Otherwise record the safe stop.
 
 **Before you act:** Rollback restores the prior deployment. Recovery checks capture measured values against a frozen limit; execution success alone is insufficient.
 
-- **See:** The banner asks you to wait for execution and all three recovery checks. About two minutes later, inspect LANDED or NOT LANDED and the recovery table.
+- **See:** For an executed rollback, the banner asks you to wait for all recovery checks. About two minutes later, inspect LANDED or NOT LANDED. A model response is not guaranteed to propose rollback.
 - **Check:** The half check may fail. The full and double checks must both pass. On NOT LANDED the banner names the failed check, its value and the limit.
 - **Stuck?** A button is grey: the banner says which step is allowed now. The server refuses every other button.
 
-### 3.3 LANDED: click Mark mitigated, then Resolve with notes. NOT LANDED: do not close. Read the failed check, then investigate in chat or escalate.
+### 3.5 LANDED: click Mark mitigated, then Resolve with notes. NOT LANDED: do not close. Read the failed check, then investigate in chat or escalate.
 
 **Before you act:** LANDED means the full and double checks passed. Mitigated and resolved are separate human decisions. NOT LANDED or unknown means stop.
 
@@ -135,20 +183,26 @@ Slides: Core 3: Judge the recovery · Core 3: Close it, or stop safely. Replaces
 - **Check:** If resolved, `lessons/lessons.md` has your name and the incident id. If NOT LANDED, confirm the incident remains open and retain the failed check. Record your actual outcome: `npm run progress:note -- "Core 3: …"`
 - **Stuck?** Never execute again to get a green result. NOT LANDED is a correct, safe stop.
 
+### 3.6 Ask Claude Code: "Read the actual observations in docs/verify/sdlc.md. Propose one next change and the acceptance check or regression test that would prove it. Distinguish observed facts from hypotheses. Do not edit code or close the incident. Wait for my review."
+
+**Before you act:** Maintenance feeds the next planning cycle. A closed incident or a model-generated lesson is not automatically a reviewed software improvement.
+
+- **See:** One proposed next task grounded in a trace, failed check, review finding or missing observation. It includes an acceptance check.
+- **Check:** Review the proposal yourself. Record the task, evidence and your decision in `docs/verify/sdlc.md`. Keep an unresolved incident open. Record progress with `npm run progress:note -- "SDLC: recorded actual evidence, release decision and next task"`.
+- **Stuck?** If the model or recovery was blocked, use that observed limitation. Do not invent a successful run. Implementing this next task is optional; proposing and reviewing it is required.
+
 ## Go deeper (optional)
 
 | # | Task | Do |
 | --- | --- | --- |
-| A2 | Write your team intent.md | Fill `intent.md`: who the agent serves, the boundary, and three checks a stranger can verify. The design-control-loop skill can interview you. |
 | A3 | Read the contract | Write `docs/spec.md` for the evidence rules in `src/contract.ts`. Run `npx tsx --test test/contract.test.ts` and break one rule on purpose. |
 | A4 | Add your own guard rule | Add one deny rule of your own to `.claude/hooks/guard.mjs` BY HAND (the agent may not edit hooks). Prove it with a deny line in `approvals/audit.jsonl`. Write `docs/decisions/D01-*.md`. |
 | A7 | Add a bench case | Add one case to `bench/cases.json`, run `npm run bench`. Ask the agent to lower `bench/ratchet.json` and watch the guard deny it. |
-| A8b | The git gate | Ask the agent to push `fix/<your-name>`: denied. Your neighbour runs `npm run approve:git -- <their-name> fix/<your-name> "<reason>"` in their own terminal. |
 | A9b | Your hackathon intent.md | Write `docs/hackathon-intent.md` for the agent you build next. Hand off with the `/handoff` skill. |
 
 ## Behind? Catch up without losing your work
 
-Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from any starter copy. Each creates a separate current-HEAD worktree under `.lab/checkpoints/` and refuses to overwrite an existing destination. Your files remain unchanged. Never copy runtime data, approvals, progress, or lesson history.
+Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from the ORIGINAL, unchanged clone root, not from a modified starter. Each creates a separate current-HEAD worktree and refuses overwrite. Compare files yourself. Never copy runtime data, approvals, progress or lesson history. A solved checkpoint helps catch up; it does not prove you authored, tested or reviewed a change.
 
 | Checkpoint | Contains |
 | --- | --- |
@@ -158,6 +212,6 @@ Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from any st
 
 ## Where everything is
 
-- **Participant:** [Participant card](CARD.md) · [Console](http://127.0.0.1:4320) · [Course (concepts, self-paced)](course/index.html) · [Working alone](SOLO.md)
+- **Participant:** [Participant card](CARD.md) · [Console](http://127.0.0.1:4320) · [Course (concepts, self-paced)](course/index.html) · [Working alone](SOLO.md) · [Claude Code and SDK setup](https://github.com/RyanLisse/sre-oncall-agent/blob/main/docs/claude-code.md) · [Human Git release steps](docs/sdlc-git.md)
 - **Facilitator:** [Facilitator run sheet](FACILITATOR.md) · [Workshop guide](WORKSHOP.md) · [Slides (separate repo)](aetherlink-classroom-slides-w5/workshop5.html)
 - **Agent:** [Agent rules](CLAUDE.md) · [Contract](docs/spec.md) · [Bench cases](bench/cases.json) · [Review checklist](REVIEW.md)

@@ -1,12 +1,134 @@
 # Tutorial: build an AI SRE first responder
 
 For the shorter classroom route, use [WORKSHOP.md](WORKSHOP.md) and
-[PARTICIPANT.md](PARTICIPANT.md). The numbered steps below remain the full
-optional self-study sequence.
+[PARTICIPANT.md](PARTICIPANT.md). This recommended self-paced route teaches
+the required AI software delivery lifecycle. Claude Code is the development
+assistant; the runtime SRE agent is the application being changed. The
+numbered steps below remain an optional offline reference for mirror
+consumers. Their content is retained for compatibility.
 
-You can do this path alone. Each step has four parts: **Explain**, **See it**,
-**Do**, **Check**. Everything runs offline. A real model run is optional and
-needs your own API key.
+Use [docs/claude-code.md](docs/claude-code.md) for official Claude Code
+installation and separate Agent SDK setup. The Agent SDK defaults to `sonnet`;
+`npm run model:check` must pass before a real-model fault injection. Offline
+is an explicit scripted fallback, not model evidence. For canonical actions,
+prompts and proof, follow [CARD.md](CARD.md).
+
+## Recommended self-paced route
+
+### Start — Claude Code before theory or edits
+
+- **Task:** Create a disposable starter and begin with the coding assistant.
+- **Why:** AI-assisted delivery starts by agreeing on the problem, evidence
+  and human boundaries, not by prompting directly for code.
+- **Action:** In terminal 1, clone the repository, create the starter
+  checkpoint, enter it and run `claude`. Submit the read-only prompt in
+  [CARD.md](CARD.md) before theory or edits. In terminal 2, from the original
+  clone root, configure SDK access as described in the setup guide, then enter
+  the same checkpoint, run `npm ci`, `npm run fixtures`,
+  `npm run model:check`, and `npm start -- --fast`.
+- **Proof:** The SDK preflight returns `READY`, and console health reports
+  the selected model before fault injection. If SDK access is unavailable,
+  record the blocker; use `npm start -- --fast --offline` only as an explicit
+  fallback. Offline output is not model evidence.
+
+When both terminals are occupied, ask Claude Code to run safe checks or use
+`/exit` before typing shell commands, then reopen Claude Code afterward. Never
+type shell commands into the active assistant prompt.
+
+### Core 1 — turn observed evidence into accepted intent
+
+- **Task:** Break the shop once, inspect the diagnosis and trace, verify every
+  reference against telemetry, and draft `intent.md` from the observations.
+- **Why:** An incident diagnosis is input to a software requirement, not the
+  requirement itself. A missing deploy signal is unknown, not proof that no
+  deploy happened.
+- **Action:** Click **Bad deploy v2.15.0** once in the shop at
+  `http://127.0.0.1:4310`. Check the incident at `http://127.0.0.1:4320`,
+  citations and trace against `demo/data/telemetry.json`. Save
+  `docs/diagnosis-live.md`. Use the Core 1 prompt in the card to draft an
+  intent naming the user, outcome, observable checks, boundary and open
+  question. Review and accept it yourself before Core 2. Record actual
+  observations with `npm run progress:note -- "..."`.
+- **Proof:** `docs/diagnosis-live.md` has checked evidence; `intent.md` has
+  your accepted scope and decision. Real model wording varies. If a citation
+  is fabricated or a contract fails, preserve the output and stop; do not
+  weaken the contract.
+
+### Core 2 — review the design, then repair and prove the tool
+
+- **Task:** Create a human-owned starter baseline, review `docs/plan.md`
+  against accepted intent, then repair the read-only `list_deploys` handler
+  while preserving its MCP registration.
+- **Why:** A meaningful diff makes the repair reviewable. The failing test
+  exposes missing behavior; the plan constrains the change before code edits.
+- **Action:** Follow the baseline steps in
+  [docs/sdlc-git.md](docs/sdlc-git.md) in the isolated starter. Run the red
+  `npx tsx --test test/workshop/tools.test.ts`; ask Claude Code for a small
+  plan and wait for human review. Then implement and run the focused tool test,
+  `npm run typecheck` and `npm run bench`. Re-investigate the same incident
+  with the Investigate action from the card. Record actual checks and trace
+  in `docs/verify/sdlc.md`, then record them with
+  `npm run progress:note -- "Core 2: recorded actual tests, bench and trace"`.
+- **Proof:** The plan is accepted before edits; the code diff is nonempty;
+  tests, typecheck and bench pass; the actual trace shows the tools called.
+  The A8 gate remains intentionally red until Core 3. Preserve failed
+  contracts or citations rather than calling them success.
+
+### Core 3 — review, release and learn
+
+- **Task:** Review a fail-closed `checkApproval` plan, repair the human gate,
+  run full checks, inspect the actual diff and make a human release decision.
+  Observe runtime evidence and propose one reviewed next task.
+- **Why:** Passing tests do not accept or publish a change; runtime recovery is
+  separate from code release.
+- **Action:** Follow the Core 3 prompts and checks in [CARD.md](CARD.md).
+  Run the focused executor test, `npm run verify`,
+  `npm run test:workshop` and `npm run test:hooks`; record results. Review
+  `git diff workshop-base` against `intent.md`, `docs/plan.md` and `REVIEW.md`.
+  A human prepares the learner-repo PR and checks current-head CI and required
+  review before deciding to merge. If access or a reviewer is missing, record
+  `RELEASE BLOCKED` and the reason. Then record the actual runtime model,
+  trace, recovery result and one reviewed next task in `docs/verify/sdlc.md`.
+  Record the actual result with
+  `npm run progress:note -- "Core 3: recorded release decision, runtime result and next task"`.
+- **Proof:** Full checks and actual diff findings are recorded. A human has
+  made a release decision or documented the exact blocker. Runtime results
+  are observed, not inferred from a local reload. `NOT LANDED` or unknown
+  recovery is a safe stop; keep the incident open.
+
+### Completion checklist
+
+- [ ] The diagnosis is checked against evidence and `intent.md` is accepted.
+- [ ] `docs/plan.md` was reviewed before implementation and the repair diff is
+      nonempty.
+- [ ] Focused and full code checks, actual diff review and human release
+      decision (or `RELEASE BLOCKED`) are recorded.
+- [ ] The actual runtime model label, trace and recovery outcome are recorded,
+      or the missing observation is explicitly marked blocked/not run.
+- [ ] One next task and its acceptance check are proposed and reviewed.
+- [ ] No approval, execution, mitigation, resolution, commit, push or merge was
+      delegated to the assistant.
+
+### Catch up without overwriting your starter
+
+Run catch-up commands from the original clone root, not a modified starter.
+Each creates a separate checkpoint and preserves the participant's files.
+Tell anyone helping which checkpoint you entered.
+
+```bash
+cd /path/to/sre-oncall-agent
+npm run checkpoint -- core-2
+cd .lab/checkpoints/core-2
+```
+
+For Core 3, return to the original root and run
+`npm run checkpoint -- core-3`, then enter `.lab/checkpoints/core-3`.
+Do not copy runtime data, approvals, progress or lesson history from a solved
+checkpoint. A solved copy helps catch up; it does not prove authored work.
+
+The numbered steps below are deterministic offline reference material. Every
+investigation command explicitly selects `--model offline`; they are not model
+evidence.
 
 | Step | You do | Time |
 | --- | --- | --- |
@@ -24,13 +146,14 @@ needs your own API key.
 
 ## Step 0 — Install
 
-**Explain:** The project is a TypeScript agent on the Claude Agent SDK with
-three read-only tools and a scripted offline runtime.
+**Explain:** This optional reference uses the scripted runtime. The current
+recommended route starts Claude Code first and separately preflights the real
+Agent SDK.
 
 **Do:**
 
 ```text
-npm install
+npm ci
 npm run fixtures
 npm run verify
 ```
@@ -72,7 +195,7 @@ loop.
 **Do:**
 
 ```text
-npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
+npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model offline
 ```
 
 **Check:** The trace lists the three tools in order. The diagnosis has six
@@ -83,9 +206,9 @@ last line says a human decides.
 Now run the other three scenarios. Predict the proposal before each run:
 
 ```text
-npm run investigate -- fixtures/incidents/slow-dependency.json --dry-run
-npm run investigate -- fixtures/incidents/noisy-alert.json --dry-run
-npm run investigate -- fixtures/incidents/mystery-errors.json --dry-run
+npm run investigate -- fixtures/incidents/slow-dependency.json --dry-run --model offline
+npm run investigate -- fixtures/incidents/noisy-alert.json --dry-run --model offline
+npm run investigate -- fixtures/incidents/mystery-errors.json --dry-run --model offline
 ```
 
 **Check:** `scale`, `no-action`, `investigate-more`. Note the confidence on
@@ -110,13 +233,13 @@ never called fails.
 **Do:** Run the adversarial alert. Its text tells the agent to skip the rules.
 
 ```text
-npm run investigate -- fixtures/incidents/adversarial.json --dry-run
+npm run investigate -- fixtures/incidents/adversarial.json --dry-run --model offline
 ```
 
 Then try the loop budget:
 
 ```text
-npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --max-turns 2
+npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model offline --max-turns 2
 ```
 
 **Check:** The adversarial alert gets the same verdict as the clean one —
@@ -139,7 +262,7 @@ full and double the expected window. Not a polling loop.
 **Do:**
 
 ```text
-npm run investigate -- fixtures/incidents/bad-deploy.json
+npm run investigate -- fixtures/incidents/bad-deploy.json --model offline
 cat approvals/INC-1001.approval.json
 npm run approve -- fixtures/incidents/bad-deploy.json --by <your name>
 ```
@@ -185,7 +308,7 @@ entries, the pattern belongs in a playbook, not the log.
 read the prompt the agent would get:
 
 ```text
-npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
+npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model offline
 ```
 
 **Check:** `#bad-deploy` now has two entries; one more and
@@ -218,19 +341,24 @@ Revert the edit. Then try `npm run bench -- --raise` — the floor moves to
 
 ---
 
-## Step 7 — Optional: a real model
+## Step 7 — Optional: verify model access
+
+This is optional model verification, not the first model use. Follow
+[docs/claude-code.md](docs/claude-code.md), configure SDK access in the shell
+only, and run the bounded preflight before an investigation.
 
 **Do:**
 
 ```text
-export ANTHROPIC_API_KEY=sk-ant-...
+npm run model:check
 npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model sonnet
 ```
 
-**Check:** The trace shows real tool calls through the in-process MCP server.
-The verdict passes the same contract. Compare its `ruled_out` and
-`would_change_my_mind` with the offline run — that is where a model adds
-judgment the script cannot.
+**Check:** If the preflight is unavailable, report the limitation and do not
+invent credentials or use CLI OAuth as an SDK bypass. If it passes, the trace
+shows real tool calls through the in-process MCP server and the verdict still
+passes the contract. Model output varies; preserve a failed contract or
+fabricated citation and stop.
 
 ---
 
@@ -241,7 +369,7 @@ can break *now*. It writes its own telemetry in the shape the agent reads —
 the agent never talks to the shop, exactly as it would read Grafana rather
 than your service.
 
-**Do (by hand):** run `npm start -- --fast`. It starts the shop, the traffic
+**Do (by hand):** run `npm start -- --fast --offline`. It starts the shop, the traffic
 and the console in one terminal. Open the shop at `http://localhost:4310`. Customers check out on
 their own (10 per second). Click a button under **Make something break** and
 watch the error bar cross the dashed 2% line. After about a minute the
@@ -249,40 +377,9 @@ console at `http://localhost:4320` raises the alert. Its banner names the next
 allowed step. **Reset to healthy** is a facilitator
 lever, not the fix.
 
-**Do (scripted):**
-
-```text
-npm run doctor
-npm run demo
-```
-
-Watch the seven steps: baseline → fault → diagnosis → executor refused
-(pending) → you approve → executor rolls back and collects three fresh
-checkouts → watch says LANDED.
-
-Now the two cases where rollback is wrong:
-
-```text
-npm run demo -- slow degrade
-npm run demo -- errors degrade
-```
-
-**Check:** With no deploy record the agent proposes `scale` and
-`investigate-more`, and the executor refuses both — it only implements
-rollback, and a human takes those actions by hand.
-
-Finally the deployment watch:
-
-```text
-npm run demo:watch
-```
-
-**Check:** The watch records the serving revision, waits for the next one,
-then probes `/checkout` every 1.5 s. When the injected bad deploy trips the
-fixed policy it prints `FAILED watch`, writes an incident file, and says
-*No automatic rollback.* Try `npm run watch-deploy -- "Watch the next
-deployment for five minutes. If it fails, roll back automatically."` — the
-extra sentence is rejected.
+Do not run legacy demo scripts that auto-approve. Use the explicit launcher
+and the human-gated console route instead; a human still approves, executes,
+mitigates and resolves separately.
 
 ---
 

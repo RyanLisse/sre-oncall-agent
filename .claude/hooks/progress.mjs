@@ -72,7 +72,7 @@ function evidence() {
       title: "Build: list_deploys tool + capability binding",
       shipped: "list_deploys re-implemented as a read-only telemetry tool and bound to its capability in the handlers map.",
       validation: "`npm run test:workshop` green; the console investigation trace shows a list_deploys call.",
-      hint: "re-implement list_deploys in src/tools.ts (handler + registration); prove it in the console trace",
+      hint: "re-implement the list_deploys handler binding in src/tools.ts; inspect and preserve its existing MCP registration, then prove it in the console trace",
     },
     {
       key: "A-6", name: "live diagnosis",

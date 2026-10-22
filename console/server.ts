@@ -27,7 +27,7 @@
 import { readFile, readFileSync, writeFile } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decide, draftApproval, readApproval, writeApproval } from "../src/approval.js";
 import { ask, investigateFromChat, routeMessage } from "../src/chat.js";
@@ -35,6 +35,7 @@ import { parseIncident, type Incident } from "../src/contract.js";
 import { runWatch } from "../src/deployWatch.js";
 import { execute } from "../src/executor.js";
 import { nextAction } from "../src/nextAction.js";
+import { runtimeModel, type QueryFn } from "../src/runtime.js";
 import { appendResolutionLesson, lessonsStore, renderResolutionLesson } from "../src/lessons.js";
 import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
@@ -46,7 +47,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.AGENT_CONSOLE_PORT ?? 4320);
 const SHOP = process.env.AGENT_SHOP_URL ?? `http://localhost:${process.env.AGENT_SHOP_PORT ?? 4310}`;
 const TELEMETRY = process.env.AGENT_TELEMETRY ?? (process.env.AGENT_DEMO_DATA ? `${process.env.AGENT_DEMO_DATA}/telemetry.json` : "demo/data/telemetry.json");
-const MODEL = process.env.AGENT_MODEL; // undefined → offline
+const MODEL = runtimeModel();
 const APPROVALS = process.env.AGENT_APPROVALS_DIR ?? "approvals";
 const store = new Store();
 const triaging = new Set<string>();
@@ -67,6 +68,7 @@ const say = (id: string, role: "user" | "agent" | "system", kind: Parameters<Sto
   broadcast("message", m);
   return m;
 };
+const agentError = (error: unknown): string => error instanceof Error ? error.message : "unknown agent error";
 
 // ── telemetry ────────────────────────────────────────────────────────────
 const telemetry = async (): Promise<Telemetry | undefined> => {
@@ -94,7 +96,7 @@ const loadIncident = (row: IncidentRow): { incident: Incident; telemetry: string
 };
 
 // ── the triage loop (shared by all three intake paths) ───────────────────
-const triage = async (row: IncidentRow, alert: string) => {
+const makeTriage = (query?: QueryFn) => async (row: IncidentRow, alert: string) => {
   const current = store.get(row.id);
   if (triaging.has(row.id) || deciding.has(row.id) || closing.has(row.id)
     || row.state === "resolved" || current?.state === "resolved"
@@ -107,6 +109,7 @@ const triage = async (row: IncidentRow, alert: string) => {
   say(row.id, "agent", "text", `Investigating ${row.id} with ${MODEL ? `model ${MODEL}` : "the offline investigator (scripted, not model evidence)"} …`);
   const run = await investigateFromChat(file.incident, {
     telemetry: t, model: MODEL,
+    ...(query ? { query } : {}),
     onEvent: (e) => {
       if (e.type === "assistant" && e.parent_tool_use_id === null)
         for (const b of e.message.content) if (b.type === "tool_use") say(row.id, "agent", "tool", `${String(b.name).replace(/^mcp__telemetry__/, "")} ${JSON.stringify(b.input ?? {})}`);
@@ -120,6 +123,8 @@ const triage = async (row: IncidentRow, alert: string) => {
   await writeApproval(APPROVALS, approval);
   say(row.id, "system", "approval", JSON.stringify(approval));
   if (run.lessonFile) say(row.id, "system", "text", `lesson proposed → ${run.lessonFile}`);
+  } catch (error) {
+    say(row.id, "agent", "error", `Investigation failed: ${agentError(error)} Inspect the error before continuing. No offline fallback was used.`);
   } finally {
     triaging.delete(row.id);
     broadcast("incidents", store.list());
@@ -130,7 +135,7 @@ const triage = async (row: IncidentRow, alert: string) => {
 /** oncall.md-style criteria. AGENT_LISTEN_WINDOW_MIN defaults to 5 (production); the demo scripts set 1. */
 const CRITERIA = { errorRate: 0.02, p95Ms: 2000, minutes: Number(process.env.AGENT_LISTEN_WINDOW_MIN ?? 5), deployWindowMin: 10 } as const;
 let lastOpened = 0;
-const listen = async () => {
+const listen = async (triage: (row: IncidentRow, alert: string) => Promise<void>) => {
   const t = await telemetry();
   if (!t) return;
   const since = new Date(Date.now() - CRITERIA.minutes * 60_000).toISOString();
@@ -159,7 +164,9 @@ const closing = new Set<string>();
 const recordRecovery = (id: string, recovery: Recovery) => say(id, "system", "recovery", JSON.stringify(recovery));
 
 // ── routes ───────────────────────────────────────────────────────────────
-const server = createServer(async (req, res) => {
+export const createConsoleServer = (deps: { readonly query?: QueryFn } = {}) => {
+const triage = makeTriage(deps.query);
+return createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://x");
   const m = url.pathname.match(/^\/api\/incidents\/([^/]+)(?:\/(\w+))?$/);
 
@@ -170,7 +177,7 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/api/health") {
     const t = await telemetry();
     const shop = await fetch(`${SHOP}/health`).then((r) => r.json()).catch(() => undefined);
-    return json(res, 200, { shop, telemetry: t ? { buckets: t.metrics.length, deploys: t.deploys.length, path: TELEMETRY } : null, model: MODEL ?? "offline", listening: true });
+    return json(res, 200, { shop, telemetry: t ? { buckets: t.metrics.length, deploys: t.deploys.length, path: TELEMETRY } : null, model: MODEL, listening: true });
   }
   if (req.method === "GET" && url.pathname === "/api/stream") {
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
@@ -239,8 +246,12 @@ const server = createServer(async (req, res) => {
         return;
       }
       if (!t) return void say(row.id, "agent", "error", `no telemetry at ${TELEMETRY}`);
-      const answer = await ask(route.text, { telemetry: t, model: MODEL });
-      return void say(row.id, "agent", "text", answer);
+      try {
+        const answer = await ask(route.text, { telemetry: t, model: MODEL, ...(deps.query ? { query: deps.query } : {}) });
+        return void say(row.id, "agent", "text", answer);
+      } catch (error) {
+        return void say(row.id, "agent", "error", `Question failed: ${agentError(error)} No offline answer was used.`);
+      }
     }
 
     if (req.method === "POST" && (action === "approve" || action === "reject")) {
@@ -333,12 +344,17 @@ const server = createServer(async (req, res) => {
   }
   json(res, 404, { error: "not found" });
 });
+};
 
-setInterval(() => { void listen(); }, Number(process.env.AGENT_LISTEN_MS ?? 10_000)).unref();
-setInterval(() => { const s = store.flagStale(); if (s.length) broadcast("incidents", store.list()); }, 60_000).unref();
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`▶ on-call console  http://localhost:${PORT}`);
-  console.log(`  shop ${SHOP} · telemetry ${TELEMETRY} · model ${MODEL ?? "offline"} · listening for alerts every 10 s`);
-  console.log(`  alert webhook: curl -XPOST localhost:${PORT}/api/alerts -d '{"alert":"Error rate 12% on checkout"}'`);
-});
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const triage = makeTriage();
+  const server = createConsoleServer();
+  setInterval(() => { void listen(triage); }, Number(process.env.AGENT_LISTEN_MS ?? 10_000)).unref();
+  setInterval(() => { const s = store.flagStale(); if (s.length) broadcast("incidents", store.list()); }, 60_000).unref();
+  server.listen(PORT, "127.0.0.1", () => {
+    console.log(`▶ on-call console  http://localhost:${PORT}`);
+    console.log(`  shop ${SHOP} · telemetry ${TELEMETRY} · model ${MODEL ?? "offline"} · listening for alerts every 10 s`);
+    console.log(`  alert webhook: curl -XPOST localhost:${PORT}/api/alerts -d '{"alert":"Error rate 12% on checkout"}'`);
+  });
+}
 void readFile; // (imported for symmetry with writeFile; keeps the import list honest)

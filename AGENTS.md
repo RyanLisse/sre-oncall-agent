@@ -4,12 +4,40 @@ The canonical participant route is generated from `workshop.json`:
 [CARD.md](CARD.md) and the live [hub](http://127.0.0.1:4320/hub). Follow
 [CLAUDE.md](CLAUDE.md) for the safety rules. This file does not authorize
 approval, execution, mitigation, resolution, or pushing.
+The learning goal is the AI software delivery lifecycle. Claude Code is the
+development assistant; the runtime SRE agent is the application being changed.
+The required route is: Core 1 verifies evidence and produces a human-accepted
+intent; Core 2 creates a human-owned baseline, reviews the plan before code,
+repairs the read-only tool and proves it; Core 3 repairs the gate, runs full
+checks, reviews the actual diff, records a human PR/merge decision or
+`RELEASE BLOCKED`, observes runtime evidence and reviews a next task. Intent,
+review and release are not optional depth. Use the card for canonical actions
+and prompts, and [docs/sdlc-git.md](docs/sdlc-git.md) for human-only Git steps.
+Follow [Claude Code and Agent SDK setup](docs/claude-code.md), including the
+official installer and shell-only SDK configuration. Terminal 1 runs the
+clone/checkpoint commands, enters the starter, starts `claude`, and submits
+the read-only prompt before theory or edits. Terminal 2 starts from the
+original clone root, enters the same checkpoint, then runs `npm ci`,
+`npm run fixtures`, `npm run model:check`, and `npm start -- --fast`. The
+Agent SDK preflight is separate from interactive CLI login.
 
+**Terminal 1**
 ```bash
 git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start
 cd .lab/checkpoints/start
+claude
+```
+
+Submit the read-only assistant prompt from the card. In terminal 2, from
+the original clone root, configure supported SDK access per the guide, then:
+
+```bash
+cd .lab/checkpoints/start
+npm ci
+npm run fixtures
+npm run model:check
 npm start -- --fast
 ```
 
@@ -22,6 +50,9 @@ Never copy runtime data, approvals, progress, or lesson history.
 The starter's A5 tool and A8 executor tests are intentionally incomplete; A8
 fails closed and never authorizes mutation. Do not weaken tests or call the
 starter solved. Agents cite observed evidence and propose; named humans decide.
+The real runtime defaults to `sonnet`; `--offline` is explicit scripted
+fallback output, never model evidence. If a model response fabricates a
+citation or fails the contract, preserve it and stop.
 When guiding a participant, state the current task, why it is needed, and
 what will prove it. Explain only the concept needed for the next card step.
 Do not lead with a glossary or turn optional depth into prerequisites.
@@ -29,3 +60,6 @@ NOT LANDED or unknown recovery means stop, keep the incident open, and escalate.
 Never use approval, execution, mitigation, or resolution endpoints on a human's
 behalf. Record progress with `npm run progress:note -- "observed result"`; do
 not edit `PROGRESS.md` directly. Use [CARD.md](CARD.md) for the task steps.
+Only skills, hooks, subagents and additional bench-case work are optional
+extensions. Do not claim offline output is model evidence or treat a solved
+checkpoint as proof that a participant authored, tested or reviewed a change.

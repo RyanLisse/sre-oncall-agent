@@ -23,6 +23,9 @@ const DATA_DIR = join(ROOT, "demo", "data");
 const TELEMETRY_PATH = join(DATA_DIR, "telemetry.json");
 const REQUIRED_FIXTURES = ["bad-deploy", "after-rollback", "slow-dependency", "noisy-alert", "mystery-errors"];
 
+export const workshopModel = (args, env = process.env) =>
+  args.includes("--offline") ? "offline" : env.AGENT_MODEL?.trim() || "sonnet";
+
 export const dependencyInstallSpec = (env = process.env, platform = process.platform) => {
   if (platform !== "win32") return { command: "npm", args: ["ci"] };
   if (env.npm_execpath) return { command: process.execPath, args: [env.npm_execpath, "ci"] };
@@ -39,7 +42,6 @@ const say = (s) => console.log(`\x1b[1m▶ ${s}\x1b[0m`);
 const fail = (s) => { throw new Error(s); };
 
 const validateLocalOverrides = (shopPort) => {
-  if (process.env.AGENT_MODEL) fail("AGENT_MODEL is set, but this workshop is explicitly offline. Unset it and retry npm start. No API key is needed.");
   if (process.env.AGENT_SHOP_URL) {
     let url;
     try { url = new URL(process.env.AGENT_SHOP_URL); } catch { fail(`AGENT_SHOP_URL must be a local http URL such as http://127.0.0.1:${shopPort}. Unset it or correct it and retry.`); }
@@ -143,10 +145,10 @@ const stopChild = async (child) => {
 const main = async () => {
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
-  console.log("Workshop launcher (offline by default)\n\nUsage:\n  npm start\n  npm start -- --fast\n  npm start -- --help\n\nStarts the local shop, traffic generator and on-call console without approving, executing or creating a chaos deployment. Detection normally takes five minutes; --fast uses one minute. Keep this terminal open; Ctrl-C stops only children started here. No API key is needed.");
+  console.log("Workshop launcher (real Claude Agent SDK by default)\n\nUsage:\n  npm start\n  npm start -- --fast\n  npm start -- --fast --offline\n  npm start -- --help\n\nStart Claude Code in a second terminal in the same checkpoint. See docs/claude-code.md for CLI login and separate SDK authentication. Model calls use your provider and may cost money. AGENT_MODEL overrides the default sonnet model. --offline explicitly selects scripted output, not model evidence. There is no automatic offline fallback.\n\nStarts the local shop, traffic generator and on-call console without approving, executing or creating a chaos deployment. Detection normally takes five minutes; --fast uses one minute. Keep this terminal open; Ctrl-C stops only children started here.");
   return;
 }
-if (args.some((arg) => arg !== "--fast")) fail(`Unknown option "${args.find((arg) => arg !== "--fast")}". Run npm start -- --help for usage.`);
+if (args.some((arg) => !["--fast", "--offline"].includes(arg))) fail(`Unknown option "${args.find((arg) => !["--fast", "--offline"].includes(arg))}". Run npm start -- --help for usage.`);
 const fast = args.includes("--fast");
 const SHOP_PORT = port("AGENT_SHOP_PORT", process.env.AGENT_SHOP_PORT ?? "4310");
 const CONSOLE_PORT = port("AGENT_CONSOLE_PORT", process.env.AGENT_CONSOLE_PORT ?? "4320");
@@ -162,6 +164,7 @@ const archived = archiveTelemetry();
 // ── 2. start, in order, with prefixed output ─────────────────────────────
 const env = {
   ...process.env,
+  AGENT_MODEL: workshopModel(args),
   AGENT_SHOP_PORT: String(SHOP_PORT),
   AGENT_CONSOLE_PORT: String(CONSOLE_PORT),
   AGENT_SHOP_URL: `http://127.0.0.1:${SHOP_PORT}`,
@@ -214,6 +217,9 @@ process.once("SIGTERM", shutdown);
 try {
   if (interrupted) return;
   if (archived) console.log(`Archived previous telemetry at ${archived}`);
+  console.log(env.AGENT_MODEL === "offline"
+    ? "Runtime: offline (explicit scripted fallback, not model evidence)."
+    : `Runtime: Claude Agent SDK / ${env.AGENT_MODEL}. Model calls use your configured provider. No automatic offline fallback. See docs/claude-code.md for authentication.`);
   console.log(`Detection window: ${env.AGENT_LISTEN_WINDOW_MIN} minute${env.AGENT_LISTEN_WINDOW_MIN === "1" ? "" : "s"}${fast ? " (--fast)" : ""}`);
   run("shop", ["demo/shop.ts"]);
   await waitFor(`http://127.0.0.1:${SHOP_PORT}/health`, "Shop");

@@ -1,7 +1,7 @@
 /**
  * cli.ts — `npm run investigate` and `npm run watch`
  * ---------------------------------------------------------------------------
- * Local, reproducible, offline by default.
+ * Local Agent SDK runtime. Select --model offline for scripted replay.
  *
  *   npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
  *   npm run approve  -- fixtures/incidents/bad-deploy.json --by ryan          (or --reject)

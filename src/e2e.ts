@@ -1,7 +1,7 @@
 /**
  * e2e.ts — headless verification of the real-model path (after cwc-workshops' e2e.py)
  * ---------------------------------------------------------------------------
- *   npm run e2e                     uses your Claude Code login, or ANTHROPIC_API_KEY when set
+ *   npm run e2e                     uses configured SDK API or cloud-provider access
  *   npm run e2e -- --model opus
  *
  * Runs the bad-deploy fixture through the REAL Claude Agent SDK and asserts the

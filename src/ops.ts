@@ -32,13 +32,14 @@ const doctor = async (): Promise<number> => {
   const ratchet = JSON.parse(readFileSync("bench/ratchet.json", "utf8")) as { min_rate: number; max_harmful: number };
   rows.push(["bench ratchet", ratchet.max_harmful === 0, `min_rate ${ratchet.min_rate} · max_harmful ${ratchet.max_harmful}`]);
   rows.push(["lessons.md present", existsSync("lessons/lessons.md"), "lessons/lessons.md"]);
-  rows.push(["ANTHROPIC_API_KEY in shell", Boolean(process.env.ANTHROPIC_API_KEY), process.env.ANTHROPIC_API_KEY ? "set (real --model runs possible)" : "not set — --model runs use your Claude Code login"]);
+  const sdkConfigured = Boolean(process.env.ANTHROPIC_API_KEY) || ["CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"].some(key => process.env[key] === "1");
+  rows.push(["SDK authentication configured", sdkConfigured, "not validated here; run the model preflight in docs/claude-code.md"]);
   const h = await shopHealth();
   rows.push(["demo shop reachable", Boolean(h), h ? `${SHOP} · ${h.revision} · mode ${h.mode}` : `${SHOP} — start with npm run shop (optional)`]);
   rows.push(["live telemetry file", existsSync(LIVE_TELEMETRY), existsSync(LIVE_TELEMETRY) ? LIVE_TELEMETRY : "appears once the shop runs"]);
   for (const [name, okk, note] of rows) console.log(`${okk ? "✅" : "⚠️ "} ${name.padEnd(42)} ${note}`);
   const hard = rows.slice(0, 3).every((r) => r[1]);
-  console.log(hard ? "\nPASS doctor · offline path ready" : "\nFAIL doctor · fix the ⚠️ rows above first");
+  console.log(hard ? "\nPASS doctor · local files ready; model access is not verified" : "\nFAIL doctor · fix the ⚠️ rows above first");
   return hard ? 0 : 1;
 };
 
