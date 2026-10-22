@@ -38,6 +38,7 @@ export type AgentEvent =
   | {
       readonly type: "result";
       readonly subtype: string;
+      readonly is_error?: boolean;
       readonly result?: string;
       readonly structured_output?: unknown;
       readonly total_cost_usd?: number;

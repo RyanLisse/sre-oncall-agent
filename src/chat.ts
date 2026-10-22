@@ -16,7 +16,7 @@
  * commands, not general natural-language planning." Same here.
  */
 import { VERDICT_SCHEMA, type Incident } from "./contract.js";
-import { investigate, type AgentRun } from "./agent.js";
+import { investigate, modelErrorText, type AgentRun } from "./agent.js";
 import { parseStopCommand, parseWatchCommand, type WatchCommand } from "./deployWatch.js";
 import { guessTag, lessonsStore, loadLessons, renderLessons } from "./lessons.js";
 import { ONCALL_SYSTEM } from "./prompts.js";
@@ -91,7 +91,7 @@ export const ask = async (text: string, deps: AskDeps): Promise<string> => {
     },
   })) {
     deps.onEvent?.(e);
-    if (e.type === "result" && e.subtype === "success") answer = e.result ?? "";
+    if (e.type === "result" && e.subtype === "success") answer = e.is_error ? modelErrorText(e.result ?? "") : e.result ?? "";
   }
   return answer || "(no answer)";
 };
