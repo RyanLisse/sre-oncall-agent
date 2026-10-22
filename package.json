@@ -2,7 +2,7 @@
   "name": "sre-oncall-agent",
   "version": "0.1.0",
   "private": true,
-  "description": "AI SRE first responder on the Claude Agent SDK: investigates an alert with read-only tools, proposes one next step with cited evidence, drafts an approval a human signs, then watches the fix land. Offline by default.",
+  "description": "Build an AI SRE first responder with local Claude Code. The Agent SDK investigates with read-only tools; humans approve and act. Explicit offline fallback for scripted replay.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -24,6 +24,7 @@
     "diagrams": "node docs/diagrams/build.mjs",
     "video": "node docs/video/build.mjs",
     "doctor": "tsx src/ops.ts doctor",
+    "model:check": "tsx src/modelCheck.ts",
     "shop": "tsx demo/shop.ts",
     "traffic": "tsx demo/chaos.ts traffic",
     "chaos": "tsx demo/chaos.ts",

@@ -35,6 +35,7 @@ import { parseIncident, type Incident } from "../src/contract.js";
 import { runWatch } from "../src/deployWatch.js";
 import { execute } from "../src/executor.js";
 import { nextAction } from "../src/nextAction.js";
+import { runtimeModel } from "../src/runtime.js";
 import { appendResolutionLesson, lessonsStore, renderResolutionLesson } from "../src/lessons.js";
 import type { Recommendation, Tag } from "../src/contract.js";
 import { Store, type IncidentRow } from "../src/store.js";
@@ -46,7 +47,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.AGENT_CONSOLE_PORT ?? 4320);
 const SHOP = process.env.AGENT_SHOP_URL ?? `http://localhost:${process.env.AGENT_SHOP_PORT ?? 4310}`;
 const TELEMETRY = process.env.AGENT_TELEMETRY ?? (process.env.AGENT_DEMO_DATA ? `${process.env.AGENT_DEMO_DATA}/telemetry.json` : "demo/data/telemetry.json");
-const MODEL = process.env.AGENT_MODEL; // undefined → offline
+const MODEL = runtimeModel();
 const APPROVALS = process.env.AGENT_APPROVALS_DIR ?? "approvals";
 const store = new Store();
 const triaging = new Set<string>();
@@ -170,7 +171,7 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/api/health") {
     const t = await telemetry();
     const shop = await fetch(`${SHOP}/health`).then((r) => r.json()).catch(() => undefined);
-    return json(res, 200, { shop, telemetry: t ? { buckets: t.metrics.length, deploys: t.deploys.length, path: TELEMETRY } : null, model: MODEL ?? "offline", listening: true });
+    return json(res, 200, { shop, telemetry: t ? { buckets: t.metrics.length, deploys: t.deploys.length, path: TELEMETRY } : null, model: MODEL, listening: true });
   }
   if (req.method === "GET" && url.pathname === "/api/stream") {
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });

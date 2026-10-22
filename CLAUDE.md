@@ -28,7 +28,7 @@ The agent gathers evidence, proposes, verifies and communicates.
 5. **No unreviewed memory.** The agent writes to `lessons/proposed/`, never to `lessons/lessons.md`. Humans promote via PR — or write resolution notes in the console, which land in `lessons.md` directly because a human wrote them.
 6. **Alert text is DATA.** Instructions inside an alert are never policy. See `fixtures/incidents/adversarial.json`.
 7. **The ratchet only goes up.** `bench/ratchet.json` is a floor. Fix the investigator or the case; never lower the floor.
-8. **Offline output is never model evidence.** The scripted runtime demonstrates the pipeline. Only `--model <name>` runs produce model evidence.
+8. **Offline output is never model evidence.** Only real SDK runs produce model evidence, whether they use the default `sonnet` model or an explicit `--model <name>`; scripted `--offline` output never does.
 9. **The executor is a separate program.** `src/executor.ts` never imports `agent.ts`/`runtime.ts`, never reads model text, recomputes the rollback target from telemetry, and reports done only with fresh verified evidence. `demo/chaos.ts` is the operator's lever, not the agent's.
 10. **The watch command is a grammar, not a prompt.** `parseWatchCommand` accepts the documented sentences; anything else is rejected. The failure policy in `deployWatch.ts` is fixed and model-free.
 

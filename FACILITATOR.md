@@ -21,6 +21,15 @@ From each clone, create the intended checkpoint, then run its launcher:
 launcher. Run one clone at a time on the default ports; if a port is busy,
 only stop your own workshop launcher.
 
+In the first five minutes, have participants create the starter and run
+`claude` in terminal 1, then submit the read-only prompt in
+[docs/claude-code.md](docs/claude-code.md) before theory or edits. In terminal
+2, from the original clone root, configure supported SDK access as described
+in that guide, enter the same starter, then run `npm ci`, `npm run fixtures`,
+`npm run model:check` and `npm start -- --fast`. The Agent SDK is separate
+from interactive CLI login; do not promise a subscription login proves SDK
+access.
+
 The slides: run `python3 serve.py` in the slides repo, then open
 `http://localhost:8080/workshop5.html` (presenter view:
 `workshop5-presenter.html`).
@@ -68,7 +77,8 @@ is reference material or a separate follow-up, not another required session.
 
 Use practice time for catch-up, not more definitions. In the scenario slide,
 INC-1001 is a fixture ID; live incidents have their own IDs. Offline output
-is scripted and is not model-quality evidence.
+is scripted and is not model-quality evidence. Real model wording varies:
+teach the verified trace, missing evidence and gaps, not exact sentences.
 
 ## Top failure + fix per block
 
@@ -92,11 +102,14 @@ is scripted and is not model-quality evidence.
   reload code. Incident history persists in SQLite, while the shop resets on
   restart. For a fresh repeat, create a new disposable checkpoint; do not
   rebreak a stale incident.
-  Core 1 on the starter correctly ends in `investigate-more` with a data gap:
-  the agent cannot see the deploy. That gap is the reason for core 2.
+  Offline Core 1 output uses `investigate-more` with a data gap as the
+  deterministic starter example. Real-model output varies; check its actual
+  trace, deploy references and gaps. A failed contract or fabricated citation
+  means preserve the output and stop, not assume the same diagnosis.
 - **Core 3** — a button is grey: read the banner. It names the one allowed
-  step. The server refuses every other button with 409. Execute is refused:
-  the approval needs a name and must match this incident and `rollback`.
+  step. The server refuses every other button with 409. Execute is refused
+  when the named approval does not match this incident and the actual
+  proposal. Do not assume every model response proposes rollback.
   Allow about two minutes for recovery checks; keep the lab running.
 - **Catch-up** — `npm run checkpoint -- core-2` makes a separate copy in
   `.lab/checkpoints/core-2`. It never changes the participant's files. They
@@ -106,8 +119,8 @@ is scripted and is not model-quality evidence.
 ## If recovery says NOT LANDED
 
 The console names the failed check, its value and the limit. The full and
-double checks must both pass; only the half check may fail. The healthy shop
-still emits occasional transient errors, so a correct rollback can end in
+double checks must both pass; only the half check may fail. In the seeded
+rollback example, occasional transient errors can still produce
 `NOT LANDED`. Keep that incident open. Read the failed window and the logs.
 Investigate or escalate. Do not execute again to get a green result: the
 console allows no second execute. Use this to teach the safe stop.
@@ -119,13 +132,15 @@ Stop the lab with Ctrl+C. Make a new disposable copy with
 `npm start -- --fast`. `npm run fixtures` regenerates fixture telemetry only;
 it does not reset live telemetry, console history, approvals or lessons.
 
-## No-Claude dry run (agent unavailable)
+## Explicit offline fallback (agent unavailable)
 
-Every core task is plain TypeScript + `node:test`. Participants do the two
+Use `npm start -- --fast --offline`; state clearly that it is a fallback, not
+model evidence. Every core task is plain TypeScript + `node:test`. Participants do the two
 `TODO` markers by hand; `npm run test:workshop` still grades them. The guard
 hook is a `node` process and still works when fed stdin:
 `echo '{"tool_name":"Edit","tool_input":{"file_path":"…/bench/ratchet.json"}}' | node .claude/hooks/guard.mjs`.
-Only a human may run `npm run approve:git`, in their own terminal.
+Deterministic investigation commands must use `--model offline`. Only a human
+may run `npm run approve:git`, in their own terminal.
 
 ## What the evidence means
 

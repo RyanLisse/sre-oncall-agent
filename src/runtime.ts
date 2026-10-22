@@ -1,7 +1,7 @@
 /**
  * runtime.ts — real Claude Agent SDK or the offline scripted investigator
  * ---------------------------------------------------------------------------
- * AGENT_MODEL=offline (default, no key) or a real model name.
+ * Real Claude Agent SDK by default. AGENT_MODEL=offline selects the scripted fallback.
  *
  * The offline fake runs the SAME three tools against the SAME fixture, in the
  * order the system prompt prescribes, and derives a verdict with a fixed
@@ -65,7 +65,7 @@ export const sdkQuery: QueryFn = async function* ({ prompt, options }) {
       yield (KNOWN.has(message.type) ? message : { type: "other" }) as AgentEvent;
     }
   } catch (error) {
-    if (!sawResult) throw error;
+    if (!sawResult) throw new Error("Claude Agent SDK failed. Check model access and SDK authentication (ANTHROPIC_API_KEY or your configured cloud provider). Claude Code login alone is not an SDK access check. No offline fallback was used. See docs/claude-code.md.", { cause: error });
   }
 };
 
@@ -253,6 +253,7 @@ export const offlineQuery =
   };
 
 export const OFFLINE = "offline";
+export const runtimeModel = (name = process.env.AGENT_MODEL): string => name?.trim() || "sonnet";
 
 export interface Runtime {
   readonly query: QueryFn;
@@ -260,7 +261,9 @@ export interface Runtime {
   readonly label: string;
 }
 
-export const resolveRuntime = (t: Telemetry, name: string = process.env.AGENT_MODEL ?? OFFLINE): Runtime =>
-  name === OFFLINE
+export const resolveRuntime = (t: Telemetry, name?: string): Runtime => {
+  const model = runtimeModel(name);
+  return model === OFFLINE
     ? { query: offlineQuery(t), model: undefined, label: "offline (scripted, not model evidence)" }
-    : { query: sdkQuery, model: name, label: `claude-agent-sdk/${name}` };
+    : { query: sdkQuery, model, label: `claude-agent-sdk/${model}` };
+};

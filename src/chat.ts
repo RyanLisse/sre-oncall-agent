@@ -50,7 +50,7 @@ export const routeMessage = (text: string): Route => {
 // ── free-text questions ──────────────────────────────────────────────────
 export interface AskDeps {
   readonly telemetry: Telemetry;
-  readonly model?: string | undefined; // undefined/offline → deterministic summary
+  readonly model?: string | undefined; // only explicit offline uses the scripted summary
   readonly onEvent?: (e: AgentEvent) => void;
 }
 

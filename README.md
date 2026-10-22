@@ -1,7 +1,7 @@
 # SRE on-call lab — Workshop 5 (AI-native SDLC)
 
 In this lab you build an AI first responder for a small checkout service, with
-an optional coding assistant such as Claude Code, or by hand. An alert fires. The agent reads the telemetry,
+Claude Code as the default coding assistant from the first minutes. An alert fires. The agent reads the telemetry,
 the deploy history and the logs. It posts one diagnosis with a reference
 behind every claim, and it proposes ONE next step. A named human decides.
 After the human acts, the agent watches the metric and reports if the fix
@@ -11,7 +11,8 @@ The agent **cannot** roll back, scale, flip a flag or page anyone. That is the
 design: the agent gathers evidence, proposes, verifies and communicates;
 humans decide what to mitigate and when.
 
-Everything runs on your own machine. All data is fictional.
+The CLI, launcher, shop and console run locally; SDK model calls use your
+configured provider. All data is fictional.
 
 ![The on-call loop: alert → investigation → recovery](docs/diagrams/01-architecture.svg)
 
@@ -37,23 +38,39 @@ never the detector.
 
 ## Set up and run
 
-You need **Git** and **Node.js 22 or newer**. A coding assistant such as Claude
-Code is optional; the workshop works by hand. No API key: the agent runs
-offline by default, with a scripted investigator on the same tools and data.
-Its output demonstrates the pipeline; it is not model evidence.
+You need **Git** and **Node.js 22 or newer**. Install Claude Code using the
+[official setup instructions](https://code.claude.com/docs/en/setup); the
+[setup guide](docs/claude-code.md) includes platform commands and explains
+separate Agent SDK authentication.
 
+**Terminal 1 — start Claude Code in the starter**
 ```bash
 git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start                    # current committed starter copy
 cd .lab/checkpoints/start
-npm start -- --fast                           # checks, installs, starts the lab
+claude
 ```
 
-Keep that terminal open; Ctrl+C stops only processes started by that launcher.
-Use a second terminal for the rest. If you use Claude Code, start it there
-(`claude`) and run `/status` to see the guard and progress hooks from
-`.claude/settings.json`.
+Submit the exact read-only prompt from the [setup guide](docs/claude-code.md)
+before theory or edits.
+
+**Terminal 2 — configure SDK access and start the lab**
+
+From the original clone root, configure a supported SDK provider in the shell
+as described in the setup guide, then run:
+
+```bash
+cd sre-oncall-agent/.lab/checkpoints/start
+npm ci
+npm run fixtures
+npm run model:check                           # must pass before fault injection
+npm start -- --fast                           # starts the real-model lab
+```
+
+Keep terminal 2 open; Ctrl+C stops only processes it started. Use `/login`
+only for the interactive CLI if needed; inspect
+`.claude/settings.json` to verify hooks. `/status` is not SDK proof.
 
 | Command | What it does |
 | --- | --- |
@@ -62,7 +79,7 @@ Use a second terminal for the rest. If you use Claude Code, start it there
 | `npm run checkpoint -- core-2` | current-HEAD copy with the fail-closed A8 gate; your files untouched |
 | `npm run checkpoint -- core-3` | solved current source in `.lab/checkpoints/`, your files untouched |
 | `npm run doctor` | preflight check |
-| `npm run demo` | the whole loop on a bad deploy, about 2 minutes, no console |
+| `npm run demo` | legacy auto-approving script; do not use for the human-gated route |
 | `npm run progress` | which assignments already have file evidence |
 
 ## The assignment: three core tasks
@@ -91,11 +108,13 @@ Each step of the AI SDLC leaves one file behind: `intent.md` → `docs/spec.md`
 
 ## The rules
 
-- **Local only.** Everything runs on your machine. The agent has no network
-  access: the guard hook denies network calls.
+- **Local boundary.** The CLI, launcher, shop and console run on your machine.
+  A real SDK call uses your configured provider; the guard still denies
+  unrelated network calls.
 - **Push nothing.** Commit locally if you like, but do not push branches, open
   pull requests or deploy anything. The guard hook denies `git push`.
 - **Humans decide.** The agent proposes; a named human approves, executes and
   closes. The agent may not sign approvals, edit hooks, edit `.claude/`, or
   rewrite `PROGRESS.md`.
-- **No secrets in files.** You do not need an API key for this lab.
+- **No secrets in files.** Configure an SDK key or supported provider in the
+  shell only. A Claude Code login does not prove SDK access.

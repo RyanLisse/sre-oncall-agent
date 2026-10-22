@@ -6,15 +6,38 @@ import { z } from "zod";
 test("card and hub explain each task and place concepts beside their use", () => {
   const text = z.string().min(1);
   const workshop = z.object({
-    start: z.object({ why: text }),
+    start: z.object({
+      why: text,
+      do: z.array(text).min(1),
+      launcher: z.array(text).min(1),
+      assistant: z.object({ title: text, command: text, prompt: text }),
+    }),
     cores: z.array(z.object({
       id: text, why: text, proof: text,
-      steps: z.array(z.object({ before: text })).min(1),
+      steps: z.array(z.object({ before: text, see: text, check: text })).min(1),
     })).length(3),
   }).parse(JSON.parse(readFileSync("workshop.json", "utf8")));
   const card = readFileSync("CARD.md", "utf8");
   const hub = readFileSync("hub/index.html", "utf8");
   const html = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] ?? c);
+  assert.ok(card.includes(workshop.start.assistant.prompt));
+  assert.ok(hub.includes(workshop.start.assistant.prompt));
+  assert.ok(card.includes("npm run model:check"));
+  assert.ok(card.includes("--offline"));
+  assert.ok(card.indexOf(workshop.start.do[0]) < card.indexOf(`\`${workshop.start.assistant.command}\``));
+  assert.ok(card.indexOf(`\`${workshop.start.assistant.command}\``) < card.indexOf(workshop.start.assistant.prompt));
+  assert.ok(card.indexOf(workshop.start.assistant.prompt) < card.indexOf("npm ci"));
+  assert.ok(hub.indexOf(`<code>${html(workshop.start.assistant.command)}</code>`) < hub.indexOf(html(workshop.start.assistant.prompt)));
+  assert.ok(hub.indexOf(workshop.start.assistant.prompt) < hub.indexOf("npm ci"));
+  const launcher = workshop.start.launcher;
+  assert.ok(launcher.indexOf("npm ci") < launcher.indexOf("npm run fixtures"));
+  assert.ok(launcher.indexOf("npm run fixtures") < launcher.indexOf("npm run model:check"));
+  assert.ok(launcher.indexOf("npm run model:check") < launcher.indexOf("npm start -- --fast"));
+  const core2LastStep = workshop.cores[1].steps[2];
+  assert.match(core2LastStep.see, /trace/i);
+  assert.match(core2LastStep.see, /deploy references/i);
+  assert.doesNotMatch(core2LastStep.see, /rollback|no data gap/i);
+  assert.match(core2LastStep.check, /fabricated|citation/i);
   for (const [i, core] of workshop.cores.entries()) {
     const section = card.split(`## Core ${i + 1} ·`)[1]?.split("\n## ")[0] ?? "";
     const view = hub.split(`<h2 id="${core.id}">`)[1]?.split("<h2 ")[0] ?? "";

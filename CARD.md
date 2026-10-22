@@ -6,7 +6,7 @@ Start with the task and its reason. Read each concept just before you use it. Th
 
 ## Start
 
-Create the isolated starter from committed HEAD. Keep the lab terminal open. Use a second terminal for everything else.
+Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code before theory or edits; terminal 2 configures the SDK and runs the lab.
 
 **Why:** Use an isolated local copy so you can break the demo without touching real customers or another participant's work.
 
@@ -15,15 +15,31 @@ git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start
 cd .lab/checkpoints/start
+```
+
+### Claude Code first minutes
+
+In terminal 1, run `claude` in the starter before theory or edits.
+
+> Read CLAUDE.md, AGENTS.md and CARD.md. Explain what we will build, why it helps the on-call team, and what evidence we need. Name the two starter exercises. Do not edit files or run approval, execution, mitigation, resolution, commit or push commands. Wait for my review.
+
+In terminal 2, from the original clone root, configure supported SDK access as described in the setup guide, then run:
+
+```bash
+cd sre-oncall-agent/.lab/checkpoints/start
+npm ci
+npm run fixtures
+npm run model:check
 npm start -- --fast
 ```
 
-- **See:** ✓ Lab running. Hub: http://127.0.0.1:4320/hub · Console: http://127.0.0.1:4320 · Shop: http://127.0.0.1:4310.
-- **Check:** `curl 127.0.0.1:4320/api/health` shows `"mode":"healthy"`.
+- **See:** ✓ SDK preflight passes before fault injection, then the lab runs. Hub: http://127.0.0.1:4320/hub · Console: http://127.0.0.1:4320 · Shop: http://127.0.0.1:4310.
+- **Check:** `curl 127.0.0.1:4320/api/health` shows `"mode":"healthy"` and the selected model. `npm run model:check` must return READY before a real-model fault injection.
 - **Stuck?**
   - Port 4310 or 4320 is already in use: Another copy runs. Stop only your own workshop launcher with Ctrl+C in its terminal. Never kill an unknown process.
   - Node is too old: Install Node 22 or newer. Check with `node --version`.
   - The console header says no telemetry: Wait 20 seconds. The shop writes telemetry every few seconds while traffic runs.
+  - SDK preflight cannot authenticate: Report the missing API/provider configuration. Use `npm start -- --fast --offline` only as an explicit fallback; it is not model evidence. See `docs/claude-code.md`.
 
 ## Core 1 · Investigate the evidence
 
@@ -47,16 +63,16 @@ Slides: Core 1: Investigate the evidence · Core 1: Check the claims. Replaces A
 
 **Before you act:** An evidence reference points to an observation. A data gap means unknown, not proof that nothing happened.
 
-- **See:** The diagnosis proposes `investigate-more` with low confidence. Under Data gaps it says `list_deploys: no deploys in the window`.
-- **Check:** Find each reference in `demo/data/telemetry.json`. Then search that file for `v2.15.0`: there WAS a deploy. The agent cannot see it, and it says so.
+- **See:** The model output may vary. Expect missing deploy evidence, a verified tool trace and explicit data gaps; the starter cannot see the deploy.
+- **Check:** Preserve the diagnosis and trace. Verify every cited reference in `demo/data/telemetry.json`, then search that file for `v2.15.0`: there WAS a deploy outside the starter's visible tool result.
 - **Stuck?** References are text, not links. Search the file for the timestamp.
 
 ### 1.3 Challenge the agent in chat: Could this be something other than the deployment?
 
-**Before you act:** Offline chat follows a fixed script. It does not run a fresh model investigation.
+**Before you act:** Free-text chat is not checked by the structured verdict contract. Verify its claims manually against telemetry and trace; use Investigate for a contract-validated diagnosis.
 
-- **See:** Offline, the agent returns a scripted summary. It is not a new model investigation.
-- **Check:** Compare its answer with `ruled_out` and the data gap. A missing signal is unknown, not healthy: that is why the agent does not propose a rollback.
+- **See:** Real output may vary. With the explicit offline fallback, the agent returns a scripted summary; that is not a new model investigation.
+- **Check:** Compare the answer with `ruled_out`, the trace and the data gap. If it fabricates a deploy citation or fails the contract, preserve the output and stop; do not call it success or weaken the contract.
 - **Stuck?** Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.
 
 ### 1.4 Save the diagnosis in `docs/diagnosis-live.md`. Then record what you checked: `npm run progress:note -- "Core 1: <what you verified>"`
@@ -77,7 +93,7 @@ Slides: Core 1: Investigate the evidence · Core 1: Check the claims. Replaces A
 
 Slides: Core 2: Build a change safely · Core 2: Prove it on the live incident. Replaces A5 + A7.
 
-### 2.1 Run the red test: `npx tsx --test test/workshop/tools.test.ts`
+### 2.1 Run the red test: `npx tsx --test test/workshop/tools.test.ts`. Ask Claude Code for a small plan, then wait for human review.
 
 **Before you act:** A red test exposes the missing behaviour. The bench checks scripted outcomes across fixed scenarios, not model quality.
 
@@ -87,18 +103,18 @@ Slides: Core 2: Build a change safely · Core 2: Prove it on the live incident. 
 
 ### 2.2 Build `list_deploys` in `src/tools.ts` with Claude Code or by hand. Bind the handler AND register the tool.
 
-**Before you act:** MCP exposes named tools. The handler reads data; its binding and registration make that read-only result available.
+**Before you act:** MCP exposes named tools. The handler reads data; bind it and register it only after the human reviews the small plan.
 
 - **See:** `test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.
-- **Check:** `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass. The bench prints `PASS bench`. Executor tests remain expected to fail until Core 3 restores the approval gate.
+- **Check:** After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until Core 3 restores the approval gate.
 - **Stuck?** The tool still returns `[]`: you did only one of the two halves.
 
 ### 2.3 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
 
 **Before you act:** A trace records the tools used for a diagnosis. Re-investigation lets you compare the same incident before and after the repair.
 
-- **See:** The lab terminal prints a console reload line. The new diagnosis proposes `rollback` with no data gap. The next-step banner asks you to read the evidence before a named approval or rejection.
-- **Check:** The diagnosis cites `deploys:<id>` for `v2.15.0`. Record it: `npm run progress:note -- "Core 2: …"`
+- **See:** The lab terminal prints a console reload line. Inspect the new diagnosis, its observed trace, deploy references, data gaps and proposal; real model wording and actions can vary.
+- **Check:** Verify the actual trace and references against `demo/data/telemetry.json`. If the citation is fabricated or the contract fails, preserve the output and stop. Record what you verified: `npm run progress:note -- "Core 2: ..."`
 - **Stuck?** Incident gone? Incident history persists in SQLite, while the shop resets on restart. Do not restart the launcher to reload code; saving auto-reloads the console. For a fresh repeat, use a new disposable checkpoint copy; do not rebreak a stale incident.
 
 ## Core 3 · Judge the recovery
@@ -116,7 +132,7 @@ Slides: Core 3: Judge the recovery · Core 3: Close it, or stop safely. Replaces
 **Before you act:** The approval gate validates a named human decision for this incident and proposal. The starter fails closed until you rebuild it.
 
 - **See:** The test is green. The executor now refuses to act without a named approval for this incident and this proposal.
-- **Check:** `npm run verify` and `npm run test:workshop` pass before a human approves the rollback. The console reloads by itself.
+- **Check:** Before a human approves the rollback, `npm run verify` and `npm run test:workshop` pass. The console reloads by itself.
 - **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.
 
 ### 3.2 Open your incident and read the diagnosis and evidence. Type your name. Click Approve, then Execute rollback.
@@ -158,6 +174,6 @@ Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from any st
 
 ## Where everything is
 
-- **Participant:** [Participant card](CARD.md) · [Console](http://127.0.0.1:4320) · [Course (concepts, self-paced)](course/index.html) · [Working alone](SOLO.md)
+- **Participant:** [Participant card](CARD.md) · [Console](http://127.0.0.1:4320) · [Course (concepts, self-paced)](course/index.html) · [Working alone](SOLO.md) · [Claude Code and SDK setup](https://github.com/RyanLisse/sre-oncall-agent/blob/main/docs/claude-code.md)
 - **Facilitator:** [Facilitator run sheet](FACILITATOR.md) · [Workshop guide](WORKSHOP.md) · [Slides (separate repo)](aetherlink-classroom-slides-w5/workshop5.html)
 - **Agent:** [Agent rules](CLAUDE.md) · [Contract](docs/spec.md) · [Bench cases](bench/cases.json) · [Review checklist](REVIEW.md)

@@ -14,35 +14,54 @@ before the step that uses it. Reflect on the full SDLC loop after the work.
   what you do, what you should see, how you check it, and what to do when you
   are stuck.
 
-Everything runs offline. No API key is needed: the scripted runtime
-(`src/runtime.ts`) drives the same tools as a real model.
+Use Claude Code as the default assistant in the first five minutes. The real
+Agent SDK defaults to `sonnet` and needs separate API/provider configuration;
+run `npm run model:check` before fault injection. If that access is unavailable,
+use `npm start -- --fast --offline` only as an explicit fallback. Offline
+output is scripted integration evidence, not model evidence.
 
 ## Set up once
+
+**Terminal 1 — start Claude Code before theory or edits**
 
 ```bash
 git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
 npm run checkpoint -- start                # make the current committed starter copy
 cd .lab/checkpoints/start
-npm start -- --fast                         # installs, checks, starts the lab
+claude
 ```
 
-`npm start` checks Node 22+ and the dependencies, generates missing fixtures, and
-starts the shop, the traffic and the console in one terminal. The console
-reloads itself when you save code; the shop keeps running. Keep that
-terminal open. Ctrl+C stops only the processes started by this launcher. Use a second terminal for everything
-else. `--fast` opens an incident after one minute instead of five.
+Use the exact read-only prompt from [docs/claude-code.md](docs/claude-code.md).
+
+**Terminal 2 — from the original clone root**
+
+Configure supported SDK access in the shell as described in the setup guide,
+then run:
+
+```bash
+cd sre-oncall-agent/.lab/checkpoints/start
+npm ci
+npm run fixtures
+npm run model:check                         # real SDK preflight, before fault injection
+npm start -- --fast                         # starts the local lab
+```
+
+`npm start` checks Node 22+ and starts the shop, traffic and console in
+terminal 2. The console reloads itself when you save code; the shop keeps
+running. Keep terminal 2 open. Ctrl+C stops only processes started by this
+launcher. `--fast` opens an incident after one minute instead of five.
 
 Break the shop once, when Core 1 asks you to: click **Bad deploy v2.15.0**
-in the shop OR run `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in
-the second terminal. Never do both.
+in the shop. If using the CLI alternative, open a separate shell in the
+starter; do not type into the active launcher terminal. Never use both.
 
 ## The three core tasks
 
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
-| **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Find the deploy the agent cannot see (its data gap). | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
-| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). Re-investigate: the gap closes, the proposal becomes `rollback`. | `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass; A8 valid-approval assertion remains red until Core 3; `list_deploys` in the trace | A5, A7 |
+| **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Find the deploy the agent cannot see (its data gap). Model wording may vary; preserve a failed contract or fabricated citation and stop. | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
+| **2 · Build a change safely and test it** | Use Claude Code for the red test and a small plan. After human plan review, rebuild the read-only `list_deploys` tool (`TODO(A5)` in `src/tools.ts`) and re-investigate. | `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass; executor tests remain intentionally red until Core 3; `list_deploys` is in the trace | A5, A7 |
 | **3 · Judge the recovery** | Rebuild the approval gate (`TODO(A8)` in `src/executor.ts`). Approve with your name, execute, read the recovery checks, then mitigate and resolve, or stop on NOT LANDED. | Gate tests pass; a named resolution lesson OR a documented safe stop with the incident left open | A8, A9 |
 
 The card gives each core a reason and proof, with **Before you act**

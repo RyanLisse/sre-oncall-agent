@@ -57,7 +57,7 @@ test("console API enforces resolved, recovery and named-human gates", { timeout:
   const port = address.port; await new Promise<void>(r => socket.close(() => r()));
   const child = spawn(process.execPath, ["--import", "tsx", "console/server.ts"], { env: { ...process.env,
     AGENT_CONSOLE_PORT: String(port), AGENT_DB: join(dir, "oncall.sqlite"), AGENT_APPROVALS_DIR: join(dir, "approvals"),
-    AGENT_DEMO_DATA: dir, AGENT_TELEMETRY: join(dir, "missing.json"), AGENT_LISTEN_MS: "600000", AGENT_MODEL: "",
+    AGENT_DEMO_DATA: dir, AGENT_TELEMETRY: join(dir, "missing.json"), AGENT_LISTEN_MS: "600000", AGENT_MODEL: "offline",
   }, stdio: ["ignore", "pipe", "pipe"] });
   t.after(async () => { if (child.exitCode === null) { const closed = once(child, "exit"); child.kill(); await closed; } });
   await new Promise<void>((resolveReady, reject) => {
