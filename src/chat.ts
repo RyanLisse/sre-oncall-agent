@@ -86,7 +86,7 @@ export const ask = async (text: string, deps: AskDeps): Promise<string> => {
       systemPrompt: `${ONCALL_SYSTEM}\n\nMode: QUESTION. The operator asked a question. Answer in plain prose with evidence references. Do NOT return the JSON verdict and do NOT propose a mitigation; if they want one, tell them to send "Investigate: …".`,
       mcpServers: { [SERVER_NAME]: createTelemetryServer(deps.telemetry) },
       tools: [...ALLOWED_TOOLS], allowedTools: [...ALLOWED_TOOLS],
-      permissionMode: "dontAsk", settingSources: [], maxTurns: 8, maxBudgetUsd: 0.3,
+      permissionMode: "dontAsk", settingSources: [], maxTurns: 8, maxBudgetUsd: 3,
       ...(rt.model ? { model: rt.model } : {}),
     },
   })) {

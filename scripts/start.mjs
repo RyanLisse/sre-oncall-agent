@@ -172,6 +172,8 @@ const env = {
   AGENT_TELEMETRY: TELEMETRY_PATH,
   AGENT_LISTEN_WINDOW_MIN: fast ? "1" : process.env.AGENT_LISTEN_WINDOW_MIN ?? "5",
 };
+// Started from inside a Claude Code session, the SDK would refuse to nest; the console is its own session.
+delete env.CLAUDECODE;
 const children = [];
 let failure;
 let stopping = false;
