@@ -1,7 +1,10 @@
 # Facilitator run sheet — Workshop 5 (one day, starts 10:00)
 
-The day has **three core tasks**. Everything else is optional depth. The
-slides explain; participants execute from **[CARD.md](CARD.md)** or the hub
+The day practises the **AI software delivery lifecycle** through three
+required core tasks. Claude Code is the development assistant; the runtime
+SRE agent is the application being changed. Only skills, hooks, subagents and
+additional bench cases are optional depth. Participants execute from
+**[CARD.md](CARD.md)** or the hub
 (`http://127.0.0.1:4320/hub`). Both are generated from `workshop.json`
 (`npm run card`). Change the steps there, never in the generated files.
 
@@ -22,8 +25,8 @@ launcher. Run one clone at a time on the default ports; if a port is busy,
 only stop your own workshop launcher.
 
 In the first five minutes, have participants create the starter and run
-`claude` in terminal 1, then submit the read-only prompt in
-[docs/claude-code.md](docs/claude-code.md) before theory or edits. In terminal
+`claude` in terminal 1, then submit the read-only assistant prompt in
+[CARD.md](CARD.md) before theory or edits. In terminal
 2, from the original clone root, configure supported SDK access as described
 in that guide, enter the same starter, then run `npm ci`, `npm run fixtures`,
 `npm run model:check` and `npm start -- --fast`. The Agent SDK is separate
@@ -44,15 +47,15 @@ to the steps under **Before you act**.
 
 | Task | Why now | Explain at first use | Evidence to collect |
 | --- | --- | --- | --- |
-| Core 1: investigate | A plausible diagnosis is not permission to act. | Telemetry before the fault; references and data gaps before reading the diagnosis; progress notes before recording evidence. | Checked references and the missing deployment signal. |
-| Core 2: repair the tool | Core 1 found data the agent cannot read. | Repo rules and a small plan before editing; MCP beside the handler and registration; trace and bench before checking the repair. | Tool test, typecheck and bench pass; the same incident cites the deploy. |
-| Core 3: judge recovery | A diagnosis cannot approve its own action. | Named approval before rebuilding the gate; frozen recovery checks before judging the result; closure notes only after LANDED. | Passing gate tests and a justified closure, or a documented safe stop. |
+| Core 1: specify from evidence | A plausible diagnosis is not permission to change software. | Telemetry, references and data gaps before drafting an intent; human acceptance before planning. | `docs/diagnosis-live.md` plus a human-accepted `intent.md` with observable checks. |
+| Core 2: design and build | Core 1 defines the outcome; the code change must be reviewable. | Human starter baseline and reviewed plan before edits; MCP registration beside its handler; test, typecheck, bench and trace as proof. | Reviewed `docs/plan.md`, meaningful diff, passing focused checks and actual trace evidence. |
+| Core 3: review, release and learn | Tests do not accept or release their own change. | Fail-closed gate, full checks, actual diff review, human PR/merge decision, then runtime evidence and next-task review. | `docs/verify/sdlc.md` records checks, review, release or `RELEASE BLOCKED`, runtime result and next task. |
 
-Do not insert the optional skills, hooks, subagents or Git-gate material
-between these tasks. The deck labels that material **Optional depth** after
-the closing recap. If a team chooses an extension, explain its concept just
-before that extension. Name the full SDLC loop during the final reflection,
-using the work participants actually did.
+Do not insert optional skills, hooks, subagents or extra bench-case work
+between these tasks. The human baseline, code review, release decision and
+runtime observation are required work, not optional Git-gate material. Explain
+concepts just before their first use. Name the full SDLC loop during the final
+reflection, using the work participants actually did.
 
 ## Time boxes
 
@@ -61,21 +64,23 @@ is reference material or a separate follow-up, not another required session.
 
 | Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
-| 10:00–10:30 | The shop and the problem | What, why, outputs, human boundaries | participants can explain the task and why evidence comes first |
-| 10:30–11:00 | Start the lab | **Start the lab** | checkpoint copy prints ✓ Lab running; hub opens |
+| 10:00–10:30 | Claude orientation and lifecycle map | Coding assistant vs runtime SRE agent; goal, outputs and human boundaries | participants can state the required artifacts and why evidence comes first |
+| 10:30–11:00 | Start the lab | **Start the lab** | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
 | 11:00–11:15 | Break | Break | — |
-| 11:15–11:37 | Core 1: Investigate the evidence | Brief, detection, one fault, evidence concepts | shop broken once; listener raises an incident; explain the data gap |
-| 11:37–12:00 | Core 1: Check the claims | **Core 1** (check and record) | references checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
+| 11:15–11:40 | Core 1: observe the evidence | Detection, one fault, references and data gaps | diagnosis checked against telemetry; `docs/diagnosis-live.md` |
+| 11:40–12:00 | Core 1: accept intent | Draft and human review of observable outcome | accepted `intent.md` and decision recorded |
 | 12:00–13:00 | Lunch | Lunch | — |
-| 13:00–13:22 | Core 2: Why this change | Scope, plan, tool boundary, trace and bench beside the code | each pair states its change and proof |
-| 13:22–14:10 | Core 2: Build a change safely | **Core 2** | `test/workshop/tools.test.ts` green |
-| 14:10–14:40 | Core 2: Prove it on the live incident | **Core 2** (prove it) | focused tool test + typecheck + `PASS bench`; A8 assertion remains expected red until Core 3; `list_deploys` in the trace |
+| 13:00–13:20 | Core 2: baseline and plan review | Human-owned baseline; smallest plan against intent | meaningful repair diff is possible; reviewed `docs/plan.md` |
+| 13:20–14:10 | Core 2: repair and check | **Core 2** | focused tool test, typecheck and bench pass; A8 remains intentionally red |
+| 14:10–14:40 | Trace and gate repair | Same-incident trace, then Core 3 gate plan and repair | actual tool trace recorded; focused executor test passes |
 | 14:40–14:55 | Break | Break | — |
-| 14:55–15:25 | Human gate, then Core 3: Judge the recovery | Gate concept, implementation, tests, human action | executor and full checks green; named approval and separate execution |
-| 15:25–15:50 | Recovery result, then Core 3: Close it, or stop safely | Read the frozen checks before deciding | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
-| 15:50–16:00 | The AI-native loop; Close: show what you can now prove | Reflect on the work, then stop | each team shows its evidence and explains its decision |
+| 14:55–15:15 | Full checks and diff review | Verify, inspect actual diff against intent and review checklist | full checks recorded; findings verified by a human |
+| 15:15–15:35 | PR and release decision | Human-owned learner-repo PR, current-head checks and review | merge decision recorded, or `RELEASE BLOCKED` with exact reason |
+| 15:35–15:50 | Runtime observation | Briefly inspect actual model label, trace and recovery; avoid a long button demo | observed result or blocker recorded; NOT LANDED stays open |
+| 15:50–16:00 | Next task and SDLC evidence | Propose and review one evidence-based next task; show the full record | `docs/verify/sdlc.md` shows artifacts, checks, human decisions, runtime and next task |
 
-Use practice time for catch-up, not more definitions. In the scenario slide,
+Protect the delivery and review blocks; timebox the runtime button
+demonstration. Use practice time for catch-up, not more definitions. In the scenario slide,
 INC-1001 is a fixture ID; live incidents have their own IDs. Offline output
 is scripted and is not model-quality evidence. Real model wording varies:
 teach the verified trace, missing evidence and gaps, not exact sentences.
@@ -136,8 +141,10 @@ it does not reset live telemetry, console history, approvals or lessons.
 ## Explicit offline fallback (agent unavailable)
 
 Use `npm start -- --fast --offline`; state clearly that it is a fallback, not
-model evidence. Every core task is plain TypeScript + `node:test`. Participants do the two
-`TODO` markers by hand; `npm run test:workshop` still grades them. The guard
+model evidence. The code exercises use TypeScript and `node:test`; the
+required route also includes evidence, intent, planning, review and release
+decisions. Participants do the two `TODO` markers by hand;
+`npm run test:workshop` still grades them. The guard
 hook is a `node` process and still works when fed stdin:
 `echo '{"tool_name":"Edit","tool_input":{"file_path":"…/bench/ratchet.json"}}' | node .claude/hooks/guard.mjs`.
 Deterministic investigation commands must use `--model offline`. Only a human

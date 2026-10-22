@@ -9,7 +9,9 @@ test("Claude setup distinguishes CLI login, SDK access and explicit offline fall
   assert.match(docs, /Node\.js 22/);
   assert.match(docs, /npm run model:check/);
   assert.ok(docs.indexOf("## Configure the SDK in terminal 2") < docs.indexOf("npm run model:check"));
-  assert.ok(docs.indexOf("\nclaude\n") < docs.indexOf("Read CLAUDE.md, AGENTS.md and CARD.md."));
+  assert.ok(docs.indexOf("\nclaude\n") < docs.indexOf("read-only assistant prompt in [CARD.md]"));
+  const card = readFileSync("CARD.md", "utf8");
+  assert.ok(card.indexOf("### Claude Code first minutes") < card.indexOf("In terminal 2, from the original clone root"));
   assert.match(docs, /does not\s+prove SDK access/);
   assert.match(docs, /--fast --offline/);
   assert.match(docs, /not model(?:-quality)? evidence/);

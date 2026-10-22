@@ -9,6 +9,7 @@ and `bench/cases.json` before changing behaviour.
 | --- | --- |
 | What participants do, step by step | `CARD.md` (generated from `workshop.json` by `npm run card`; edit the JSON, never the card) |
 | The workshop shape: three core tasks + optional depth | `WORKSHOP.md` · facilitator timing: `FACILITATOR.md` · solo: `SOLO.md` |
+| The required AI-SDLC artifacts and human-only release steps | `CARD.md` · `docs/verify/sdlc.md` · `docs/sdlc-git.md` |
 | The two exercise cuts | `npm run workshop:check` (`TODO(A5)` in `src/tools.ts`, `TODO(A8)` in `src/executor.ts`) |
 | What a human may do next on an incident | `src/nextAction.ts` (the console enforces it) |
 | Start the lab | `npm start` (Ctrl+C stops all). Breaking the shop is `npm run chaos …`, never part of start. |
@@ -18,6 +19,17 @@ and `bench/cases.json` before changing behaviour.
 
 The agent gathers evidence, proposes, verifies and communicates.
 **Humans decide what to mitigate and when.**
+
+Claude Code is the development assistant; the runtime SRE agent is the
+application being changed. When guiding participants, follow the required
+card route: accept an evidence-based intent, review a plan and human-owned
+baseline before coding, repair and prove the tool, repair the gate, run full
+checks, review the actual diff, record a human PR/merge decision or
+`RELEASE BLOCKED`, observe runtime evidence, and review a next task. Intent,
+review and release are required; only skills, hooks, subagents and additional
+bench cases are optional. Explain concepts at first use, not in a glossary.
+Use `docs/sdlc-git.md` for human-only Git procedures. Never publish, approve,
+merge or operate the incident on a human's behalf.
 
 ## Rules
 

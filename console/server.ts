@@ -124,7 +124,7 @@ const makeTriage = (query?: QueryFn) => async (row: IncidentRow, alert: string) 
   say(row.id, "system", "approval", JSON.stringify(approval));
   if (run.lessonFile) say(row.id, "system", "text", `lesson proposed → ${run.lessonFile}`);
   } catch (error) {
-    say(row.id, "agent", "error", `Investigation failed: ${agentError(error)} No diagnosis or approval was saved.`);
+    say(row.id, "agent", "error", `Investigation failed: ${agentError(error)} Inspect the error before continuing. No offline fallback was used.`);
   } finally {
     triaging.delete(row.id);
     broadcast("incidents", store.list());

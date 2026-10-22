@@ -1,12 +1,15 @@
 # Workshop 5 — build the AI SRE agent (AI-native SDLC)
 
-This is the workshop overview. For the facilitator run sheet and timing, see
-[FACILITATOR.md](FACILITATOR.md).
+This is the workshop overview. Its goal is to practise AI-assisted software
+delivery while improving a small local SRE agent. Claude Code is the coding
+assistant; the separate runtime SRE agent is the application being changed.
+For the facilitator run sheet and timing, see [FACILITATOR.md](FACILITATOR.md).
 
-The team path through this repo. You do **three core tasks**. Everything else
-is optional depth. Start with the failing shop. For each task, explain what
-you will do, why it is needed, and what will prove it. Read a concept just
-before the step that uses it. Reflect on the full SDLC loop after the work.
+The required route has **three core tasks**. Start Claude Code before theory
+or code edits. For each task, explain what you will do, why it is needed, and
+what will prove it. Read a concept just before the step that uses it. The
+generated [CARD.md](CARD.md) is the canonical source for actions, prompts and
+proof. Optional depth does not replace intent, review, or release work.
 
 - **The slides explain.** The facilitator uses them for the why.
 - **The card is for doing.** Open **[CARD.md](CARD.md)**, or the hub at
@@ -32,7 +35,9 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Use the exact read-only prompt from [docs/claude-code.md](docs/claude-code.md).
+Submit the read-only assistant prompt in [CARD.md](CARD.md) before theory or
+edits. See [docs/claude-code.md](docs/claude-code.md) for installation and
+separate SDK configuration.
 
 **Terminal 2 — from the original clone root**
 
@@ -60,15 +65,17 @@ starter; do not type into the active launcher terminal. Never use both.
 
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
-| **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Find the deploy the agent cannot see (its data gap). Model wording may vary; preserve a failed contract or fabricated citation and stop. | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
-| **2 · Build a change safely and test it** | Use Claude Code for the red test and a small plan. After human plan review, rebuild the read-only `list_deploys` tool (`TODO(A5)` in `src/tools.ts`) and re-investigate. | `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass; executor tests remain intentionally red until Core 3; `list_deploys` is in the trace | A5, A7 |
-| **3 · Judge the recovery** | Rebuild the approval gate (`TODO(A8)` in `src/executor.ts`). Approve with your name, execute, read the recovery checks, then mitigate and resolve, or stop on NOT LANDED. | Gate tests pass; a named resolution lesson OR a documented safe stop with the incident left open | A8, A9 |
+| **1 · Specify from evidence** | Verify the actual diagnosis, citations, trace and gaps. Draft `intent.md` from those observations and accept it as a human. | `docs/diagnosis-live.md` and a human-accepted `intent.md` with observable checks and an open question | A1, A6 |
+| **2 · Design and build** | Create the human-owned starter baseline; review `docs/plan.md` against the accepted intent before code edits. Repair the read-only `list_deploys` handler and re-investigate the same incident. | Focused tools test, typecheck and bench pass; actual trace and code diff are recorded; A8 remains intentionally red | A5, A7 |
+| **3 · Review, release and learn** | Repair the fail-closed approval gate, run full checks, review the actual diff, and let a human decide whether to open/merge a learner-repo PR or record `RELEASE BLOCKED`. Observe runtime evidence and propose a reviewed next task. | `docs/verify/sdlc.md` records real checks, human review/release decision, runtime result and next task | A8, A9 |
 
 The card gives each core a reason and proof, with **Before you act**
-explanations next to the steps. Telemetry and evidence belong in Core 1;
-MCP and the bench belong in Core 2; approval and recovery belong in Core 3.
-Skills, subagents, hooks and the Git gate are optional extensions, not
-prerequisites. The slides put them after the closing recap.
+explanations next to the steps. The human baseline and release exercise are
+required; their terminal procedures are in [docs/sdlc-git.md](docs/sdlc-git.md).
+Skills, hooks, subagents and adding a bench case are optional extensions.
+Explain concepts at their first use, not as a glossary. Do not treat a solved
+checkpoint or local reload as participant-authored work or a production
+release.
 
 Run `npm run workshop:check` to see the two
 `TODO` markers left in the starter.
@@ -103,11 +110,10 @@ you ran them: `npm run progress:note -- "Core 2: tools test green, bench PASS"`.
 
 | # | Task |
 | --- | --- |
-| A2 | Write your team `intent.md`: who the agent serves, the boundary, three checks a stranger can verify. |
-| A3 | Write `docs/spec.md` for the evidence rules in `src/contract.ts`; break one rule on purpose and watch `test/contract.test.ts` fail. |
+| A3 | Review and extend the existing `docs/spec.md` contract reference; break one rule on purpose and watch `test/contract.test.ts` fail. |
 | A4 | Add one deny rule of your own to `.claude/hooks/guard.mjs` **by hand**. Prove it with a deny line in `approvals/audit.jsonl`. Write `docs/decisions/D01-*.md`. |
 | A7 | Add a case to `bench/cases.json`. Ask the agent to lower `bench/ratchet.json`: the guard denies it. Review is the second guard. |
-| A8b | The git gate: ask the agent to push `fix/<your-name>` (denied). Your neighbour runs `npm run approve:git -- <their-name> fix/<your-name> "<reason>"` in their own terminal. |
+| A8b | Optional guard experiment: test the SDLC push gate in a disposable learner repository. The human PR and release exercise in Core 3 remains required. |
 | A9b | Write `docs/hackathon-intent.md` for the agent you build next. Hand off with `/handoff`. |
 
 ## Two gates — don't confuse them

@@ -1,148 +1,119 @@
 # Tutorial: build an AI SRE first responder
 
 For the shorter classroom route, use [WORKSHOP.md](WORKSHOP.md) and
-[PARTICIPANT.md](PARTICIPANT.md). Start with the recommended three-core route
-below; the numbered steps remain an optional offline reference for mirror
-consumers.
+[PARTICIPANT.md](PARTICIPANT.md). This recommended self-paced route teaches
+the required AI software delivery lifecycle. Claude Code is the development
+assistant; the runtime SRE agent is the application being changed. The
+numbered steps below remain an optional offline reference for mirror
+consumers. Their content is retained for compatibility.
 
-You can do this path alone. Each task says **Task**, **Why**, **Action** and
-**Proof**. Claude Code starts in the checkpoint before theory or edits. The
-Agent SDK defaults to `sonnet`; use [docs/claude-code.md](docs/claude-code.md)
-for official CLI installation and separate SDK setup. A safe stop on unknown
-or `NOT LANDED` recovery is valid completion.
+Use [docs/claude-code.md](docs/claude-code.md) for official Claude Code
+installation and separate Agent SDK setup. The Agent SDK defaults to `sonnet`;
+`npm run model:check` must pass before a real-model fault injection. Offline
+is an explicit scripted fallback, not model evidence. For canonical actions,
+prompts and proof, follow [CARD.md](CARD.md).
 
 ## Recommended self-paced route
 
-### Start — orient before acting
+### Start — Claude Code before theory or edits
 
-- **Task:** Create a disposable starter and start Claude Code in terminal 1.
-- **Why:** The assistant should explain the work and evidence boundary before
-  anyone edits code or acts on an incident.
-- **Action:** Install Claude Code and configure SDK access as described in the
-  [canonical setup guide](docs/claude-code.md). Use terminal 1 to create your clone and starter:
+- **Task:** Create a disposable starter and begin with the coding assistant.
+- **Why:** AI-assisted delivery starts by agreeing on the problem, evidence
+  and human boundaries, not by prompting directly for code.
+- **Action:** In terminal 1, clone the repository, create the starter
+  checkpoint, enter it and run `claude`. Submit the read-only prompt in
+  [CARD.md](CARD.md) before theory or edits. In terminal 2, from the original
+  clone root, configure SDK access as described in the setup guide, then enter
+  the same checkpoint, run `npm ci`, `npm run fixtures`,
+  `npm run model:check`, and `npm start -- --fast`.
+- **Proof:** The SDK preflight returns `READY`, and console health reports
+  the selected model before fault injection. If SDK access is unavailable,
+  record the blocker; use `npm start -- --fast --offline` only as an explicit
+  fallback. Offline output is not model evidence.
 
-  ```bash
-  git clone https://github.com/RyanLisse/sre-oncall-agent.git
-  cd sre-oncall-agent
-  npm run checkpoint -- start
-  cd .lab/checkpoints/start
-  claude
-  ```
+When both terminals are occupied, ask Claude Code to run safe checks or use
+`/exit` before typing shell commands, then reopen Claude Code afterward. Never
+type shell commands into the active assistant prompt.
 
-  Submit this exact read-only prompt before theory or edits:
+### Core 1 — turn observed evidence into accepted intent
 
-  ```text
-  Read CLAUDE.md, AGENTS.md and CARD.md. Explain what we will build, why it helps the on-call team, and what evidence we need. Name the two starter exercises. Do not edit files or run approval, execution, mitigation, resolution, commit or push commands. Wait for my review.
-  ```
+- **Task:** Break the shop once, inspect the diagnosis and trace, verify every
+  reference against telemetry, and draft `intent.md` from the observations.
+- **Why:** An incident diagnosis is input to a software requirement, not the
+  requirement itself. A missing deploy signal is unknown, not proof that no
+  deploy happened.
+- **Action:** Click **Bad deploy v2.15.0** once in the shop at
+  `http://127.0.0.1:4310`. Check the incident at `http://127.0.0.1:4320`,
+  citations and trace against `demo/data/telemetry.json`. Save
+  `docs/diagnosis-live.md`. Use the Core 1 prompt in the card to draft an
+  intent naming the user, outcome, observable checks, boundary and open
+  question. Review and accept it yourself before Core 2. Record actual
+  observations with `npm run progress:note -- "..."`.
+- **Proof:** `docs/diagnosis-live.md` has checked evidence; `intent.md` has
+  your accepted scope and decision. Real model wording varies. If a citation
+  is fabricated or a contract fails, preserve the output and stop; do not
+  weaken the contract.
 
-  In terminal 2, configure supported SDK access in the shell, then from the
-  original clone root run:
+### Core 2 — review the design, then repair and prove the tool
 
-  ```bash
-  cd .lab/checkpoints/start
-  npm ci
-  npm run fixtures
-  npm run model:check
-  npm start -- --fast
-  ```
+- **Task:** Create a human-owned starter baseline, review `docs/plan.md`
+  against accepted intent, then repair the read-only `list_deploys` handler
+  while preserving its MCP registration.
+- **Why:** A meaningful diff makes the repair reviewable. The failing test
+  exposes missing behavior; the plan constrains the change before code edits.
+- **Action:** Follow the baseline steps in
+  [docs/sdlc-git.md](docs/sdlc-git.md) in the isolated starter. Run the red
+  `npx tsx --test test/workshop/tools.test.ts`; ask Claude Code for a small
+  plan and wait for human review. Then implement and run the focused tool test,
+  `npm run typecheck` and `npm run bench`. Re-investigate the same incident
+  with the Investigate action from the card. Record actual checks and trace
+  in `docs/verify/sdlc.md`, then record them with
+  `npm run progress:note -- "Core 2: recorded actual tests, bench and trace"`.
+- **Proof:** The plan is accepted before edits; the code diff is nonempty;
+  tests, typecheck and bench pass; the actual trace shows the tools called.
+  The A8 gate remains intentionally red until Core 3. Preserve failed
+  contracts or citations rather than calling them success.
 
-- **Proof:** The real SDK preflight returns `READY` before fault injection and
-  console health reports the selected model. If SDK access is unavailable,
-  report it and use `npm start -- --fast --offline` only as an explicit
-  fallback; offline output is not model evidence.
+### Core 3 — review, release and learn
 
-When both terminals are occupied, ask Claude Code to run safe checks or enter
-`/exit` before typing shell commands, then reopen `claude` when finished. Never
-type shell commands into the active Claude Code prompt.
-
-### Core 1 — investigate the evidence
-
-- **Task:** Break the shop once, inspect the diagnosis and verify every cited
-  reference against telemetry and the trace.
-- **Why:** A plausible explanation is not permission to change a service; a
-  missing deploy signal is unknown, not proof that no deploy happened.
-- **Action:** In the shop at `http://127.0.0.1:4310`, click **Bad deploy
-  v2.15.0** once. Use the console at `http://127.0.0.1:4320` and check
-  `demo/data/telemetry.json` against the actual diagnosis, citations and trace.
-  Save `docs/diagnosis-live.md`, then record what you verified:
-  `npm run progress:note -- "Core 1: checked the actual references and recorded the trace and gaps"`.
-  Real model wording varies.
-- **Proof:** The saved evidence shows what the agent could verify and what it
-  could not. If it fabricates a deploy citation or fails the contract, retain
-  the output and stop; do not weaken the contract.
-
-### Core 2 — repair one read-only path
-
-- **Task:** Run the red `list_deploys` test and ask Claude Code for a small
-  plan; implement the handler binding while preserving the existing MCP
-  registration only after human plan review.
-- **Why:** Core 1 found a deployment the agent cannot read. Test-first repair
-  restores evidence without adding a mutation tool.
-- **Action:** Run `npx tsx --test test/workshop/tools.test.ts` and read
-  the expected failure. Use this scoped prompt:
-  `Read CLAUDE.md, AGENTS.md and the failing test. Propose a small plan for
-  the read-only list_deploys handler while preserving the existing MCP
-  registration. Do not edit files.
-  Wait for my review.` After a human reviews the plan, implement and run:
-
-  ```bash
-  npx tsx --test test/workshop/tools.test.ts
-  npm run typecheck
-  npm run bench
-  ```
-
-  After the checks pass, submit `Investigate: customers report checkout errors`
-  in the same console incident. Check the actual trace, references and gaps;
-  model output and proposals vary.
-- **Proof:** Focused tests and bench pass, the A8 valid-approval exercise
-  remains intentionally red until Core 3, and the actual trace records the
-  available deploy evidence. If a contract or citation fails, preserve output
-  and stop. Record the test and trace result with
-  `npm run progress:note -- "Core 2: recorded actual test results and observed trace"`.
-
-### Core 3 — judge recovery safely
-
-- **Task:** Rebuild `checkApproval`, then have a named human review and decide
-  each recovery action separately.
-- **Why:** The agent cannot approve its own action, and execution success does
-  not prove recovery.
-- **Action:** Use this scoped prompt: `Read CLAUDE.md, AGENTS.md and the current
-  executor test. Explain the checkApproval contract and propose a small
-  fail-closed plan. Do not edit files or approve, execute, mitigate or
-  resolve anything. Wait for my review.` Implement only after the human
-  reviews the gate plan, then run:
-
-  ```bash
-  npx tsx --test test/workshop/executor.test.ts
-  npm run verify
-  npm run test:workshop
-  ```
-
-  In the console, the named human reviews the actual proposal and clicks
-  **Approve** with their own name, then **Execute** as a separate action.
-  Only after checking the recovery result may that human choose **Mitigate**
-  and **Resolve**. Follow the console next-step banner; never assume a
-  particular proposal or promise rollback for arbitrary model output.
-  - **Proof:** A named human records a justified resolution only after LANDED,
-  or records the failed check and leaves the incident open on NOT LANDED or
-  unknown. Safe stop is completion. Record the result with
-  `npm run progress:note -- "Core 3: recorded actual test results and recovery outcome"`.
+- **Task:** Review a fail-closed `checkApproval` plan, repair the human gate,
+  run full checks, inspect the actual diff and make a human release decision.
+  Observe runtime evidence and propose one reviewed next task.
+- **Why:** Passing tests do not accept or publish a change; runtime recovery is
+  separate from code release.
+- **Action:** Follow the Core 3 prompts and checks in [CARD.md](CARD.md).
+  Run the focused executor test, `npm run verify`,
+  `npm run test:workshop` and `npm run test:hooks`; record results. Review
+  `git diff workshop-base` against `intent.md`, `docs/plan.md` and `REVIEW.md`.
+  A human prepares the learner-repo PR and checks current-head CI and required
+  review before deciding to merge. If access or a reviewer is missing, record
+  `RELEASE BLOCKED` and the reason. Then record the actual runtime model,
+  trace, recovery result and one reviewed next task in `docs/verify/sdlc.md`.
+  Record the actual result with
+  `npm run progress:note -- "Core 3: recorded release decision, runtime result and next task"`.
+- **Proof:** Full checks and actual diff findings are recorded. A human has
+  made a release decision or documented the exact blocker. Runtime results
+  are observed, not inferred from a local reload. `NOT LANDED` or unknown
+  recovery is a safe stop; keep the incident open.
 
 ### Completion checklist
 
-- [ ] Code tests and the relevant focused workshop tests are recorded.
-- [ ] The actual runtime model label and trace are recorded, or SDK access is
-      explicitly blocked; offline is not model evidence.
-- [ ] The actual recovery outcome is recorded: LANDED and separate human
-      actions, or NOT LANDED/unknown with the incident still open.
-- [ ] No approval, execution, mitigation, resolution, commit or push was
+- [ ] The diagnosis is checked against evidence and `intent.md` is accepted.
+- [ ] `docs/plan.md` was reviewed before implementation and the repair diff is
+      nonempty.
+- [ ] Focused and full code checks, actual diff review and human release
+      decision (or `RELEASE BLOCKED`) are recorded.
+- [ ] The actual runtime model label, trace and recovery outcome are recorded,
+      or the missing observation is explicitly marked blocked/not run.
+- [ ] One next task and its acceptance check are proposed and reviewed.
+- [ ] No approval, execution, mitigation, resolution, commit, push or merge was
       delegated to the assistant.
 
 ### Catch up without overwriting your starter
 
-Run these commands from the original clone root, not from inside a modified
-starter. Each creates a separate named checkpoint and leaves the existing
-starter files in place. Tell anyone helping you which checkpoint you entered.
+Run catch-up commands from the original clone root, not a modified starter.
+Each creates a separate checkpoint and preserves the participant's files.
+Tell anyone helping which checkpoint you entered.
 
 ```bash
 cd /path/to/sre-oncall-agent
@@ -150,13 +121,10 @@ npm run checkpoint -- core-2
 cd .lab/checkpoints/core-2
 ```
 
-For the next checkpoint, return to the original clone root and run:
-
-```bash
-cd /path/to/sre-oncall-agent
-npm run checkpoint -- core-3
-cd .lab/checkpoints/core-3
-```
+For Core 3, return to the original root and run
+`npm run checkpoint -- core-3`, then enter `.lab/checkpoints/core-3`.
+Do not copy runtime data, approvals, progress or lesson history from a solved
+checkpoint. A solved copy helps catch up; it does not prove authored work.
 
 The numbered steps below are deterministic offline reference material. Every
 investigation command explicitly selects `--model offline`; they are not model

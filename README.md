@@ -1,11 +1,13 @@
 # SRE on-call lab — Workshop 5 (AI-native SDLC)
 
-In this lab you build an AI first responder for a small checkout service, with
-Claude Code as the default coding assistant from the first minutes. An alert fires. The agent reads the telemetry,
-the deploy history and the logs. It posts one diagnosis with a reference
-behind every claim, and it proposes ONE next step. A named human decides.
-After the human acts, the agent watches the metric and reports if the fix
-landed.
+This lab teaches the AI software delivery lifecycle by changing a local SRE
+first responder. Claude Code is the development assistant from the first
+minutes; it is distinct from the runtime SRE agent being built. That agent
+reads telemetry, forms an evidence-backed diagnosis and proposes one next
+step. Participants turn observed evidence into an accepted intent, review a
+plan, repair and test code, review the actual diff, make a human release
+decision (or record `RELEASE BLOCKED`), observe runtime results and propose a
+reviewed next task.
 
 The agent **cannot** roll back, scale, flip a flag or page anyone. That is the
 design: the agent gathers evidence, proposes, verifies and communicates;
@@ -52,8 +54,8 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the exact read-only prompt from the [setup guide](docs/claude-code.md)
-before theory or edits.
+Submit the read-only assistant prompt in [CARD.md](CARD.md) before theory or
+edits.
 
 **Terminal 2 — configure SDK access and start the lab**
 
@@ -86,33 +88,40 @@ only for the interactive CLI if needed; inspect
 
 | Core | You do |
 | --- | --- |
-| **1 · Investigate the evidence** | Break the shop, let the console raise the incident, check every reference in the diagnosis against the data. |
-| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first; prove it with the tests, the bench and the trace. |
-| **3 · Judge the recovery** | Rebuild the approval gate, approve with your name, read the recovery checks, then close or stop. |
+| **1 · Specify from evidence** | Verify the diagnosis and its references, then draft and human-accept an intent from the observed data. |
+| **2 · Design and build** | Create a human-owned starter baseline, review the plan before editing, repair the read-only `list_deploys` handler, and prove the change with tests, bench and trace. |
+| **3 · Review, release and learn** | Repair the human gate, run full checks, review the actual diff, make a human PR/merge decision or record `RELEASE BLOCKED`, observe runtime evidence, and propose a reviewed next task. |
 
-The steps, with what you should see and what to do when you are stuck, are on
-**[CARD.md](CARD.md)**. The facilitator run sheet is **[FACILITATOR.md](FACILITATOR.md)**;
-**[WORKSHOP.md](WORKSHOP.md)** is the workshop overview.
-Working alone? Follow **[SOLO.md](SOLO.md)**. Optional depth (intent, spec,
-your own guard rule, a bench case, the git gate, a hackathon intent) is at the
-bottom of the card.
+The canonical actions, prompts and proof for each core are on
+**[CARD.md](CARD.md)**. The facilitator run sheet is
+**[FACILITATOR.md](FACILITATOR.md)**; **[WORKSHOP.md](WORKSHOP.md)** is the
+overview. Working alone? Follow **[SOLO.md](SOLO.md)**. Intent, planning,
+diff review and release decisions are required, not optional depth. Skills,
+hooks, subagents and adding a bench case are optional extensions. Human-only
+baseline, approval and learner-repository steps are in
+**[docs/sdlc-git.md](docs/sdlc-git.md)**.
 
 Historical `w5-core-*` tags are archived references only. The current
 safety-tested starter is generated from committed `HEAD` by `npm run checkpoint`.
 
 ## The file flow
 
-Each step of the AI SDLC leaves one file behind: `intent.md` → `docs/spec.md`
-→ `docs/plan.md` → `PROGRESS.md` (append-only: `npm run progress:note -- "…"`)
-→ `REVIEW.md`.
+The required evidence trail includes `docs/diagnosis-live.md`, accepted
+`intent.md`, reviewed `docs/plan.md`, actual checks and review in
+`docs/verify/sdlc.md`, and an append-only `PROGRESS.md` note
+(`npm run progress:note -- "…"`). `docs/spec.md` records the existing
+diagnosis contract; it constrains the plan.
 
 ## The rules
 
 - **Local boundary.** The CLI, launcher, shop and console run on your machine.
   A real SDK call uses your configured provider; the guard still denies
   unrelated network calls.
-- **Push nothing.** Commit locally if you like, but do not push branches, open
-  pull requests or deploy anything. The guard hook denies `git push`.
+- **Human-owned release.** Use your own fork or a facilitator-provided learner
+  repository for the required PR exercise. A human reviews, commits, approves,
+  pushes, opens the PR and makes the merge decision. Follow
+  [docs/sdlc-git.md](docs/sdlc-git.md); never push the training baseline to
+  upstream.
 - **Humans decide.** The agent proposes; a named human approves, executes and
   closes. The agent may not sign approvals, edit hooks, edit `.claude/`, or
   rewrite `PROGRESS.md`.

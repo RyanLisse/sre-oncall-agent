@@ -5,6 +5,12 @@ Use the generated [CARD.md](CARD.md) or the live
 Follow [Claude Code and Agent SDK setup](docs/claude-code.md) for the official
 installer and separate SDK configuration.
 
+Claude Code is your development assistant. The runtime SRE agent is the
+application you will change. The three required cores produce an evidence-based
+and accepted intent, a human-reviewed plan and tested repair, then a reviewed
+diff, human release decision (or `RELEASE BLOCKED`), runtime observation and a
+reviewed next task. These are required work, not optional extensions.
+
 **Terminal 1 — create the starter and start Claude Code**
 
 ```bash
@@ -15,7 +21,8 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the exact read-only prompt from the setup guide before theory or edits.
+Submit the read-only assistant prompt from [CARD.md](CARD.md) before theory or
+edits. Follow the card for the required tasks and their evidence.
 
 **Terminal 2 — from the original clone root**
 
@@ -33,10 +40,12 @@ npm start -- --fast
 Keep terminal 2 open; `Ctrl+C` stops only processes it started. If SDK access
 is unavailable, use `npm start -- --fast --offline` explicitly; it is not
 model evidence.
-Catch up with `npm run checkpoint -- core-2` or
+Catch up using `npm run checkpoint -- core-2` or
 `npm run checkpoint -- core-3`. These create separate copies from committed
 `HEAD` and refuse to overwrite. Never copy runtime, approvals, progress, or
-lesson history. For the three core tasks, see [CARD.md](CARD.md).
+lesson history. Follow the human-only Git steps in
+[docs/sdlc-git.md](docs/sdlc-git.md); use a learner repository, not upstream.
+Skills, hooks, subagents and new bench cases are optional depth.
 
 Agents propose and communicate. Named humans approve, execute, mitigate, and
 resolve. Keep a NOT LANDED or unknown recovery open; do not retry for green.

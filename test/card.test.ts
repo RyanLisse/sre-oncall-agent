@@ -37,7 +37,7 @@ test("card and hub explain each task and place concepts beside their use", () =>
   assert.ok(launcher.indexOf("npm run model:check") < launcher.indexOf("npm start -- --fast"));
   const core2 = workshop.cores[1];
   assert.ok(core2);
-  const core2LastStep = core2.steps[2];
+  const core2LastStep = core2.steps.at(-1);
   assert.ok(core2LastStep);
   assert.match(core2LastStep.see, /trace/i);
   assert.match(core2LastStep.see, /deploy references/i);
@@ -56,4 +56,16 @@ test("card and hub explain each task and place concepts beside their use", () =>
       assert.ok(view.includes(html(step.before)));
     }
   }
+});
+
+test("the required route teaches delivery artifacts before optional depth", () => {
+  const card = readFileSync("CARD.md", "utf8");
+  const core = card.split("## Go deeper (optional)")[0] ?? "";
+  for (const artifact of ["intent.md", "docs/plan.md", "docs/verify/sdlc.md", "REVIEW.md", "workshop-base", "RELEASE BLOCKED"]) {
+    assert.ok(core.includes(artifact), `${artifact} belongs to the required route`);
+  }
+  assert.match(core, /Do not edit code or approve anything/);
+  assert.match(core, /Do not edit, approve, commit, push or merge/);
+  assert.match(core, /proposing and reviewing it is required/);
+  assert.match(core, /not a production deployment/);
 });

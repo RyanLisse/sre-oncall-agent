@@ -23,11 +23,12 @@ const seedFixture = (fixture, corruptFile) => {
       : source.replace('record.proposal !== "rollback"', 'record.proposal === "rollback"'));
   }
   git(fixture, "init", "-q");
+  appendFileSync(join(fixture, ".git", "info", "exclude"), "\n/node_modules\n");
   git(fixture, "config", "user.email", "checkpoint@example.invalid");
   git(fixture, "config", "user.name", "Checkpoint test");
   git(fixture, "add", ".");
   git(fixture, "commit", "-qm", "fixture");
-  symlinkSync(join(root, "node_modules"), join(fixture, "node_modules"), "dir");
+  symlinkSync(join(root, "node_modules"), join(fixture, "node_modules"), "junction");
 };
 const assertFailClosedA8 = (executor) => {
   const stub = executor.match(/export const checkApproval = \(_record: ApprovalRecord, _incident: Incident\): Result<ApprovalRecord> =>\n  fail\(\["TODO\(A8\): rebuild the named human approval gate before execution"\]\);/);
@@ -130,8 +131,40 @@ test("checkpoint cuts come from committed HEAD and refuse overwrite", () => {
     assert.equal(readFileSync(checkpointTools, "utf8"), retainedEdit);
     assert.equal(readFileSync(join(fixture, "src/tools.ts"), "utf8"), dirtyParentTools);
     assert.equal(readFileSync(join(fixture, "src/executor.ts"), "utf8"), committedExecutor);
-    assert.equal(git(fixture, "status", "--porcelain"), "M src/tools.ts\n?? .lab/\n?? node_modules");
+    assert.equal(git(fixture, "status", "--porcelain"), "M src/tools.ts\n?? .lab/");
     assert.equal(git(fixture, "rev-parse", "HEAD"), sourceSha);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test("the human starter baseline yields a nonempty repair diff", () => {
+  const fixture = mkdtempSync(join(tmpdir(), "w5-checkpoint-baseline-"));
+  try {
+    seedFixture(fixture);
+    const solvedSha = git(fixture, "rev-parse", "HEAD");
+    const checkpoint = join(fixture, ".lab", "checkpoints", "start");
+    const created = spawnSync(process.execPath, [join(fixture, "scripts/checkpoint.mjs"), "start"], {
+      cwd: fixture, encoding: "utf8",
+    });
+    assert.equal(created.status, 0, created.stderr);
+
+    git(checkpoint, "switch", "-c", "workshop-base");
+    git(checkpoint, "add", "src/tools.ts", "src/executor.ts");
+    assert.deepEqual(
+      git(checkpoint, "diff", "--cached", "--name-only").split("\n").sort(),
+      ["src/executor.ts", "src/tools.ts"],
+    );
+    git(checkpoint, "commit", "-m", "Set workshop exercise baseline");
+    git(checkpoint, "switch", "-c", "fix/w5-core");
+    git(checkpoint, "restore", "--source", solvedSha, "--", "src/tools.ts", "src/executor.ts");
+
+    const repairDiff = git(checkpoint, "diff", "workshop-base", "--", "src/tools.ts", "src/executor.ts");
+    assert.ok(repairDiff.length > 0);
+    assert.deepEqual(
+      git(checkpoint, "diff", "--name-only", "workshop-base", "--", "src/tools.ts", "src/executor.ts").split("\n").sort(),
+      ["src/executor.ts", "src/tools.ts"],
+    );
   } finally {
     rmSync(fixture, { recursive: true, force: true });
   }

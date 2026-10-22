@@ -57,11 +57,9 @@ authentication, use `/login`. `/status` reports the interactive session
 status; it does **not** prove that hooks loaded. Inspect
 `.claude/settings.json` when checking hooks.
 
-Submit this exact read-only prompt before theory or code edits:
-
-```text
-Read CLAUDE.md, AGENTS.md and CARD.md. Explain what we will build, why it helps the on-call team, and what evidence we need. Name the two starter exercises. Do not edit files or run approval, execution, mitigation, resolution, commit or push commands. Wait for my review.
-```
+Submit the read-only assistant prompt in [CARD.md](../CARD.md) before theory
+or code edits. The generated card is the canonical source for the participant
+route and its prompts.
 
 ## Configure the SDK in terminal 2
 
