@@ -59,7 +59,10 @@ test("shop serves the local workshop without exposing network access", { timeout
       signal: AbortSignal.timeout(2_000),
     }), error => {
       const cause = error && typeof error === "object" && "cause" in error ? error.cause : undefined;
-      return cause !== null && typeof cause === "object" && "code" in cause && cause.code === "ECONNREFUSED";
+      if (cause !== null && typeof cause === "object" && "code" in cause && cause.code === "ECONNREFUSED") return true;
+      // Windows Firewall drops instead of refusing, so the probe times out. Still unreachable,
+      // but a timeout cannot tell loopback-only from firewalled: the strict check runs on Linux/macOS CI.
+      return process.platform === "win32" && error instanceof Error && error.name === "TimeoutError";
     });
   });
 });
