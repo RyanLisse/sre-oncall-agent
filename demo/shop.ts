@@ -196,8 +196,8 @@ if (process.argv[1]?.endsWith("shop.ts") || process.argv[1]?.endsWith("shop.js")
   });
   setInterval(flush, 2000).unref();
   flush();
-  server.listen(PORT, () => {
-    console.log(`▶ shop listening on http://localhost:${PORT}  revision ${state.version}  mode ${state.mode}`);
+  server.listen(PORT, "127.0.0.1", () => {
+    console.log(`▶ shop listening on http://127.0.0.1:${PORT}  revision ${state.version}  mode ${state.mode}`);
     console.log(`  telemetry → ${TELEMETRY_PATH}`);
     console.log(`  inject a fault:  npm run chaos -- deploy v2.15.0 --mode bad-deploy`);
   });
