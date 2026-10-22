@@ -10,14 +10,18 @@
 // note can never fake an `<!-- auto: A-n -->` marker or rewrite an old line.
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const KINDS = ["note", "status", "decision", "blocker"];
 const MAX = 500;
 
 const fail = (msg) => { console.error(`progress:note: ${msg}`); process.exit(1); };
+const packagedRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+const isPackage = existsSync(join(packagedRoot, "WORKSHOP-PACKAGE.md"));
 
 function repoRoot() {
+  if (isPackage) return packagedRoot;
   try {
     return execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
   } catch {
@@ -48,9 +52,9 @@ if (text.includes("<!--") || text.includes("-->")) fail("no HTML comments in a n
 if (text.length > MAX) fail(`note longer than ${MAX} characters`);
 
 const file = join(repoRoot(), "PROGRESS.md");
-if (!existsSync(file)) fail(`${file} not found`);
+if (!existsSync(file) && !isPackage) fail(`${file} not found`);
 
-const existing = readFileSync(file, "utf8");
+const existing = existsSync(file) ? readFileSync(file, "utf8") : "";
 const lead = existing.length === 0 || existing.endsWith("\n") ? "" : "\n";
 appendFileSync(file, `${lead}- ${stamp()} [${kind}] ${text}\n`);
 console.log(`progress:note: appended [${kind}] to PROGRESS.md`);

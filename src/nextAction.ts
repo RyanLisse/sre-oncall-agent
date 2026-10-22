@@ -8,14 +8,12 @@
  * Humans still approve, execute, mitigate and resolve. This function only
  * decides which of those buttons is legal right now. Chat is always open.
  */
-import type { State } from "./store.js";
+import type { IncidentRow, MessageRow, State } from "./store.js";
+import { incidentActions } from "./recovery.js";
 
 export type Action = "approve" | "reject" | "execute" | "mitigated" | "resolve";
 
-export interface Msg {
-  readonly kind: string;
-  readonly text: string;
-}
+export type Msg = Pick<MessageRow, "kind" | "text">;
 
 export interface Next {
   readonly title: string;
@@ -24,37 +22,25 @@ export interface Next {
 }
 
 /** The `recovery` message the console writes when execute starts and when the three checks finish. */
-export type Recovery =
-  | { readonly phase: "running" }
-  | { readonly phase: "done"; readonly landed: boolean; readonly failed: readonly string[] };
-
-const last = (msgs: readonly Msg[], kind: string): Record<string, unknown> | undefined => {
-  const m = [...msgs].reverse().find((x) => x.kind === kind);
-  if (!m) return undefined;
-  try { return JSON.parse(m.text) as Record<string, unknown>; } catch { return undefined; }
-};
-
 export const nextAction = (state: State, msgs: readonly Msg[]): Next => {
+  const actions = incidentActions({ state } satisfies Pick<IncidentRow, "state">, msgs);
   if (state === "resolved") return { title: "Closed", detail: "A human resolved this incident. Nothing can be executed again.", allowed: [] };
-
-  const diag = last(msgs, "diagnosis");
-  if (!diag) return { title: "Wait for the investigation", detail: "No diagnosis yet. If it failed, ask in chat: “Investigate: …”.", allowed: [] };
-
-  const proposal = String(diag.proposal ?? "");
-  const decision = String(last(msgs, "approval")?.decision ?? "pending");
-  const rec = last(msgs, "recovery") as Recovery | undefined;
-
-  if (state === "mitigated") return { title: "Resolve with notes", detail: "Write what you actually did. Your notes become a lesson with your name and this incident id.", allowed: ["resolve"] };
-  if (decision === "pending") return { title: `Approve or reject “${proposal}”`, detail: "Read the evidence first. Type your name, then decide. The agent cannot sign.", allowed: ["approve", "reject"] };
-  if (decision === "rejected") return { title: "Investigate further, or resolve with notes", detail: "The proposal was rejected. Ask the agent a new question in chat, or close with notes.", allowed: ["resolve"] };
-
-  if (proposal !== "rollback") return { title: `Carry out “${proposal}” yourself`, detail: "The executor only rolls back. Do this step outside the agent, then mark mitigated.", allowed: ["mitigated", "resolve"] };
-  if (!rec) return { title: "Execute the rollback", detail: "The separate executor recomputes the target from telemetry and verifies three checkouts.", allowed: ["execute"] };
-  if (rec.phase === "running") return { title: "Wait: recovery checks are running", detail: "Three checks at half, full and double the window (about two minutes). Keep traffic running.", allowed: [] };
-  if (rec.landed) return { title: "LANDED: mark mitigated", detail: "The full and double checks passed. Landed is not closed: you mark mitigated, then resolve with notes.", allowed: ["mitigated"] };
-  return {
-    title: "NOT LANDED: do not close, investigate or escalate",
-    detail: `Failed: ${rec.failed.join("; ")}. Read the metric window and logs. Do not execute again to get a green result.`,
-    allowed: ["resolve"],
-  };
+  if (actions.recovery.status === "running") return { title: "Wait: recovery checks are running", detail: actions.next, allowed: [] };
+  if (actions.recovery.status === "blocked") return { title: "Recovery blocked", detail: actions.next, allowed: [] };
+  if (actions.recovery.status === "complete" && !actions.recovery.report.landed) {
+    const failed = actions.recovery.report.checks.filter((c) => (c.label === "full" || c.label === "double") && !c.ok)
+      .map((c) => `${c.label}=${c.value ?? "no data"}`).join(", ");
+    return { title: "NOT LANDED: keep the incident open", detail: `Failed ${failed || "full or double"}; recovery limit ${actions.recovery.report.limit}. Keep the incident open and investigate.`, allowed: [] };
+  }
+  if (actions.canResolve) return { title: "Resolve with notes", detail: actions.next, allowed: ["resolve"] };
+  if (actions.canMitigate) {
+    const landed = actions.recovery.status === "complete" && actions.recovery.report.landed;
+    return landed
+      ? { title: "LANDED: mark mitigated", detail: actions.next, allowed: ["mitigated"] }
+      : { title: "Review manual mitigation", detail: actions.next, allowed: ["mitigated"] };
+  }
+  if (actions.canDecide) return { title: "Approve or reject the proposal", detail: actions.next, allowed: ["approve", "reject"] };
+  if (actions.canExecute) return { title: "Execute the approved rollback", detail: actions.next, allowed: ["execute"] };
+  if (!msgs.some((m) => m.kind === "diagnosis")) return { title: "Wait for the investigation", detail: "No diagnosis yet. Ask in chat: Investigate: …", allowed: [] };
+  return { title: "Investigate or escalate", detail: actions.next, allowed: [] };
 };

@@ -5,15 +5,19 @@
 // The hook never rewrites entries; humans fill in the "<fill in: …>" bullets.
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-// Work from the repo root (git, falling back to the cwd), never from the folder
-// name: participants may clone into any directory and run hooks from a subfolder.
-try {
-  const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
-    encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
-  }).trim();
-  if (root) process.chdir(root);
-} catch { /* not a git checkout (e.g. an unpacked ZIP): stay in the cwd */ }
+const packagedRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+if (existsSync(join(packagedRoot, "WORKSHOP-PACKAGE.md"))) process.chdir(packagedRoot);
+else {
+  try {
+    const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    if (root) process.chdir(root);
+  } catch { /* not a git checkout (e.g. an unpacked ZIP): stay in the cwd */ }
+}
 
 const FILE = "PROGRESS.md";
 
@@ -117,9 +121,6 @@ function entry(step) {
   return `\n## ${stamp()} — ${step.title} (${step.key})\n<!-- auto: ${step.key} -->\n\n- **What shipped:** ${step.shipped}\n- **Why it mattered:** <fill in: what this step proves about the AI SDLC>\n- **How, and what was rejected:** <fill in>\n- **Validation:** ${step.validation}\n- **Deliberately not done:** <fill in>\n`;
 }
 
-if (!existsSync(FILE)) process.exit(0); // no PROGRESS.md yet: stay silent
-const done = readFileSync(FILE, "utf8");
-
 if (process.argv.includes("--status")) {
   const rows = evidence();
   const n = rows.filter((s) => s.done).length;
@@ -127,6 +128,9 @@ if (process.argv.includes("--status")) {
   for (const s of rows) console.log(`${s.done ? "✓" : "·"} ${s.key} ${s.name} — ${s.done ? s.title : "open: " + s.hint}`);
   process.exit(0);
 }
+
+if (!existsSync(FILE)) process.exit(0); // no PROGRESS.md yet: stay silent
+const done = readFileSync(FILE, "utf8");
 
 for (const s of evidence()) {
   if (s.done && !done.includes(`<!-- auto: ${s.key} -->`)) appendFileSync(FILE, entry(s));

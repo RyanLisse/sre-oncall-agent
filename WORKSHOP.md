@@ -1,12 +1,16 @@
 # Workshop 5 — build the AI SRE agent (AI-native SDLC)
 
+This is the workshop overview. For the facilitator run sheet and timing, see
+[FACILITATOR.md](FACILITATOR.md).
+
 The team path through this repo. You do **three core tasks**. Everything else
-is optional depth. The loop you learn: **Intent → Spec → Design/controls →
-Build → Test/evals → Gate → Maintain.**
+is optional depth. Start with the failing shop. For each task, explain what
+you will do, why it is needed, and what will prove it. Read a concept just
+before the step that uses it. Reflect on the full SDLC loop after the work.
 
 - **The slides explain.** The facilitator uses them for the why.
 - **The card is for doing.** Open **[CARD.md](CARD.md)**, or the hub at
-  `http://localhost:4320/hub` once the lab runs (`npm run hub`). Each step says
+  `http://127.0.0.1:4320/hub` once the lab runs (`npm run hub`). Each step says
   what you do, what you should see, how you check it, and what to do when you
   are stuck.
 
@@ -16,30 +20,38 @@ Everything runs offline. No API key is needed: the scripted runtime
 ## Set up once
 
 ```bash
-git clone <repo-url> sre-oncall-agent   # the URL your facilitator gives you
+git clone https://github.com/RyanLisse/sre-oncall-agent.git
 cd sre-oncall-agent
-git switch -c my/workshop-5 w5-core-start   # your own branch, from the starter
-npm start -- --fast                          # installs, checks, starts the lab
+npm run checkpoint -- start                # make the current committed starter copy
+cd .lab/checkpoints/start
+npm start -- --fast                         # installs, checks, starts the lab
 ```
 
-`npm start` checks Node 22+ and the dependencies, generates the fixtures, and
+`npm start` checks Node 22+ and the dependencies, generates missing fixtures, and
 starts the shop, the traffic and the console in one terminal. The console
 reloads itself when you save code; the shop keeps running. Keep that
-terminal open. Ctrl+C stops all three. Use a second terminal for everything
+terminal open. Ctrl+C stops only the processes started by this launcher. Use a second terminal for everything
 else. `--fast` opens an incident after one minute instead of five.
 
-Breaking the shop is always a separate, deliberate command in the second
-terminal: `npm run chaos -- deploy v2.15.0 --mode bad-deploy`.
+Break the shop once, when Core 1 asks you to: click **Bad deploy v2.15.0**
+in the shop OR run `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in
+the second terminal. Never do both.
 
 ## The three core tasks
 
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
 | **1 · Investigate the evidence** | Break the shop. The console raises the incident. Check every reference in the diagnosis against `demo/data/telemetry.json`. Find the deploy the agent cannot see (its data gap). | `docs/diagnosis-live.md` + a progress note naming the references you checked | A1, A6 |
-| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). Re-investigate: the gap closes, the proposal becomes `rollback`. | `test/workshop/tools.test.ts` green, `npm run typecheck && npm test && npm run bench` pass, `list_deploys` in the trace | A5, A7 |
-| **3 · Judge the recovery** | Rebuild the approval gate (`TODO(A8)` in `src/executor.ts`). Approve with your name, execute, read the recovery checks, then mitigate and resolve, or stop on NOT LANDED. | `test/workshop/executor.test.ts` green, a lesson in `lessons/lessons.md` with your name | A8, A9 |
+| **2 · Build a change safely and test it** | Rebuild the read-only `list_deploys` tool test-first (`TODO(A5)` in `src/tools.ts`). Re-investigate: the gap closes, the proposal becomes `rollback`. | `npx tsx --test test/workshop/tools.test.ts`, `npm run typecheck` and `npm run bench` pass; A8 valid-approval assertion remains red until Core 3; `list_deploys` in the trace | A5, A7 |
+| **3 · Judge the recovery** | Rebuild the approval gate (`TODO(A8)` in `src/executor.ts`). Approve with your name, execute, read the recovery checks, then mitigate and resolve, or stop on NOT LANDED. | Gate tests pass; a named resolution lesson OR a documented safe stop with the incident left open | A8, A9 |
 
-The steps are on the card. Run `npm run workshop:check` to see the two
+The card gives each core a reason and proof, with **Before you act**
+explanations next to the steps. Telemetry and evidence belong in Core 1;
+MCP and the bench belong in Core 2; approval and recovery belong in Core 3.
+Skills, subagents, hooks and the Git gate are optional extensions, not
+prerequisites. The slides put them after the closing recap.
+
+Run `npm run workshop:check` to see the two
 `TODO` markers left in the starter.
 
 ## The console tells you the next step
@@ -55,7 +67,8 @@ it with notes. Approval and closure always need your name.
 
 ```bash
 npm run checkpoint                # list: start · core-2 · core-3
-npm run checkpoint -- core-2      # a separate copy in .lab/checkpoints/core-2
+npm run checkpoint -- core-2      # current-HEAD copy with only the fail-closed A8 cut
+npm run checkpoint -- core-3      # current solved source, unchanged
 git diff --no-index .lab/checkpoints/core-2/src/tools.ts src/tools.ts
 ```
 
@@ -90,9 +103,10 @@ you ran them: `npm run progress:note -- "Core 2: tools test green, bench PASS"`.
 
 ## Refs
 
-| Ref | Contains |
+| Checkpoint | Contains |
 | --- | --- |
-| `w5-core-start` | The starter: two cuts, `TODO(A5)` and `TODO(A8)`. Everything else works. |
-| `w5-core-2` | Core 2 solved. |
-| `w5-core-3` | All three cores solved. |
-| `w5-step-0-setup` … `w5-step-8-maintain` | The earlier nine-assignment route. Kept for reference. |
+| `start` | The current-HEAD starter: bounded `TODO(A5)` and fail-closed `TODO(A8)`. |
+| `core-2` | Current-HEAD source with only the fail-closed A8 cut. |
+| `core-3` | Current committed solved source, unchanged. |
+
+Historical `w5-core-*` tags are archived references, not the current safety-tested starter.

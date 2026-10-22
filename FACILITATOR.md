@@ -2,61 +2,96 @@
 
 The day has **three core tasks**. Everything else is optional depth. The
 slides explain; participants execute from **[CARD.md](CARD.md)** or the hub
-(`http://localhost:4320/hub`). Both are generated from `workshop.json`
+(`http://127.0.0.1:4320/hub`). Both are generated from `workshop.json`
 (`npm run card`). Change the steps there, never in the generated files.
 
 ## Prepare (the evening before)
 
 Use two separate clones. Never present a solved clone as the starter.
 
-| Clone | Ref | Check |
+| Clone | Checkpoint | Check |
 | --- | --- | --- |
-| Participant route | `git switch -c demo/start w5-core-start` | `npm test` passes; `npm run test:workshop` fails on the tools and executor tests only |
-| Solved demo | `git switch -c demo/solved w5-core-3` | `npm run verify` and `npm run test:workshop` pass |
+| Participant route | `npm run checkpoint -- start` then `cd .lab/checkpoints/start` | the A5 tool and A8 approval exercises are intentionally incomplete; A8 fails closed |
+| Solved demo | `npm run checkpoint -- core-3` then `cd .lab/checkpoints/core-3` | `npm run verify` and `npm run test:workshop` pass |
 
-In each clone: `npm start -- --fast`, open `http://localhost:4320/hub`, then
-Ctrl+C. Run one clone at a time on the default ports. `npm start` refuses to
-start when a port is in use, and says which one.
+From each clone, create the intended checkpoint, then run its launcher:
+`npm run checkpoint -- start` (or `core-3` for the solved demo), followed by
+`cd .lab/checkpoints/start` (or `core-3`) and `npm start -- --fast`. Open
+`http://127.0.0.1:4320/hub`. Ctrl+C stops only processes started by that
+launcher. Run one clone at a time on the default ports; if a port is busy,
+only stop your own workshop launcher.
 
 The slides: run `python3 serve.py` in the slides repo, then open
 `http://localhost:8080/workshop5.html` (presenter view:
 `workshop5-presenter.html`).
 
+## Teach from the task
+
+Start with the shop and the failing checkout, not a glossary. For each core,
+ask what participants will do, why it is needed, and what will prove it.
+Explain only the concept needed for the next action. Show one example,
+then let participants use it. The card and hub put these explanations next
+to the steps under **Before you act**.
+
+| Task | Why now | Explain at first use | Evidence to collect |
+| --- | --- | --- | --- |
+| Core 1: investigate | A plausible diagnosis is not permission to act. | Telemetry before the fault; references and data gaps before reading the diagnosis; progress notes before recording evidence. | Checked references and the missing deployment signal. |
+| Core 2: repair the tool | Core 1 found data the agent cannot read. | Repo rules and a small plan before editing; MCP beside the handler and registration; trace and bench before checking the repair. | Tool test, typecheck and bench pass; the same incident cites the deploy. |
+| Core 3: judge recovery | A diagnosis cannot approve its own action. | Named approval before rebuilding the gate; frozen recovery checks before judging the result; closure notes only after LANDED. | Passing gate tests and a justified closure, or a documented safe stop. |
+
+Do not insert the optional skills, hooks, subagents or Git-gate material
+between these tasks. The deck labels that material **Optional depth** after
+the closing recap. If a team chooses an extension, explain its concept just
+before that extension. Name the full SDLC loop during the final reflection,
+using the work participants actually did.
+
 ## Time boxes
 
-The deck keeps its order and times. The nine practice slides now carry the
-three cores and the optional depth.
+Use the main route through **Close: show what you can now prove**. The rest
+is reference material or a separate follow-up, not another required session.
 
-| Time | Slide | Block | Expected output |
+| Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
-| 10:00–10:50 | 1–25 | Intro: AI-native SDLC loop, the use case, the console | participants can name the 7 phases |
-| 10:50–11:00 | 26 | **Start the lab** | `npm start -- --fast` prints ✓ Lab running; hub opens |
-| 11:00–11:15 | 27 | Break | — |
-| 11:28–11:43 | 32 | **Core 1 · Investigate the evidence** (part 1) | shop broken by the participant; incident raised by the listener; data gap on `list_deploys` |
-| 11:47–12:00 | 35 | **Core 1** (part 2) | every reference checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
-| 12:00–13:00 | 36 | Lunch | — |
-| 13:30–13:50 | 46 | Go deeper: your own guard rule (A4) · catch-up buffer for core 1 | optional |
-| 14:00–14:15 | 47 | **Core 2 · Build a change safely and test it** | `test/workshop/tools.test.ts` green |
-| 14:15–14:40 | 51 | **Core 2** (prove it) | typecheck + tests + `PASS bench`; `list_deploys` in the trace |
-| 14:40–14:55 | 52 | Break | — |
-| 15:04–15:15 | 56 | Go deeper: a bench case and the ratchet (A7) | optional |
-| 15:18–15:35 | 60 | **Core 3 · Judge the recovery** (gate + execute) | `test/workshop/executor.test.ts` green; approved with a name; recovery running |
-| 15:35–15:50 | 63 | **Core 3** (judge + close) | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
-| 15:50–16:00 | 64–66 | Close, skills pack, hackathon bridge | `docs/hackathon-intent.md` is optional depth |
+| 10:00–10:30 | The shop and the problem | What, why, outputs, human boundaries | participants can explain the task and why evidence comes first |
+| 10:30–11:00 | Start the lab | **Start the lab** | checkpoint copy prints ✓ Lab running; hub opens |
+| 11:00–11:15 | Break | Break | — |
+| 11:15–11:37 | Core 1: Investigate the evidence | Brief, detection, one fault, evidence concepts | shop broken once; listener raises an incident; explain the data gap |
+| 11:37–12:00 | Core 1: Check the claims | **Core 1** (check and record) | references checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
+| 12:00–13:00 | Lunch | Lunch | — |
+| 13:00–13:22 | Core 2: Why this change | Scope, plan, tool boundary, trace and bench beside the code | each pair states its change and proof |
+| 13:22–14:10 | Core 2: Build a change safely | **Core 2** | `test/workshop/tools.test.ts` green |
+| 14:10–14:40 | Core 2: Prove it on the live incident | **Core 2** (prove it) | focused tool test + typecheck + `PASS bench`; A8 assertion remains expected red until Core 3; `list_deploys` in the trace |
+| 14:40–14:55 | Break | Break | — |
+| 14:55–15:25 | Human gate, then Core 3: Judge the recovery | Gate concept, implementation, tests, human action | executor and full checks green; named approval and separate execution |
+| 15:25–15:50 | Recovery result, then Core 3: Close it, or stop safely | Read the frozen checks before deciding | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
+| 15:50–16:00 | The AI-native loop; Close: show what you can now prove | Reflect on the work, then stop | each team shows its evidence and explains its decision |
 
-The gaps between boxes are the deck's talk and demo segments.
+Use practice time for catch-up, not more definitions. In the scenario slide,
+INC-1001 is a fixture ID; live incidents have their own IDs. Offline output
+is scripted and is not model-quality evidence.
 
 ## Top failure + fix per block
 
-- **Start** — `npm start` stops with a port message: another copy runs. Find
-  its terminal and press Ctrl+C. Node too old: install Node 22+.
-- **Core 1** — no incident: the lab terminal must show traffic lines. Without
-  `--fast` detection takes five minutes. Check `curl localhost:4320/api/incidents`.
+- **Start** — `npm start` stops with a port message: another copy runs. Stop
+  only your own workshop launcher; never kill an unknown process. Node too old:
+  install Node 22+.
+- **Core 1** — no incident: the lab terminal must show traffic lines. Use one
+  fault trigger only: click **Bad deploy v2.15.0** in the shop OR run the
+  chaos CLI, never both. The shop UI counters cover this browser's checkout
+  requests over the last 30 seconds, not the terminal's traffic. Its chart
+  covers 60 seconds. The console reads server telemetry from
+  `demo/data/telemetry.json`; incident history is stored separately in SQLite.
+  Never click Reset to force a green counter or treat it as recovery evidence.
+  Without
+  `--fast` detection takes five minutes. Check `curl 127.0.0.1:4320/api/incidents`.
   References are text, not links: search the data file for the timestamp.
   Offline chat is a scripted summary, not a new model run.
 - **Core 2** — the tool returns `[]`: they bound the handler but did not
   register `tool("list_deploys", …)`, or the reverse. The console reloads on
-  save (a reload line in the lab terminal); the shop keeps its broken state.
+  save (a reload line in the lab terminal); do not restart the launcher to
+  reload code. Incident history persists in SQLite, while the shop resets on
+  restart. For a fresh repeat, create a new disposable checkpoint; do not
+  rebreak a stale incident.
   Core 1 on the starter correctly ends in `investigate-more` with a data gap:
   the agent cannot see the deploy. That gap is the reason for core 2.
 - **Core 3** — a button is grey: read the banner. It names the one allowed
@@ -79,7 +114,8 @@ console allows no second execute. Use this to teach the safe stop.
 
 ## Repeat the demo without deleting participant work
 
-Stop the lab with Ctrl+C. Make a new disposable clone at `w5-core-3`, then
+Stop the lab with Ctrl+C. Make a new disposable copy with
+`npm run checkpoint -- core-3`, then `cd .lab/checkpoints/core-3` and
 `npm start -- --fast`. `npm run fixtures` regenerates fixture telemetry only;
 it does not reset live telemetry, console history, approvals or lessons.
 

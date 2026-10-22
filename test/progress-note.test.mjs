@@ -99,6 +99,23 @@ test("outside a git repo or without PROGRESS.md it fails and creates nothing", (
   assert.equal(existsSync(join(dir, "PROGRESS.md")), false);
 });
 
+test("a labeled package creates local progress without Git or inherited history", () => {
+  const parent = mkdtempSync(join(tmpdir(), "w5-note-package-parent-"));
+  assert.equal(spawnSync("git", ["init", "-q"], { cwd: parent }).status, 0, "enclosing git init");
+  const parentProgress = "# Parent progress\nmust stay outside the package\n";
+  writeFileSync(join(parent, "PROGRESS.md"), parentProgress);
+  const pkg = join(parent, "exports", "starter");
+  mkdirSync(join(pkg, "scripts"), { recursive: true });
+  cpSync(join(ROOT, "scripts/progress-note.mjs"), join(pkg, "scripts/progress-note.mjs"));
+  writeFileSync(join(pkg, "WORKSHOP-PACKAGE.md"), "# Workshop 5 package: STARTER\n");
+
+  const r = spawnSync("node", [join(pkg, "scripts/progress-note.mjs"), "first package note"], { encoding: "utf8", cwd: pkg });
+  assert.equal(r.status, 0, r.stderr);
+  const local = readFileSync(join(pkg, "PROGRESS.md"), "utf8");
+  assert.match(local, /^- \d{4}-\d{2}-\d{2}T.* \[note\] first package note\n$/);
+  assert.equal(readFileSync(join(parent, "PROGRESS.md"), "utf8"), parentProgress);
+});
+
 test("the script only appends: no write/truncate/rename calls in its source", () => {
   const src = readFileSync(join(ROOT, "scripts/progress-note.mjs"), "utf8");
   assert.match(src, /appendFileSync\(file,/);

@@ -1,5 +1,9 @@
 # Tutorial: build an AI SRE first responder
 
+For the shorter classroom route, use [WORKSHOP.md](WORKSHOP.md) and
+[PARTICIPANT.md](PARTICIPANT.md). The numbered steps below remain the full
+optional self-study sequence.
+
 You can do this path alone. Each step has four parts: **Explain**, **See it**,
 **Do**, **Check**. Everything runs offline. A real model run is optional and
 needs your own API key.

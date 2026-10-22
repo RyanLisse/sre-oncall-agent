@@ -1,10 +1,26 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { nextAction, type Msg } from "../src/nextAction.js";
+import { incidentActions } from "../src/recovery.js";
 
 const diag = (proposal = "rollback"): Msg => ({ kind: "diagnosis", text: JSON.stringify({ proposal }) });
 const appr = (decision: string): Msg => ({ kind: "approval", text: JSON.stringify({ decision }) });
 const rec = (r: object): Msg => ({ kind: "recovery", text: JSON.stringify(r) });
+const complete = (full: number, double: number) => rec({
+  status: "complete",
+  report: {
+    metric: "error_rate",
+    baseline: 0.001,
+    limit: 0.005,
+    checks: [
+      { label: "half", at: "2026-10-05T03:54:00Z", value: 0.003, ok: true },
+      { label: "full", at: "2026-10-05T03:56:00Z", value: full, ok: full <= 0.005 },
+      { label: "double", at: "2026-10-05T03:58:00Z", value: double, ok: double <= 0.005 },
+    ],
+    landed: full <= 0.005 && double <= 0.005,
+    message: full <= 0.005 && double <= 0.005 ? "LANDED" : "NOT LANDED",
+  },
+});
 
 test("before a diagnosis no button is allowed", () => {
   const n = nextAction("active", []);
@@ -18,33 +34,69 @@ test("a pending approval allows only approve and reject", () => {
 
 test("an approved rollback allows execute once, then nothing while recovery runs", () => {
   assert.deepEqual(nextAction("active", [diag(), appr("pending"), appr("approved")]).allowed, ["execute"]);
-  const running = nextAction("active", [diag(), appr("approved"), rec({ phase: "running" })]);
+  const running = nextAction("active", [diag(), appr("approved"), rec({ status: "running" })]);
   assert.deepEqual(running.allowed, []);
+  assert.match(running.title, /recovery checks are running/i);
 });
 
-test("LANDED allows mitigated; NOT LANDED never allows mitigated or execute", () => {
-  assert.deepEqual(nextAction("active", [diag(), appr("approved"), rec({ phase: "done", landed: true, failed: [] })]).allowed, ["mitigated"]);
-  const n = nextAction("active", [diag(), appr("approved"), rec({ phase: "done", landed: false, failed: ["full check: error_rate 0.0125 > limit 0.005"] })]);
-  assert.equal(n.allowed.includes("mitigated"), false);
-  assert.equal(n.allowed.includes("execute"), false);
-  assert.match(n.detail, /full check/);
+test("LANDED permits mitigation only, then resolution; NOT LANDED remains open", () => {
+  const landed = [diag(), appr("approved"), complete(0.004, 0.003)];
+  assert.deepEqual(nextAction("active", landed).allowed, ["mitigated"]);
+  assert.deepEqual(nextAction("mitigated", landed).allowed, ["resolve"]);
+  const notLanded = [diag(), appr("approved"), complete(0.0125, 0.004)];
+  const n = nextAction("active", notLanded);
+  assert.deepEqual(n.allowed, []);
+  assert.equal(nextAction("mitigated", notLanded).allowed.includes("resolve"), false);
+  assert.match(n.title, /NOT LANDED/);
+  assert.match(n.detail, /full=0\.0125/);
+  assert.match(n.detail, /limit 0\.005/);
 });
 
 test("a resolved incident allows nothing — no second execute", () => {
   for (const msgs of [[diag(), appr("approved")], [diag(), appr("pending")], []]) {
-    assert.deepEqual(nextAction("resolved", msgs).allowed, []);
+    const n = nextAction("resolved", msgs);
+    assert.deepEqual(n.allowed, []);
+    assert.equal(n.title, "Closed");
   }
 });
 
 test("a mitigated incident allows only resolve with notes", () => {
-  assert.deepEqual(nextAction("mitigated", [diag(), appr("approved"), rec({ phase: "done", landed: true, failed: [] })]).allowed, ["resolve"]);
+  assert.deepEqual(nextAction("mitigated", [diag(), appr("approved"), complete(0.004, 0.003)]).allowed, ["resolve"]);
 });
 
 test("an approved non-rollback proposal is carried out outside the agent, then mitigated", () => {
-  assert.deepEqual(nextAction("active", [diag("scale"), appr("approved")]).allowed, ["mitigated", "resolve"]);
+  const msgs = [diag("scale"), appr("approved")];
+  const manual = nextAction("active", msgs);
+  assert.deepEqual(manual.allowed, ["mitigated"]);
+  assert.equal(manual.title, "Review manual mitigation");
+  assert.doesNotMatch(manual.title, /LANDED/);
+  assert.equal(manual.detail, incidentActions({ state: "active" }, msgs).next);
+  assert.deepEqual(nextAction("mitigated", msgs).allowed, ["resolve"]);
 });
 
-test("a rejected proposal allows resolve only; a stale incident behaves as active", () => {
-  assert.deepEqual(nextAction("active", [diag(), appr("rejected")]).allowed, ["resolve"]);
+test("pending and rejected manual proposals cannot mitigate or resolve", () => {
+  const pending = [diag("scale"), appr("pending")];
+  const pendingAction = nextAction("active", pending);
+  assert.deepEqual(pendingAction.allowed, ["approve", "reject"]);
+  assert.match(pendingAction.title, /approve or reject/i);
+  assert.deepEqual(nextAction("mitigated", pending).allowed, []);
+
+  const rejected = [diag("scale"), appr("rejected")];
+  assert.deepEqual(nextAction("active", rejected).allowed, []);
+  assert.deepEqual(nextAction("mitigated", rejected).allowed, []);
+});
+
+test("an invalid proposal cannot expose an approval control", () => {
+  const n = nextAction("active", [diag("deploy-all-prod"), appr("pending")]);
+  assert.deepEqual(n.allowed, []);
+});
+
+test("legacy or malformed recovery records fail closed; stale incidents behave as active", () => {
+  const legacy = nextAction("active", [diag(), appr("approved"), rec({ phase: "done", landed: true, failed: [] })]);
+  assert.deepEqual(legacy.allowed, []);
+  assert.match(legacy.title, /Recovery blocked/);
+  const malformed = nextAction("active", [diag(), appr("approved"), rec({ status: "complete", report: { landed: true } })]);
+  assert.deepEqual(malformed.allowed, []);
+  assert.match(malformed.title, /Recovery blocked/);
   assert.deepEqual(nextAction("stale", [diag(), appr("pending")]).allowed, ["approve", "reject"]);
 });

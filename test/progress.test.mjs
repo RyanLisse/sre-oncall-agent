@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, cpSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, cpSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -36,6 +36,17 @@ test("no PROGRESS.md → silent exit", () => {
   mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
   cpSync(join(ROOT, ".claude/hooks/progress.mjs"), join(dir, ".claude/hooks/progress.mjs"));
   assert.equal(run(dir).status, 0);
+  assert.equal(existsSync(join(dir, "PROGRESS.md")), false);
+});
+
+test("--status prints the checklist without creating a missing PROGRESS.md", () => {
+  const dir = mkdtempSync(join(tmpdir(), "w5-progress-status-none-"));
+  mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
+  cpSync(join(ROOT, ".claude/hooks/progress.mjs"), join(dir, ".claude/hooks/progress.mjs"));
+  const result = run(dir, ["--status"]);
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /0\/9 assignments with evidence/);
+  assert.equal(existsSync(join(dir, "PROGRESS.md")), false);
 });
 
 test("--status prints N/9 with a checklist", () => {
@@ -109,4 +120,22 @@ test("works from any folder name and from a subfolder: root comes from git", () 
   const r = spawnSync("node", [join(dir, ".claude/hooks/progress.mjs")], { encoding: "utf8", cwd: join(dir, "src/deep") });
   assert.equal(r.status, 0, r.stderr);
   assert.match(readFileSync(join(dir, "PROGRESS.md"), "utf8"), /<!-- auto: A-2 -->/, "evidence read and entry appended at the repo root");
+});
+
+test("a labeled package hook prefers its own root over an enclosing Git repository", () => {
+  const parent = mkdtempSync(join(tmpdir(), "w5-progress-package-parent-"));
+  assert.equal(spawnSync("git", ["init", "-q"], { cwd: parent }).status, 0, "enclosing git init");
+  const parentProgress = "# Parent progress\n<!-- ENTRIES -->\n";
+  writeFileSync(join(parent, "PROGRESS.md"), parentProgress);
+  const pkg = join(parent, "exports", "starter");
+  mkdirSync(join(pkg, ".claude/hooks"), { recursive: true });
+  cpSync(join(ROOT, ".claude/hooks/progress.mjs"), join(pkg, ".claude/hooks/progress.mjs"));
+  writeFileSync(join(pkg, "WORKSHOP-PACKAGE.md"), "# Workshop 5 package: STARTER\n");
+  writeFileSync(join(pkg, "PROGRESS.md"), "# Package progress\n\n<!-- ENTRIES -->\n");
+  writeFileSync(join(pkg, "intent.md"), "# Intent\n\nserve on-call engineers\n");
+
+  const r = spawnSync("node", [join(pkg, ".claude/hooks/progress.mjs")], { encoding: "utf8", cwd: pkg });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(readFileSync(join(pkg, "PROGRESS.md"), "utf8"), /<!-- auto: A-2 -->/);
+  assert.equal(readFileSync(join(parent, "PROGRESS.md"), "utf8"), parentProgress);
 });
