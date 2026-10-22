@@ -96,12 +96,13 @@ teach the verified trace, missing evidence and gaps, not exact sentences.
   `--fast` detection takes five minutes. Check `curl 127.0.0.1:4320/api/incidents`.
   References are text, not links: search the data file for the timestamp.
   Offline chat is a scripted summary, not a new model run.
-- **Core 2** — the tool returns `[]`: they bound the handler but did not
-  register `tool("list_deploys", …)`, or the reverse. The console reloads on
-  save (a reload line in the lab terminal); do not restart the launcher to
-  reload code. Incident history persists in SQLite, while the shop resets on
-  restart. For a fresh repeat, create a new disposable checkpoint; do not
-  rebreak a stale incident.
+- **Core 2** — the tool returns `[]`: inspect the registered
+  `tool("list_deploys", …)` and its handler binding. The starter preserves the
+  registration but its handler is an empty stub. The console reloads on save
+  (a reload line in the lab terminal); do not restart the launcher to reload
+  code. Incident history persists in SQLite, while the shop resets on restart.
+  For a fresh repeat, create a new disposable checkpoint; do not rebreak a
+  stale incident.
   Offline Core 1 output uses `investigate-more` with a data gap as the
   deterministic starter example. Real-model output varies; check its actual
   trace, deploy references and gaps. A failed contract or fabricated citation

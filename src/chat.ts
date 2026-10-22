@@ -20,7 +20,7 @@ import { investigate, type AgentRun } from "./agent.js";
 import { parseStopCommand, parseWatchCommand, type WatchCommand } from "./deployWatch.js";
 import { guessTag, lessonsStore, loadLessons, renderLessons } from "./lessons.js";
 import { ONCALL_SYSTEM } from "./prompts.js";
-import { resolveRuntime, type AgentEvent } from "./runtime.js";
+import { resolveRuntime, type AgentEvent, type QueryFn } from "./runtime.js";
 import { ALLOWED_TOOLS, SERVER_NAME, createTelemetryServer, handlers } from "./tools.js";
 import type { Telemetry } from "./telemetry.js";
 
@@ -51,6 +51,7 @@ export const routeMessage = (text: string): Route => {
 export interface AskDeps {
   readonly telemetry: Telemetry;
   readonly model?: string | undefined; // only explicit offline uses the scripted summary
+  readonly query?: QueryFn;
   readonly onEvent?: (e: AgentEvent) => void;
 }
 
@@ -76,9 +77,10 @@ const offlineAnswer = (text: string, t: Telemetry): string => {
 export const ask = async (text: string, deps: AskDeps): Promise<string> => {
   const rt = resolveRuntime(deps.telemetry, deps.model);
   if (rt.model === undefined) return offlineAnswer(text, deps.telemetry);
+  const query = deps.query ?? rt.query;
   const lessons = renderLessons(await loadLessons(lessonsStore()), guessTag(text));
   let answer = "";
-  for await (const e of rt.query({
+  for await (const e of query({
     prompt: `${text}\n\n${lessons}`,
     options: {
       systemPrompt: `${ONCALL_SYSTEM}\n\nMode: QUESTION. The operator asked a question. Answer in plain prose with evidence references. Do NOT return the JSON verdict and do NOT propose a mitigation; if they want one, tell them to send "Investigate: …".`,
@@ -98,7 +100,7 @@ export const ask = async (text: string, deps: AskDeps): Promise<string> => {
 export const investigateFromChat = async (incident: Incident, deps: AskDeps): Promise<AgentRun> => {
   const rt = resolveRuntime(deps.telemetry, deps.model);
   return investigate(incident, {
-    query: rt.query, model: rt.model, modelLabel: rt.label, telemetry: deps.telemetry, lessons: lessonsStore(),
+    query: deps.query ?? rt.query, model: rt.model, modelLabel: rt.label, telemetry: deps.telemetry, lessons: lessonsStore(),
     proposeLessons: true, ...(deps.onEvent ? { onMessage: deps.onEvent } : {}),
   });
 };

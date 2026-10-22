@@ -24,7 +24,9 @@ test("card and hub explain each task and place concepts beside their use", () =>
   assert.ok(hub.includes(workshop.start.assistant.prompt));
   assert.ok(card.includes("npm run model:check"));
   assert.ok(card.includes("--offline"));
-  assert.ok(card.indexOf(workshop.start.do[0]) < card.indexOf(`\`${workshop.start.assistant.command}\``));
+  const firstStarterAction = workshop.start.do[0];
+  assert.ok(firstStarterAction);
+  assert.ok(card.indexOf(firstStarterAction) < card.indexOf(`\`${workshop.start.assistant.command}\``));
   assert.ok(card.indexOf(`\`${workshop.start.assistant.command}\``) < card.indexOf(workshop.start.assistant.prompt));
   assert.ok(card.indexOf(workshop.start.assistant.prompt) < card.indexOf("npm ci"));
   assert.ok(hub.indexOf(`<code>${html(workshop.start.assistant.command)}</code>`) < hub.indexOf(html(workshop.start.assistant.prompt)));
@@ -33,7 +35,10 @@ test("card and hub explain each task and place concepts beside their use", () =>
   assert.ok(launcher.indexOf("npm ci") < launcher.indexOf("npm run fixtures"));
   assert.ok(launcher.indexOf("npm run fixtures") < launcher.indexOf("npm run model:check"));
   assert.ok(launcher.indexOf("npm run model:check") < launcher.indexOf("npm start -- --fast"));
-  const core2LastStep = workshop.cores[1].steps[2];
+  const core2 = workshop.cores[1];
+  assert.ok(core2);
+  const core2LastStep = core2.steps[2];
+  assert.ok(core2LastStep);
   assert.match(core2LastStep.see, /trace/i);
   assert.match(core2LastStep.see, /deploy references/i);
   assert.doesNotMatch(core2LastStep.see, /rollback|no data gap/i);

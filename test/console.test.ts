@@ -91,3 +91,62 @@ test("console API enforces resolved, recovery and named-human gates", { timeout:
   const details = await fetch(`http://127.0.0.1:${port}/api/incidents/${ids.once}`).then(r => r.json()) as { messages: { kind: string; text: string }[] };
   assert.equal(details.messages.filter(m => m.kind === "recovery" && m.text.includes('"running"')).length, 1);
 });
+
+test("console persists agent failures without fallback or approval", { timeout: 30_000 }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), "console-agent-errors-"));
+  const previous = {
+    db: process.env.AGENT_DB,
+    telemetry: process.env.AGENT_TELEMETRY,
+    approvals: process.env.AGENT_APPROVALS_DIR,
+    model: process.env.AGENT_MODEL,
+  };
+  process.env.AGENT_DB = join(dir, "oncall.sqlite");
+  process.env.AGENT_TELEMETRY = resolve("fixtures/telemetry/bad-deploy.json");
+  process.env.AGENT_APPROVALS_DIR = join(dir, "approvals");
+  process.env.AGENT_MODEL = "test-provider";
+  const restore = () => {
+    for (const [key, value] of Object.entries({
+      AGENT_DB: previous.db, AGENT_TELEMETRY: previous.telemetry,
+      AGENT_APPROVALS_DIR: previous.approvals, AGENT_MODEL: previous.model,
+    })) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  };
+  const throwingQuery = async function* () {
+    throw new Error("synthetic provider failure");
+  };
+  const { createConsoleServer } = await import("../console/server.js");
+  const server = createConsoleServer({ query: throwingQuery });
+  try {
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    assert.ok(address && typeof address !== "string");
+    const base = `http://127.0.0.1:${address.port}`;
+    const post = (path: string, body: unknown) => fetch(`${base}${path}`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+    });
+    const created = await post("/api/incidents", { title: "Provider failure", investigate: false }).then(r => r.json()) as { id: string };
+    assert.ok(created.id);
+    assert.equal((await post(`/api/incidents/${created.id}/chat`, { text: "Investigate: checkout errors" })).status, 202);
+    const read = async () => fetch(`${base}/api/incidents/${created.id}`).then(r => r.json()) as Promise<{ messages: { kind: string; text: string }[] }>;
+    let details = await read();
+    for (let i = 0; i < 100 && !details.messages.some(m => m.kind === "error" && m.text.includes("Investigation failed")); i++) {
+      await new Promise(r => setTimeout(r, 10));
+      details = await read();
+    }
+    assert.ok(details.messages.some(m => m.kind === "error" && m.text.includes("Investigation failed")));
+    assert.equal(details.messages.filter(m => m.kind === "approval").length, 0);
+    assert.doesNotMatch(details.messages.map(m => m.text).join("\n"), /offline investigator/i);
+    assert.equal((await post(`/api/incidents/${created.id}/chat`, { text: "What changed?" })).status, 202);
+    for (let i = 0; i < 100 && !details.messages.some(m => m.kind === "error" && m.text.includes("Question failed")); i++) {
+      await new Promise(r => setTimeout(r, 10));
+      details = await read();
+    }
+    assert.ok(details.messages.some(m => m.kind === "error" && m.text.includes("Question failed")));
+    assert.equal((await fetch(`${base}/api/incidents/${created.id}`)).status, 200);
+  } finally {
+    await new Promise<void>(resolveClose => server.close(() => resolveClose()));
+    restore();
+  }
+});

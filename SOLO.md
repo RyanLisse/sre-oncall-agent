@@ -74,14 +74,15 @@ type shell commands into the active Claude Code prompt.
 ### Core 2 — repair one read-only path
 
 - **Task:** Run the red `list_deploys` test and ask Claude Code for a small
-  plan; implement the handler binding **and** MCP registration only after
-  human plan review.
+  plan; implement the handler binding while preserving the existing MCP
+  registration only after human plan review.
 - **Why:** Core 1 found a deployment the agent cannot read. Test-first repair
   restores evidence without adding a mutation tool.
 - **Action:** Run `npx tsx --test test/workshop/tools.test.ts` and read
   the expected failure. Use this scoped prompt:
   `Read CLAUDE.md, AGENTS.md and the failing test. Propose a small plan for
-  the read-only list_deploys handler and MCP registration. Do not edit files.
+  the read-only list_deploys handler while preserving the existing MCP
+  registration. Do not edit files.
   Wait for my review.` After a human reviews the plan, implement and run:
 
   ```bash

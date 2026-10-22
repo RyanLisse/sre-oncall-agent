@@ -100,15 +100,15 @@
           "do": "Run the red test: `npx tsx --test test/workshop/tools.test.ts`. Ask Claude Code for a small plan, then wait for human review.",
           "see": "The test fails: `list_deploys` returns nothing. `npm run bench` fails too: without deploys the agent misses the bad deploy.",
           "check": "Read the failing assertion before you change code. Say in one sentence why it fails.",
-          "stuck": "Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore its handler binding AND the MCP registration; the registration has an explanatory comment, not a second TODO marker.",
+          "stuck": "Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore the read-only handler binding; inspect and preserve the existing MCP registration.",
           "before": "A red test exposes the missing behaviour. The bench checks scripted outcomes across fixed scenarios, not model quality."
         },
         {
-          "do": "Build `list_deploys` in `src/tools.ts` with Claude Code or by hand. Bind the handler AND register the tool.",
+          "do": "Build the `list_deploys` handler in `src/tools.ts` with Claude Code or by hand. Keep the existing MCP registration intact.",
           "see": "`test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.",
           "check": "After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until Core 3 restores the approval gate.",
-          "stuck": "The tool still returns `[]`: you did only one of the two halves.",
-          "before": "MCP exposes named tools. The handler reads data; bind it and register it only after the human reviews the small plan."
+          "stuck": "The tool still returns `[]`: inspect the handler binding and the preserved registration; do not add a second registration.",
+          "before": "MCP exposes named tools. The existing registration points to a handler that reads data; restore that binding only after the human reviews the small plan."
         },
         {
           "do": "Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`",

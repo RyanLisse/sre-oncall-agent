@@ -1,9 +1,9 @@
 import { strict as assert } from "node:assert";
 import { execFileSync, spawnSync } from "node:child_process";
-import { appendFileSync, cpSync, existsSync, mkdtempSync, readFileSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, existsSync, mkdtempSync, readFileSync, rmSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 
@@ -12,7 +12,7 @@ const git = (cwd, ...args) => execFileSync("git", args, { cwd, encoding: "utf8" 
 const seedFixture = (fixture, corruptFile) => {
   mkdirSync(join(fixture, "src"), { recursive: true });
   mkdirSync(join(fixture, "scripts"), { recursive: true });
-  for (const file of ["src/tools.ts", "src/executor.ts", "workshop.json", "scripts/checkpoint.mjs"]) {
+  for (const file of ["src/tools.ts", "src/telemetry.ts", "src/contract.ts", "src/executor.ts", "workshop.json", "scripts/checkpoint.mjs"]) {
     cpSync(join(root, file), join(fixture, file));
   }
   if (corruptFile) {
@@ -27,6 +27,7 @@ const seedFixture = (fixture, corruptFile) => {
   git(fixture, "config", "user.name", "Checkpoint test");
   git(fixture, "add", ".");
   git(fixture, "commit", "-qm", "fixture");
+  symlinkSync(join(root, "node_modules"), join(fixture, "node_modules"), "dir");
 };
 const assertFailClosedA8 = (executor) => {
   const stub = executor.match(/export const checkApproval = \(_record: ApprovalRecord, _incident: Incident\): Result<ApprovalRecord> =>\n  fail\(\["TODO\(A8\): rebuild the named human approval gate before execution"\]\);/);
@@ -71,8 +72,41 @@ test("checkpoint cuts come from committed HEAD and refuse overwrite", () => {
       } else {
         assert.equal((tools.match(/TODO\(A5\)/g) ?? []).length, 1);
         assert.doesNotMatch(tools, /uncommitted parent-only marker/);
-        assert.match(tools, /Restore the list_deploys MCP registration/);
-        assert.doesNotMatch(tools, /tool\(\s*"list_deploys"/);
+        assert.match(tools, /TODO\(A5\): restore the read-only handler binding/);
+        assert.match(tools, /tool\(\s*"list_deploys"/);
+        const probe = join(dir, "probe-mcp.mjs");
+        writeFileSync(probe, `
+          import assert from "node:assert/strict";
+          import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+          import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+          import { createTelemetryServer } from ${JSON.stringify(pathToFileURL(join(dir, "src", "tools.ts")).href)};
+          const config = createTelemetryServer({ service: "checkout", logs: [], metrics: [], deploys: [] });
+          const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+          await config.instance.connect(serverTransport);
+          const client = new Client({ name: "checkpoint-test", version: "1.0.0" });
+          await client.connect(clientTransport);
+          const listed = await client.listTools();
+          assert.ok(listed.tools.some((tool) => tool.name === "list_deploys"));
+          const result = await client.callTool({ name: "list_deploys", arguments: {} });
+          assert.equal(JSON.parse(result.content[0].text).result.length, 0);
+          await client.close();
+          await config.instance.close();
+        `);
+        const tsx = join(root, "node_modules", "tsx", "dist", "cli.mjs");
+        const probeResult = spawnSync(process.execPath, [tsx, probe], { cwd: dir, encoding: "utf8" });
+        assert.equal(probeResult.status, 0, probeResult.stderr || probeResult.stdout);
+        const trace = join(dir, "probe-trace.mjs");
+        writeFileSync(trace, `
+          import assert from "node:assert/strict";
+          import { checkTrace } from ${JSON.stringify(pathToFileURL(join(root, "src", "agent.ts")).href)};
+          assert.deepEqual(checkTrace([
+            { tool: "summarize_metrics", input: {}, output: "{}" },
+            { tool: "list_deploys", input: {}, output: "[]" },
+          ], ["metrics"]), []);
+          assert.match(checkTrace([{ tool: "summarize_metrics", input: {}, output: "{}" }], ["metrics"])[0], /list_deploys/);
+        `);
+        const traceResult = spawnSync(process.execPath, [tsx, trace], { cwd: dir, encoding: "utf8" });
+        assert.equal(traceResult.status, 0, traceResult.stderr || traceResult.stdout);
         assert.equal((executor.match(/TODO\(A8\)/g) ?? []).length, 1);
         assert.match(executor, /fail\(\["TODO\(A8\): rebuild the named human approval gate before execution"\]\)/);
         assertFailClosedA8(executor);
@@ -96,7 +130,7 @@ test("checkpoint cuts come from committed HEAD and refuse overwrite", () => {
     assert.equal(readFileSync(checkpointTools, "utf8"), retainedEdit);
     assert.equal(readFileSync(join(fixture, "src/tools.ts"), "utf8"), dirtyParentTools);
     assert.equal(readFileSync(join(fixture, "src/executor.ts"), "utf8"), committedExecutor);
-    assert.equal(git(fixture, "status", "--porcelain"), "M src/tools.ts\n?? .lab/");
+    assert.equal(git(fixture, "status", "--porcelain"), "M src/tools.ts\n?? .lab/\n?? node_modules");
     assert.equal(git(fixture, "rev-parse", "HEAD"), sourceSha);
   } finally {
     rmSync(fixture, { recursive: true, force: true });

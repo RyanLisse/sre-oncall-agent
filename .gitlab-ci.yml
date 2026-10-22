@@ -14,7 +14,7 @@ test:
     - npm run verify
     - npm run test:workshop
     - npm run test:hooks
-    - npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run
-    - npm run investigate -- fixtures/incidents/slow-dependency.json --dry-run
+    - npm run investigate -- fixtures/incidents/bad-deploy.json --dry-run --model offline
+    - npm run investigate -- fixtures/incidents/slow-dependency.json --dry-run --model offline
     - npm run course:check
     - npm run card:check

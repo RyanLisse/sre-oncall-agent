@@ -41,8 +41,7 @@ const makeCheckpointSources = (checkpointId, committedTools, committedExecutor) 
     throw new Error("HEAD src/executor.ts does not contain the solved A8 gate.");
   }
   const a5Tools = committedTools
-    .replace(handlerPattern, "  // TODO(A5): restore the read-only handler and its MCP registration.\n  list_deploys: (_args: { since?: string | undefined; until?: string | undefined }) => [] as ReturnType<typeof listDeploys>,")
-    .replace(registrationPattern, "      // Restore the list_deploys MCP registration as the second part of this exercise.");
+    .replace(handlerPattern, "  // TODO(A5): restore the read-only handler binding.\n  list_deploys: (_args: { since?: string | undefined; until?: string | undefined }) => [] as ReturnType<typeof listDeploys>,");
   const a8Executor = committedExecutor.replace(approvalPattern, 'export const checkApproval = (_record: ApprovalRecord, _incident: Incident): Result<ApprovalRecord> =>\n  fail(["TODO(A8): rebuild the named human approval gate before execution"]);');
   if ((a5Tools.match(/TODO\(A5\)/g) ?? []).length !== 1 || (a8Executor.match(/TODO\(A8\)/g) ?? []).length !== 1) {
     throw new Error("The source cuts did not produce exactly one A5 and one A8 exercise marker.");

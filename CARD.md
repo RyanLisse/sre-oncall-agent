@@ -99,15 +99,15 @@ Slides: Core 2: Build a change safely · Core 2: Prove it on the live incident. 
 
 - **See:** The test fails: `list_deploys` returns nothing. `npm run bench` fails too: without deploys the agent misses the bad deploy.
 - **Check:** Read the failing assertion before you change code. Say in one sentence why it fails.
-- **Stuck?** Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore its handler binding AND the MCP registration; the registration has an explanatory comment, not a second TODO marker.
+- **Stuck?** Find the single `TODO(A5)` handler stub in `src/tools.ts`. Restore the read-only handler binding; inspect and preserve the existing MCP registration.
 
-### 2.2 Build `list_deploys` in `src/tools.ts` with Claude Code or by hand. Bind the handler AND register the tool.
+### 2.2 Build the `list_deploys` handler in `src/tools.ts` with Claude Code or by hand. Keep the existing MCP registration intact.
 
-**Before you act:** MCP exposes named tools. The handler reads data; bind it and register it only after the human reviews the small plan.
+**Before you act:** MCP exposes named tools. The existing registration points to a handler that reads data; restore that binding only after the human reviews the small plan.
 
 - **See:** `test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.
 - **Check:** After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until Core 3 restores the approval gate.
-- **Stuck?** The tool still returns `[]`: you did only one of the two halves.
+- **Stuck?** The tool still returns `[]`: inspect the handler binding and the preserved registration; do not add a second registration.
 
 ### 2.3 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
 
