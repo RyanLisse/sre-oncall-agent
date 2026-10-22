@@ -153,7 +153,7 @@ Slides: Core 3: Judge the recovery · Review the diff, not the explanation · Pr
 
 ### 3.2 Ask Claude Code: "Review git diff workshop-base against intent.md, docs/plan.md and REVIEW.md. Identify functional defects, missing checks and unsupported claims. Cite files and lines. Do not edit, approve, commit, push or merge. Wait for my decision."
 
-**Before you act:** Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.
+**Before you act:** First run git status --short. Untracked files are absent from the diff: inspect them and stage only intended files by exact path yourself before requesting review. Never stage secrets. Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.
 
 - **See:** A list of findings, or an explicit no-findings result. The human has inspected the diff and evidence rather than accepting the model's conclusion.
 - **Check:** Verify every finding yourself. Request fixes and rerun affected checks when needed. Record your name, decision, residual risks and untested paths in `docs/verify/sdlc.md`.

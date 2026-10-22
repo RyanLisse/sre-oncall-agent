@@ -59,6 +59,12 @@ reflection, using the work participants actually did.
 
 ## Time boxes
 
+Before the day, prepare the learner repositories using
+[docs/sdlc-git.md](docs/sdlc-git.md). GitHub learner repositories need the
+published upstream `workshop/start` branch and Actions enabled; a main-only
+fork is not enough. Keep the inherited CI and review gates intact. Missing
+repository access is a release blocker, not a reason to simulate a merge.
+
 Use the main route through **Close: show what you can now prove**. The rest
 is reference material or a separate follow-up, not another required session.
 

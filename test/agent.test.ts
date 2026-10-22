@@ -64,6 +64,22 @@ test("dry run proposes no lesson", async () => {
   assert.equal(run.lessonFile, undefined);
 });
 
+test("the model receives the rollback evidence boundary and missing-deploy policy", async () => {
+  const t = await load("bad-deploy");
+  let called = false;
+  const query: QueryFn = async function* (args) {
+    called = true;
+    const prompt = args.options?.systemPrompt;
+    assert.ok(typeof prompt === "string");
+    assert.match(prompt, /rollback proposal requires a deploys evidence entry from a non-empty list_deploys result/);
+    assert.match(prompt, /list_deploys is empty or failed, propose investigate-more/);
+    assert.match(prompt, /Never invent a deploys citation/);
+    yield* offlineQuery(t)(args);
+  };
+  await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), await deps(t, query, { proposeLessons: false }));
+  assert.equal(called, true);
+});
+
 test("maxTurns too low ends with a readable stop reason", async () => {
   const t = await load("bad-deploy");
   const run = await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), await deps(t, offlineQuery(t), { maxTurns: 2 }));

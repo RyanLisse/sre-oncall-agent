@@ -155,7 +155,7 @@
         },
         {
           "do": "Ask Claude Code: \"Review git diff workshop-base against intent.md, docs/plan.md and REVIEW.md. Identify functional defects, missing checks and unsupported claims. Cite files and lines. Do not edit, approve, commit, push or merge. Wait for my decision.\"",
-          "before": "Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.",
+          "before": "First run git status --short. Untracked files are absent from the diff: inspect them and stage only intended files by exact path yourself before requesting review. Never stage secrets. Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.",
           "see": "A list of findings, or an explicit no-findings result. The human has inspected the diff and evidence rather than accepting the model's conclusion.",
           "check": "Verify every finding yourself. Request fixes and rerun affected checks when needed. Record your name, decision, residual risks and untested paths in `docs/verify/sdlc.md`.",
           "stuck": "When working solo, review your own diff in a separate pass and record that limitation. If repository policy requires another reviewer, wait for one."

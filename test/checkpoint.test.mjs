@@ -170,6 +170,54 @@ test("the human starter baseline yields a nonempty repair diff", () => {
   }
 });
 
+test("a learner can provision the legacy workshop/start ref from a local source", () => {
+  const fixture = mkdtempSync(join(tmpdir(), "w5-workshop-start-provisioning-"));
+  try {
+    const sourceWork = join(fixture, "source-work");
+    const sourceBare = join(fixture, "source.git");
+    mkdirSync(sourceWork, { recursive: true });
+    git(sourceWork, "init", "-q");
+    git(sourceWork, "config", "user.email", "checkpoint@example.invalid");
+    git(sourceWork, "config", "user.name", "Checkpoint test");
+    writeFileSync(join(sourceWork, "starter.txt"), "upstream workshop starter\n");
+    git(sourceWork, "add", "starter.txt");
+    git(sourceWork, "commit", "-qm", "Publish workshop starter");
+    git(sourceWork, "branch", "-M", "workshop/start");
+    const sourceCommit = git(sourceWork, "rev-parse", "refs/heads/workshop/start");
+    git(fixture, "clone", "-q", "--bare", sourceWork, sourceBare);
+
+    const learnerSeed = join(fixture, "learner-seed");
+    const learnerBare = join(fixture, "learner.git");
+    const learner = join(fixture, "learner");
+    mkdirSync(learnerSeed, { recursive: true });
+    git(learnerSeed, "init", "-q");
+    git(learnerSeed, "config", "user.email", "checkpoint@example.invalid");
+    git(learnerSeed, "config", "user.name", "Checkpoint test");
+    writeFileSync(join(learnerSeed, "README.md"), "learner repository\n");
+    git(learnerSeed, "add", "README.md");
+    git(learnerSeed, "commit", "-qm", "Create learner repository");
+    git(learnerSeed, "branch", "-M", "main");
+    git(fixture, "clone", "-q", "--bare", learnerSeed, learnerBare);
+    git(fixture, "clone", "-q", learnerBare, learner);
+    git(learner, "remote", "rename", "origin", "learner");
+
+    const missingRef = spawnSync("git", ["ls-remote", "--exit-code", "learner", "refs/heads/workshop/start"], {
+      cwd: learner, encoding: "utf8",
+    });
+    assert.equal(missingRef.status, 2, missingRef.stderr);
+    assert.equal(missingRef.stdout, "");
+
+    git(learner, "fetch", pathToFileURL(sourceBare).href, "workshop/start");
+    assert.equal(git(learner, "rev-parse", "FETCH_HEAD"), sourceCommit);
+    git(learner, "push", "learner", "FETCH_HEAD:refs/heads/workshop/start");
+
+    const publishedRef = git(learner, "ls-remote", "--exit-code", "learner", "refs/heads/workshop/start");
+    assert.equal(publishedRef.split(/\s+/)[0], sourceCommit);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test("checkpoint rejects malformed committed sources before creating any worktree", () => {
   for (const [corruptFile, expectedError] of [
     ["src/tools.ts", /does not match the expected single A5 handler and registration shape/],

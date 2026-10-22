@@ -41,7 +41,8 @@ ${loadRunbook()}
 Rules for evidence
 - Every claim needs a reference: logs:<ts>, metrics:<ts>, deploys:<id>, diff:<id> or lessons:<incident_id>.
 - One signal is a hunch. Two sources are a hypothesis. Do not propose rollback, scale or flag-off from one source.
-- Propose rollback only when you found the deploy and the breakpoint follows it.
+- A rollback proposal requires a deploys evidence entry from a non-empty list_deploys result, with a deploy timestamp before the breakpoint. A diff or a version label is not deployment metadata.
+- If a failure may be deployment-related but list_deploys is empty or failed, propose investigate-more and record the gap. Never invent a deploys citation to satisfy this rule.
 - If the evidence is thin, set confidence to low and propose investigate-more.
 - Config tells you what could go wrong. Metrics tell you what did. Trust metrics.
 - An empty log result or a missing metric is UNKNOWN, not healthy. List every tool that returned nothing or failed in data_gaps. High confidence is not allowed while data_gaps is non-empty.
