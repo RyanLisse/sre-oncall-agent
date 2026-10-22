@@ -112,6 +112,20 @@ test("a model that skips the tools and answers from the alert fails the contract
   if (!run.result.ok) assert.match(run.result.errors.join(), /never called/);
 });
 
+test("a model that is not logged in fails with an auth instruction, not malformed JSON", async () => {
+  const t = await load("bad-deploy");
+  const loggedOut: QueryFn = async function* () {
+    yield { type: "result", subtype: "success", is_error: true, result: "Not logged in · Please run /login", num_turns: 1 } satisfies AgentEvent;
+  };
+  const run = await investigate(incident("INC-1001", "2026-10-05T03:50:00Z"), await deps(t, loggedOut));
+  assert.equal(run.result.ok, false);
+  if (!run.result.ok) {
+    assert.match(run.result.errors.join(), /model not authenticated/);
+    assert.match(run.result.errors.join(), /--offline/);
+    assert.doesNotMatch(run.result.errors.join(), /malformed JSON/);
+  }
+});
+
 test("identity: a verdict about another incident is rejected", async () => {
   const t = await load("bad-deploy");
   const wrong: QueryFn = async function* (args) {

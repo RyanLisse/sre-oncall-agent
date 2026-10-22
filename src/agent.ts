@@ -122,6 +122,12 @@ const collect = async (
   return events;
 };
 
+/** A turn that ended on an API error carries the error text in result, not a verdict. Name the cause. */
+export const modelErrorText = (text: string): string =>
+  /not logged in|\/login|api key|authenticat|unauthori[sz]ed|\b401\b/i.test(text)
+    ? `model not authenticated (${text.trim().slice(0, 80)}). In the terminal that runs npm start: run claude and /login there (WSL and Windows each have their own login), or set ANTHROPIC_API_KEY. Then run npm run model:check. No model access? npm start -- --fast --offline`
+    : `model request failed: ${text.trim().slice(0, 200)}`;
+
 export const investigate = async (incident: Incident, deps: AgentDeps): Promise<AgentRun> => {
   const now = deps.now ?? (() => new Date());
   const maxTurns = deps.maxTurns ?? DEFAULT_MAX_TURNS;
@@ -170,6 +176,8 @@ export const investigate = async (incident: Incident, deps: AgentDeps): Promise<
   if (final?.type !== "result" || final.subtype !== "success") {
     return { ...base, result: fail([describeStop(final?.type === "result" ? final.subtype : "no result", base.turns, maxTurns)]) };
   }
+
+  if (final.is_error) return { ...base, result: fail([modelErrorText(final.result ?? "")]) };
 
   const json = parseJson(rawText);
   if (!json.ok) return { ...base, result: json };
