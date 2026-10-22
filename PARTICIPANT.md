@@ -21,8 +21,9 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the read-only assistant prompt from [CARD.md](CARD.md) before theory or
-edits. Follow the card for the required tasks and their evidence.
+Submit the read-only assistant prompt from [CARD.md](CARD.md) after the
+lifecycle introduction and before code edits. Follow the card for the
+required tasks and their evidence.
 
 **Terminal 2 — from the original clone root**
 

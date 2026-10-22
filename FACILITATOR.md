@@ -24,11 +24,12 @@ From each clone, create the intended checkpoint, then run its launcher:
 launcher. Run one clone at a time on the default ports; if a port is busy,
 only stop your own workshop launcher.
 
-In the first five minutes, have participants create the starter and run
-`claude` in terminal 1, then submit the read-only assistant prompt in
-[CARD.md](CARD.md) before theory or edits. In terminal
-2, from the original clone root, configure supported SDK access as described
-in that guide, enter the same starter, then run `npm ci`, `npm run fixtures`,
+After the short AI-SDLC introduction, have participants create the starter
+and run `claude` in terminal 1, then submit the read-only assistant prompt in
+[CARD.md](CARD.md) after the lifecycle introduction and before code edits.
+In terminal 2, from the original clone root, configure supported SDK access as
+described in that guide, enter the same starter, then run `npm ci`,
+`npm run fixtures`,
 `npm run model:check` and `npm start -- --fast`. The Agent SDK is separate
 from interactive CLI login; do not promise a subscription login proves SDK
 access.
@@ -39,8 +40,12 @@ The slides: run `python3 serve.py` in the slides repo, then open
 
 ## Teach from the task
 
-Start with the shop and the failing checkout, not a glossary. For each core,
-ask what participants will do, why it is needed, and what will prove it.
+Start with the AI SDLC: why code alone is not enough, the lifecycle stages,
+the evidence participants will produce, and the decisions humans keep.
+Then introduce Claude Code as the development assistant and the shop as the
+practice system. Do not open with installation or a checkout demonstration.
+For each core, name the lifecycle stage, what participants will do, why it
+is needed, and what will prove it.
 Explain only the concept needed for the next action. Show one example,
 then let participants use it. The card and hub put these explanations next
 to the steps under **Before you act**.
@@ -54,8 +59,8 @@ to the steps under **Before you act**.
 Do not insert optional skills, hooks, subagents or extra bench-case work
 between these tasks. The human baseline, code review, release decision and
 runtime observation are required work, not optional Git-gate material. Explain
-concepts just before their first use. Name the full SDLC loop during the final
-reflection, using the work participants actually did.
+concepts just before their first use. Return to the opening SDLC map during
+the final reflection, using the work participants actually did.
 
 ## Time boxes
 
@@ -70,7 +75,7 @@ is reference material or a separate follow-up, not another required session.
 
 | Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
-| 10:00–10:30 | Claude orientation and lifecycle map | Coding assistant vs runtime SRE agent; goal, outputs and human boundaries | participants can state the required artifacts and why evidence comes first |
+| 10:00–10:30 | AI-SDLC introduction, then Claude Code | Purpose, lifecycle, outputs and human decisions first; then assistant and practice system | participants can state the required artifacts and why evidence comes first |
 | 10:30–11:00 | Start the lab | **Start the lab** | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
 | 11:00–11:15 | Break | Break | — |
 | 11:15–11:40 | Core 1: observe the evidence | Detection, one fault, references and data gaps | diagnosis checked against telemetry; `docs/diagnosis-live.md` |

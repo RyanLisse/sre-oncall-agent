@@ -69,3 +69,20 @@ test("the required route teaches delivery artifacts before optional depth", () =
   assert.match(core, /proposing and reviewing it is required/);
   assert.match(core, /not a production deployment/);
 });
+
+test("the lifecycle introduction precedes setup in both participant views", () => {
+  for (const file of ["CARD.md", "hub/index.html"]) {
+    const text = readFileSync(file, "utf8");
+    const introduction = text.indexOf("Start with the AI SDLC");
+    const setup = text.indexOf("git clone");
+    assert.ok(introduction >= 0 && introduction < setup, file);
+    const opening = text.slice(introduction, setup);
+    assert.match(opening, /Plan → Design → Build → Test → Release → Observe/);
+    assert.match(opening, /accepted intent.*reviewed plan.*tested diff.*human release decision/);
+    assert.match(opening, /practice systems, not the learning goal/);
+    assert.doesNotMatch(text, /before theory/);
+  }
+  const facilitator = readFileSync("FACILITATOR.md", "utf8");
+  assert.match(facilitator, /Start with the AI SDLC/);
+  assert.doesNotMatch(facilitator, /Start with the shop|before theory/);
+});

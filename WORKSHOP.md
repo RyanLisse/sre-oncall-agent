@@ -1,12 +1,13 @@
-# Workshop 5 — build the AI SRE agent (AI-native SDLC)
+# Workshop 5 — practise the AI-native SDLC
 
 This is the workshop overview. Its goal is to practise AI-assisted software
 delivery while improving a small local SRE agent. Claude Code is the coding
 assistant; the separate runtime SRE agent is the application being changed.
 For the facilitator run sheet and timing, see [FACILITATOR.md](FACILITATOR.md).
 
-The required route has **three core tasks**. Start Claude Code before theory
-or code edits. For each task, explain what you will do, why it is needed, and
+The required route has **three core tasks**. Start with the AI SDLC: its
+purpose, stages, evidence and human decisions. Then open Claude Code before
+code edits. For each task, explain what you will do, why it is needed, and
 what will prove it. Read a concept just before the step that uses it. The
 generated [CARD.md](CARD.md) is the canonical source for actions, prompts and
 proof. Optional depth does not replace intent, review, or release work.
@@ -17,15 +18,16 @@ proof. Optional depth does not replace intent, review, or release work.
   what you do, what you should see, how you check it, and what to do when you
   are stuck.
 
-Use Claude Code as the default assistant in the first five minutes. The real
-Agent SDK defaults to `sonnet` and needs separate API/provider configuration;
+After the short lifecycle introduction, open Claude Code as the default
+assistant. The real Agent SDK defaults to `sonnet` and needs separate
+API/provider configuration;
 run `npm run model:check` before fault injection. If that access is unavailable,
 use `npm start -- --fast --offline` only as an explicit fallback. Offline
 output is scripted integration evidence, not model evidence.
 
 ## Set up once
 
-**Terminal 1 — start Claude Code before theory or edits**
+**Terminal 1 — start Claude Code**
 
 ```bash
 git clone https://github.com/RyanLisse/sre-oncall-agent.git
@@ -35,8 +37,9 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the read-only assistant prompt in [CARD.md](CARD.md) before theory or
-edits. See [docs/claude-code.md](docs/claude-code.md) for installation and
+Submit the read-only assistant prompt in [CARD.md](CARD.md) after the
+lifecycle introduction and before code edits. See
+[docs/claude-code.md](docs/claude-code.md) for installation and
 separate SDK configuration.
 
 **Terminal 2 — from the original clone root**

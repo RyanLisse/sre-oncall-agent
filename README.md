@@ -54,8 +54,8 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the read-only assistant prompt in [CARD.md](CARD.md) before theory or
-edits.
+Submit the read-only assistant prompt in [CARD.md](CARD.md) after the
+lifecycle introduction and before code edits.
 
 **Terminal 2 — configure SDK access and start the lab**
 

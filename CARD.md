@@ -4,9 +4,19 @@
 
 Start with the task and its reason. Read each concept just before you use it. Then act, check the result, and record your evidence. The slides follow this same route.
 
+## Start with the AI SDLC
+
+Faster code is not enough. A useful change needs a clear outcome, checked evidence and a human release decision.
+
+Plan → Design → Build → Test → Release → Observe → Plan again.
+
+Produce an accepted intent, a reviewed plan, a tested diff, a human release decision and one reviewed next task.
+
+We change the SRE agent and observe a local shop. These are practice systems, not the learning goal.
+
 ## Start
 
-Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code before theory or edits; terminal 2 configures the SDK and runs the lab.
+Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code after the lifecycle introduction and before code edits; terminal 2 configures the SDK and runs the lab.
 
 **Why:** Practise a software delivery cycle on a local SRE agent. Claude Code helps develop the software; the separate runtime agent reads the shop telemetry. Humans accept plans, review evidence and authorize release.
 
@@ -19,7 +29,7 @@ cd .lab/checkpoints/start
 
 ### Claude Code first minutes
 
-In terminal 1, run `claude` in the starter before theory or edits.
+In terminal 1, run `claude` in the starter after the lifecycle introduction and before code edits.
 
 > Read CLAUDE.md, AGENTS.md and CARD.md. Explain the AI SDLC we will practise, its required artifacts and human decisions. Distinguish your development role from the runtime SRE agent. Name the two starter exercises. Do not edit files or run approval, execution, mitigation, resolution, commit or push commands. Wait for my review.
 
@@ -49,7 +59,7 @@ npm start -- --fast
 
 **What proves it:** docs/diagnosis-live.md contains checked observations. intent.md states the user, outcome, acceptance checks, boundary, open question and your acceptance decision.
 
-Slides: Core 1: Investigate the evidence · Core 1: Check the claims · Core 1: Specify the change. Replaces A1 + A2 + A6.
+Slides: Core 1: Specify from evidence · Core 1: Check the claims · Core 1: Specify the change. Replaces A1 + A2 + A6.
 
 ### 1.1 Break the shop once: click `Bad deploy v2.15.0` in the shop. The CLI alternative is `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in a separate shell, never the occupied launcher terminal. Do not use both.
 
@@ -141,7 +151,7 @@ Slides: Before code: a small plan · Keep a reviewable baseline · Core 2: Build
 
 **What proves it:** docs/verify/sdlc.md records actual checks, human diff review, a PR and release decision or RELEASE BLOCKED, the runtime result and one reviewed next task.
 
-Slides: Core 3: Judge the recovery · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change. Replaces A8 + A9.
+Slides: Core 3: Review, release and observe · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change. Replaces A8 + A9.
 
 ### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Ask Claude for a fail-closed plan for `checkApproval` in `src/executor.ts`. Review that plan before allowing the `TODO(A8)` repair.
 

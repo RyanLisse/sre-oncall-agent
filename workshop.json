@@ -2,7 +2,7 @@
   "$comment": "Single source for the participant card (CARD.md) and the hub (hub/index.html). Edit this file, then run npm run card. npm run card:check fails when the generated files are out of date. Plain English, one idea per sentence.",
   "title": "Workshop 5 · AI-native SDLC with Claude Code",
   "start": {
-    "say": "Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code before theory or edits; terminal 2 configures the SDK and runs the lab.",
+    "say": "Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code after the lifecycle introduction and before code edits; terminal 2 configures the SDK and runs the lab.",
     "do": [
       "git clone https://github.com/RyanLisse/sre-oncall-agent.git",
       "cd sre-oncall-agent",
@@ -48,7 +48,7 @@
       "id": "core-1",
       "name": "Specify a change from evidence",
       "goal": "Observe the failing checkout and verify the diagnosis. Turn the missing deployment evidence into an accepted software requirement.",
-      "slides": "Core 1: Investigate the evidence · Core 1: Check the claims · Core 1: Specify the change",
+      "slides": "Core 1: Specify from evidence · Core 1: Check the claims · Core 1: Specify the change",
       "replaces": [
         "A1",
         "A2",
@@ -140,7 +140,7 @@
       "id": "core-3",
       "name": "Review, release and learn from the result",
       "goal": "Repair and test the human gate. Review the complete code change, prepare its PR and record a human release decision. Observe the local runtime and propose the next improvement.",
-      "slides": "Core 3: Judge the recovery · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change",
+      "slides": "Core 3: Review, release and observe · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change",
       "replaces": [
         "A8",
         "A9"
@@ -289,5 +289,12 @@
         "REVIEW.md"
       ]
     ]
+  },
+  "opening": {
+    "title": "Start with the AI SDLC",
+    "why": "Faster code is not enough. A useful change needs a clear outcome, checked evidence and a human release decision.",
+    "loop": "Plan → Design → Build → Test → Release → Observe → Plan again.",
+    "proof": "Produce an accepted intent, a reviewed plan, a tested diff, a human release decision and one reviewed next task.",
+    "practice": "We change the SRE agent and observe a local shop. These are practice systems, not the learning goal."
   }
 }

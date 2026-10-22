@@ -15,15 +15,20 @@ prompts and proof, follow [CARD.md](CARD.md).
 
 ## Recommended self-paced route
 
-### Start — Claude Code before theory or edits
+First read **Start with the AI SDLC** in [CARD.md](CARD.md). Name the stages,
+the evidence you will produce and the decisions you keep. Then use the SRE
+agent and shop to practise that cycle; operating the console is not the goal.
+
+### Start with Claude Code
 
 - **Task:** Create a disposable starter and begin with the coding assistant.
 - **Why:** AI-assisted delivery starts by agreeing on the problem, evidence
   and human boundaries, not by prompting directly for code.
 - **Action:** In terminal 1, clone the repository, create the starter
   checkpoint, enter it and run `claude`. Submit the read-only prompt in
-  [CARD.md](CARD.md) before theory or edits. In terminal 2, from the original
-  clone root, configure SDK access as described in the setup guide, then enter
+  [CARD.md](CARD.md) after the lifecycle introduction and before code edits.
+  In terminal 2, from the original clone root, configure SDK access as
+  described in the setup guide, then enter
   the same checkpoint, run `npm ci`, `npm run fixtures`,
   `npm run model:check`, and `npm start -- --fast`.
 - **Proof:** The SDK preflight returns `READY`, and console health reports

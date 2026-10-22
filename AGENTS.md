@@ -16,8 +16,9 @@ and prompts, and [docs/sdlc-git.md](docs/sdlc-git.md) for human-only Git steps.
 Follow [Claude Code and Agent SDK setup](docs/claude-code.md), including the
 official installer and shell-only SDK configuration. Terminal 1 runs the
 clone/checkpoint commands, enters the starter, starts `claude`, and submits
-the read-only prompt before theory or edits. Terminal 2 starts from the
-original clone root, enters the same checkpoint, then runs `npm ci`,
+the read-only prompt after the lifecycle introduction and before code edits.
+Terminal 2 starts from the original clone root, enters the same checkpoint,
+then runs `npm ci`,
 `npm run fixtures`, `npm run model:check`, and `npm start -- --fast`. The
 Agent SDK preflight is separate from interactive CLI login.
 

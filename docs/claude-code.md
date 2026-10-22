@@ -3,7 +3,7 @@
 This lab uses two related but separate Claude paths:
 
 - **Claude Code** is the local coding assistant. Start it in the committed
-  checkpoint before the workshop theory or edits.
+  checkpoint after the lifecycle introduction and before code edits.
 - **The Agent SDK** is the runtime that investigates telemetry. Its default is
   the `sonnet` model and it needs an SDK API key or a configured provider such
   as Bedrock, Vertex, or Foundry. A Claude Code subscription login does not
@@ -57,9 +57,9 @@ authentication, use `/login`. `/status` reports the interactive session
 status; it does **not** prove that hooks loaded. Inspect
 `.claude/settings.json` when checking hooks.
 
-Submit the read-only assistant prompt in [CARD.md](../CARD.md) before theory
-or code edits. The generated card is the canonical source for the participant
-route and its prompts.
+Submit the read-only assistant prompt in [CARD.md](../CARD.md) after the
+lifecycle introduction and before code edits. The generated card is the
+canonical source for the participant route and its prompts.
 
 ## Configure the SDK in terminal 2
 
