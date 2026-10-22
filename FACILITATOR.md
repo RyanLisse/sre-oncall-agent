@@ -25,29 +25,50 @@ The slides: run `python3 serve.py` in the slides repo, then open
 `http://localhost:8080/workshop5.html` (presenter view:
 `workshop5-presenter.html`).
 
+## Teach from the task
+
+Start with the shop and the failing checkout, not a glossary. For each core,
+ask what participants will do, why it is needed, and what will prove it.
+Explain only the concept needed for the next action. Show one example,
+then let participants use it. The card and hub put these explanations next
+to the steps under **Before you act**.
+
+| Task | Why now | Explain at first use | Evidence to collect |
+| --- | --- | --- | --- |
+| Core 1: investigate | A plausible diagnosis is not permission to act. | Telemetry before the fault; references and data gaps before reading the diagnosis; progress notes before recording evidence. | Checked references and the missing deployment signal. |
+| Core 2: repair the tool | Core 1 found data the agent cannot read. | Repo rules and a small plan before editing; MCP beside the handler and registration; trace and bench before checking the repair. | Tool test, typecheck and bench pass; the same incident cites the deploy. |
+| Core 3: judge recovery | A diagnosis cannot approve its own action. | Named approval before rebuilding the gate; frozen recovery checks before judging the result; closure notes only after LANDED. | Passing gate tests and a justified closure, or a documented safe stop. |
+
+Do not insert the optional skills, hooks, subagents or Git-gate material
+between these tasks. The deck labels that material **Optional depth** after
+the closing recap. If a team chooses an extension, explain its concept just
+before that extension. Name the full SDLC loop during the final reflection,
+using the work participants actually did.
+
 ## Time boxes
 
-The deck keeps its order and times. The practice slides now carry the
-three cores and the optional depth.
+Use the main route through **Close: show what you can now prove**. The rest
+is reference material or a separate follow-up, not another required session.
 
 | Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
-| 10:00–10:50 | Introduction | AI-native SDLC loop, the use case, the console | participants can name the 7 phases |
-| 10:50–11:00 | Start the lab | **Start the lab** | checkpoint copy prints ✓ Lab running; hub opens |
+| 10:00–10:30 | The shop and the problem | What, why, outputs, human boundaries | participants can explain the task and why evidence comes first |
+| 10:30–11:00 | Start the lab | **Start the lab** | checkpoint copy prints ✓ Lab running; hub opens |
 | 11:00–11:15 | Break | Break | — |
-| 11:28–11:43 | Core 1: Investigate the evidence | **Core 1** (part 1) | shop broken by the participant; incident raised by the listener; data gap on `list_deploys` |
-| 11:47–12:00 | Core 1: Check the claims | **Core 1** (part 2) | every reference checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
+| 11:15–11:37 | Core 1: Investigate the evidence | Brief, detection, one fault, evidence concepts | shop broken once; listener raises an incident; explain the data gap |
+| 11:37–12:00 | Core 1: Check the claims | **Core 1** (check and record) | references checked in `demo/data/telemetry.json`; `docs/diagnosis-live.md` |
 | 12:00–13:00 | Lunch | Lunch | — |
-| 13:30–13:50 | Go deeper: your own guard rule (optional) | Go deeper (A4) · catch-up buffer for core 1 | optional |
-| 14:00–14:15 | Core 2: Build a change safely | **Core 2** | `test/workshop/tools.test.ts` green |
-| 14:15–14:40 | Core 2: Prove it on the live incident | **Core 2** (prove it) | focused tool test + typecheck + `PASS bench`; A8 valid-approval assertion remains expected red until Core 3; `list_deploys` in the trace |
+| 13:00–13:22 | Core 2: Why this change | Scope, plan, tool boundary, trace and bench beside the code | each pair states its change and proof |
+| 13:22–14:10 | Core 2: Build a change safely | **Core 2** | `test/workshop/tools.test.ts` green |
+| 14:10–14:40 | Core 2: Prove it on the live incident | **Core 2** (prove it) | focused tool test + typecheck + `PASS bench`; A8 assertion remains expected red until Core 3; `list_deploys` in the trace |
 | 14:40–14:55 | Break | Break | — |
-| 15:04–15:15 | Go deeper: a bench case and the ratchet (optional) | Go deeper (A7) | optional |
-| 15:18–15:35 | Core 3: Judge the recovery | **Core 3** (gate + execute) | `test/workshop/executor.test.ts` green; approved with a name; recovery running |
-| 15:35–15:50 | Core 3: Close it, or stop safely | **Core 3** (judge + close) | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
-| 15:50–16:00 | Close, skills pack, hackathon bridge | Close | `docs/hackathon-intent.md` is optional depth |
+| 14:55–15:25 | Human gate, then Core 3: Judge the recovery | Gate concept, implementation, tests, human action | executor and full checks green; named approval and separate execution |
+| 15:25–15:50 | Recovery result, then Core 3: Close it, or stop safely | Read the frozen checks before deciding | LANDED → mitigated → resolved with notes; or a correct stop on NOT LANDED |
+| 15:50–16:00 | The AI-native loop; Close: show what you can now prove | Reflect on the work, then stop | each team shows its evidence and explains its decision |
 
-The gaps between boxes are the deck's talk and demo segments.
+Use practice time for catch-up, not more definitions. In the scenario slide,
+INC-1001 is a fixture ID; live incidents have their own IDs. Offline output
+is scripted and is not model-quality evidence.
 
 ## Top failure + fix per block
 

@@ -19,15 +19,15 @@ const cmd = (s) => s;
 const md = [];
 md.push(`# Participant card · ${w.title}`, "");
 md.push("> Generated from `workshop.json` by `npm run card`. Do not edit by hand.", "");
-md.push("The slides explain. This card is for doing. Each step says what you do, what you should see, how you check it, and what to do when you are stuck.", "");
-md.push("## Start", "", w.start.say, "", "```bash", ...w.start.do, "```", "");
+md.push("Start with the task and its reason. Read each concept just before you use it. Then act, check the result, and record your evidence. The slides follow this same route.", "");
+md.push("## Start", "", w.start.say, "", `**Why:** ${w.start.why}`, "", "```bash", ...w.start.do, "```", "");
 md.push(`- **See:** ${w.start.see}`, `- **Check:** ${cmd(w.start.check)}`, "- **Stuck?**");
 for (const [p, f] of w.start.stuck) md.push(`  - ${p}: ${cmd(f)}`);
 md.push("");
 w.cores.forEach((c, i) => {
-  md.push(`## Core ${i + 1} · ${c.name}`, "", `**Goal:** ${c.goal}`, "", `Slides: ${c.slides}. Replaces ${c.replaces.join(" + ")}.`, "");
+  md.push(`## Core ${i + 1} · ${c.name}`, "", `**What you do:** ${c.goal}`, "", `**Why:** ${c.why}`, "", `**What proves it:** ${c.proof}`, "", `Slides: ${c.slides}. Replaces ${c.replaces.join(" + ")}.`, "");
   c.steps.forEach((s, j) => {
-    md.push(`### ${i + 1}.${j + 1} ${cmd(s.do)}`, "", `- **See:** ${cmd(s.see)}`, `- **Check:** ${cmd(s.check)}`, `- **Stuck?** ${cmd(s.stuck)}`, "");
+    md.push(`### ${i + 1}.${j + 1} ${cmd(s.do)}`, "", `**Before you act:** ${cmd(s.before)}`, "", `- **See:** ${cmd(s.see)}`, `- **Check:** ${cmd(s.check)}`, `- **Stuck?** ${cmd(s.stuck)}`, "");
   });
 });
 md.push("## Go deeper (optional)", "", "| # | Task | Do |", "| --- | --- | --- |");
@@ -42,7 +42,7 @@ md.push("");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const code = (s) => esc(cmd(s)).replace(/`([^`]+)`/g, "<code>$1</code>");
 const link = ([n, h]) => (h.startsWith("http") || h.startsWith("course/") ? `<a href="${esc(h.startsWith("course/") ? "/" + h : h)}">${esc(n)}</a>` : `${esc(n)} <code>${esc(h)}</code>`);
-const step = (s, n) => `<li class="step"><div class="n">${n}</div><div><p class="do">${code(s.do)}</p><dl><dt>See</dt><dd>${code(s.see)}</dd><dt>Check</dt><dd>${code(s.check)}</dd><dt>Stuck?</dt><dd>${code(s.stuck)}</dd></dl></div></li>`;
+const step = (s, n) => `<li class="step"><div class="n">${n}</div><div><p class="do">${code(s.do)}</p><p><b>Before you act:</b> ${code(s.before)}</p><dl><dt>See</dt><dd>${code(s.see)}</dd><dt>Check</dt><dd>${code(s.check)}</dd><dt>Stuck?</dt><dd>${code(s.stuck)}</dd></dl></div></li>`;
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -55,7 +55,7 @@ const html = `<!doctype html>
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1917;--card:#292524;--line:#44403c;--text:#f5f5f4;--muted:#a8a29e;--accent:#f87171;--ok:#86efac;--okbg:#14301f;--warnbg:#3b2510;--warn:#fbbf24;--code:#1c1917}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 -apple-system,"Segoe UI",Inter,sans-serif}
 main{max-width:980px;margin:0 auto;padding:28px 16px 64px}
-h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:36px 0 10px}.sub{color:var(--muted);margin:0 0 18px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:36px 0 10px;scroll-margin-top:150px}.sub{color:var(--muted);margin:0 0 18px}
 code{font:13.5px ui-monospace,Menlo,monospace;background:var(--code);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
 nav{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);z-index:1}
 nav a{color:var(--text);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:14px}nav a:hover{border-color:var(--accent)}
@@ -69,20 +69,20 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;paddin
 table{border-collapse:collapse;width:100%;font-size:15px}td,th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.roles ul{margin:6px 0 0;padding-left:18px}
 a{color:var(--accent)}
-@media (max-width:600px){.step{grid-template-columns:28px 1fr}dl{grid-template-columns:1fr}dt{margin-top:4px}}
+@media (max-width:600px){.step{grid-template-columns:28px 1fr}dl{grid-template-columns:1fr}dt{margin-top:4px}h2{scroll-margin-top:220px}}
 </style>
 </head>
 <body>
 <main>
 <h1>${esc(w.title)}</h1>
-<p class="sub">The slides explain. This page is for doing. Three core tasks; everything else is optional depth.</p>
+<p class="sub">Start with the task and its reason. Read each concept just before you use it. Then act, check the result, and record your evidence. The slides follow this same route.</p>
 <nav><a href="#start">Start</a>${w.cores.map((c, i) => `<a href="#${c.id}">Core ${i + 1} · ${esc(c.name)}</a>`).join("")}<a href="#deeper">Go deeper</a><a href="#catchup">Catch up</a><a href="#where">Where is what</a></nav>
 <div class="live" id="live"><h3>Lab status</h3><p>Open this page from the console (<code>http://127.0.0.1:4320/hub</code>) to see the live next step.</p></div>
 <h2 id="start">Start</h2>
-<div class="card"><p class="goal">${esc(w.start.say)}</p><pre>${w.start.do.map(esc).join("\n")}</pre>
+<div class="card"><p class="goal">${esc(w.start.say)}</p><p><b>Why:</b> ${code(w.start.why)}</p><pre>${w.start.do.map(esc).join("\n")}</pre>
 <dl><dt>See</dt><dd>${code(w.start.see)}</dd><dt>Check</dt><dd>${code(w.start.check)}</dd><dt>Stuck?</dt><dd>${w.start.stuck.map(([p, f]) => `<b>${esc(p)}.</b> ${code(f)}`).join("<br>")}</dd></dl></div>
 ${w.cores.map((c, i) => `<h2 id="${c.id}">Core ${i + 1} · ${esc(c.name)}</h2>
-<div class="card"><p class="goal"><b>Goal:</b> ${esc(c.goal)}</p><p class="meta">Slides: ${esc(c.slides)} · replaces ${c.replaces.join(" + ")}</p>
+<div class="card"><p class="goal"><b>What you do:</b> ${code(c.goal)}</p><p><b>Why:</b> ${code(c.why)}</p><p><b>What proves it:</b> ${code(c.proof)}</p><p class="meta">Slides: ${esc(c.slides)} · replaces ${c.replaces.join(" + ")}</p>
 <ol class="steps">${c.steps.map((s, j) => step(s, `${i + 1}.${j + 1}`)).join("")}</ol></div>`).join("\n")}
 <h2 id="deeper">Go deeper (optional)</h2>
 <div class="card"><table><tr><th>#</th><th>Task</th><th>Do</th></tr>${w.deeper.map((d) => `<tr><td>${d.id}</td><td>${esc(d.name)}</td><td>${code(d.do)}</td></tr>`).join("")}</table></div>
