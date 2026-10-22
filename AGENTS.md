@@ -25,7 +25,7 @@ Submit the exact read-only prompt from the setup guide. In terminal 2, from
 the original clone root, configure supported SDK access per the guide, then:
 
 ```bash
-cd sre-oncall-agent/.lab/checkpoints/start
+cd .lab/checkpoints/start
 npm ci
 npm run fixtures
 npm run model:check

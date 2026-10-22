@@ -23,7 +23,7 @@ Configure supported SDK access in the shell as described in the setup guide,
 then run:
 
 ```bash
-cd sre-oncall-agent/.lab/checkpoints/start
+cd .lab/checkpoints/start
 npm ci
 npm run fixtures
 npm run model:check

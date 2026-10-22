@@ -26,7 +26,7 @@ In terminal 1, run `claude` in the starter before theory or edits.
 In terminal 2, from the original clone root, configure supported SDK access as described in the setup guide, then run:
 
 ```bash
-cd sre-oncall-agent/.lab/checkpoints/start
+cd .lab/checkpoints/start
 npm ci
 npm run fixtures
 npm run model:check

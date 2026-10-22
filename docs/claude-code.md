@@ -93,7 +93,7 @@ Open a second terminal at the original clone root. After configuring SDK access
 above, enter the same starter checkpoint and run:
 
 ```bash
-cd sre-oncall-agent/.lab/checkpoints/start
+cd .lab/checkpoints/start
 npm ci
 npm run fixtures
 npm run model:check

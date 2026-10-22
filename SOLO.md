@@ -19,8 +19,7 @@ or `NOT LANDED` recovery is valid completion.
 - **Why:** The assistant should explain the work and evidence boundary before
   anyone edits code or acts on an incident.
 - **Action:** Install Claude Code and configure SDK access as described in the
-  [canonical setup guide](docs/claude-code.md). From the original clone root,
-  use terminal 1:
+  [canonical setup guide](docs/claude-code.md). Use terminal 1 to create your clone and starter:
 
   ```bash
   git clone https://github.com/RyanLisse/sre-oncall-agent.git
@@ -40,7 +39,7 @@ or `NOT LANDED` recovery is valid completion.
   original clone root run:
 
   ```bash
-  cd sre-oncall-agent/.lab/checkpoints/start
+  cd .lab/checkpoints/start
   npm ci
   npm run fixtures
   npm run model:check
@@ -79,9 +78,8 @@ type shell commands into the active Claude Code prompt.
   human plan review.
 - **Why:** Core 1 found a deployment the agent cannot read. Test-first repair
   restores evidence without adding a mutation tool.
-- **Action:** In the console, use the same incident and submit
-  `Investigate: customers report checkout errors`. Check the actual trace,
-  references and gaps; model output and proposals vary. Use this scoped prompt:
+- **Action:** Run `npx tsx --test test/workshop/tools.test.ts` and read
+  the expected failure. Use this scoped prompt:
   `Read CLAUDE.md, AGENTS.md and the failing test. Propose a small plan for
   the read-only list_deploys handler and MCP registration. Do not edit files.
   Wait for my review.` After a human reviews the plan, implement and run:
@@ -92,6 +90,9 @@ type shell commands into the active Claude Code prompt.
   npm run bench
   ```
 
+  After the checks pass, submit `Investigate: customers report checkout errors`
+  in the same console incident. Check the actual trace, references and gaps;
+  model output and proposals vary.
 - **Proof:** Focused tests and bench pass, the A8 valid-approval exercise
   remains intentionally red until Core 3, and the actual trace records the
   available deploy evidence. If a contract or citation fails, preserve output
