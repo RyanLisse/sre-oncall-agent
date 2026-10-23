@@ -7,12 +7,13 @@ approval, execution, mitigation, resolution, or pushing.
 The learning goal is the AI software delivery lifecycle. Claude Code is the
 development assistant; the runtime SRE agent is the application being changed.
 The required route is: Core 1 verifies evidence and produces a human-accepted
-intent; Core 2 creates a human-owned baseline, reviews the plan before code,
-repairs the read-only tool and proves it; Core 3 repairs the gate, runs full
-checks, reviews the actual diff, records a human PR/merge decision or
-`RELEASE BLOCKED`, observes runtime evidence and reviews a next task. Intent,
-review and release are not optional depth. Use the card for canonical actions
-and prompts, and [docs/sdlc-git.md](docs/sdlc-git.md) for human-only Git steps.
+intent. In Core 2, create a human-owned baseline, review a plan before each
+repair, restore the read-only tool, check the same incident, repair the gate
+and run full checks. Core 3 starts with actual diff review, then records a
+human PR/release decision or `RELEASE BLOCKED`, runtime observation and a
+reviewed next task. Intent, review and release are required work. Use the card
+for canonical actions and prompts, and
+[docs/sdlc-git.md](docs/sdlc-git.md) for human-only Git steps.
 Follow [Claude Code and Agent SDK setup](docs/claude-code.md), including the
 official installer and shell-only SDK configuration. Terminal 1 runs the
 clone/checkpoint commands, enters the starter, starts `claude`, and submits
@@ -46,6 +47,8 @@ Keep the launcher terminal open. `Ctrl+C` stops only processes started by that
 launcher. Read actionable port errors; never kill an unknown process.
 `npm run checkpoint -- core-2` and `npm run checkpoint -- core-3` create
 separate current-HEAD copies and refuse to overwrite an existing destination.
+`core-2` is an intermediate tool-solved, gate-unfinished catch-up point;
+`core-3` is the solved reference. Neither proves participant-authored work.
 Never copy runtime data, approvals, progress, or lesson history.
 
 The starter's A5 tool and A8 executor tests are intentionally incomplete; A8

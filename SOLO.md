@@ -4,8 +4,9 @@ For the shorter classroom route, use [WORKSHOP.md](WORKSHOP.md) and
 [PARTICIPANT.md](PARTICIPANT.md). This recommended self-paced route teaches
 the required AI software delivery lifecycle. Claude Code is the development
 assistant; the runtime SRE agent is the application being changed. The
-numbered steps below remain an optional offline reference for mirror
-consumers. Their content is retained for compatibility.
+numbered steps below remain a separate optional offline reference for mirror
+consumers. Their content is retained for compatibility. The Daily Brief is a
+separate activity, not this solo route.
 
 Use [docs/claude-code.md](docs/claude-code.md) for official Claude Code
 installation and separate Agent SDK setup. The Agent SDK defaults to `sonnet`;
@@ -59,47 +60,35 @@ type shell commands into the active assistant prompt.
   is fabricated or a contract fails, preserve the output and stop; do not
   weaken the contract.
 
-### Core 2 — review the design, then repair and prove the tool
+### Core 2 — review both plans, repair and verify
 
-- **Task:** Create a human-owned starter baseline, review `docs/plan.md`
-  against accepted intent, then repair the read-only `list_deploys` handler
-  while preserving its MCP registration.
-- **Why:** A meaningful diff makes the repair reviewable. The failing test
-  exposes missing behavior; the plan constrains the change before code edits.
+- **Task:** Create a human-owned starter baseline. Review a plan before each
+  repair, restore the read-only `list_deploys` handler, check the same
+  incident, then repair the `checkApproval` gate.
+- **Why:** Each repair has its own scope and human plan review. The same
+  incident trace shows whether the tool repair changes the evidence.
 - **Action:** Follow the baseline steps in
-  [docs/sdlc-git.md](docs/sdlc-git.md) in the isolated starter. Run the red
-  `npx tsx --test test/workshop/tools.test.ts`; ask Claude Code for a small
-  plan and wait for human review. Then implement and run the focused tool test,
-  `npm run typecheck` and `npm run bench`. Re-investigate the same incident
-  with the Investigate action from the card. Record actual checks and trace
-  in `docs/verify/sdlc.md`, then record them with
-  `npm run progress:note -- "Core 2: recorded actual tests, bench and trace"`.
-- **Proof:** The plan is accepted before edits; the code diff is nonempty;
-  tests, typecheck and bench pass; the actual trace shows the tools called.
-  The A8 gate remains intentionally red until Core 3. Preserve failed
-  contracts or citations rather than calling them success.
+  [docs/sdlc-git.md](docs/sdlc-git.md). Follow the Core 2 prompts and checks
+  in [CARD.md](CARD.md). Record the actual plans, checks and trace in
+  `docs/verify/sdlc.md`.
+- **Proof:** The tool and gate plans were reviewed before edits. Both repairs
+  have a visible diff. The same-incident trace and complete check results are
+  recorded. The A8 gate remains cut only until its repair within Core 2.
 
 ### Core 3 — review, release and learn
 
-- **Task:** Review a fail-closed `checkApproval` plan, repair the human gate,
-  run full checks, inspect the actual diff and make a human release decision.
-  Observe runtime evidence and propose one reviewed next task.
-- **Why:** Passing tests do not accept or publish a change; runtime recovery is
-  separate from code release.
-- **Action:** Follow the Core 3 prompts and checks in [CARD.md](CARD.md).
-  Run the focused executor test, `npm run verify`,
-  `npm run test:workshop` and `npm run test:hooks`; record results. Review
-  `git diff workshop-base` against `intent.md`, `docs/plan.md` and `REVIEW.md`.
-  A human prepares the learner-repo PR and checks current-head CI and required
-  review before deciding to merge. If access or a reviewer is missing, record
-  `RELEASE BLOCKED` and the reason. Then record the actual runtime model,
-  trace, recovery result and one reviewed next task in `docs/verify/sdlc.md`.
-  Record the actual result with
-  `npm run progress:note -- "Core 3: recorded release decision, runtime result and next task"`.
-- **Proof:** Full checks and actual diff findings are recorded. A human has
-  made a release decision or documented the exact blocker. Runtime results
-  are observed, not inferred from a local reload. `NOT LANDED` or unknown
-  recovery is a safe stop; keep the incident open.
+- **Task:** Review the actual diff first. Make a human PR and release
+  decision, or record `RELEASE BLOCKED`. Observe the runtime result and
+  propose one reviewed next task.
+- **Why:** Passing tests do not accept or publish a change. Runtime recovery
+  is separate from code release.
+- **Action:** Follow the Core 3 prompts in [CARD.md](CARD.md). A human checks
+  the PR head, CI and required review before deciding to merge. Record the
+  runtime model, trace, recovery result and reviewed next task in
+  `docs/verify/sdlc.md`.
+- **Proof:** A human has reviewed the diff and made a release decision or
+  documented the exact blocker. Observe runtime results; do not infer them
+  from a local reload. Keep `NOT LANDED` or unknown recovery open.
 
 ### Completion checklist
 
@@ -129,7 +118,9 @@ cd .lab/checkpoints/core-2
 For Core 3, return to the original root and run
 `npm run checkpoint -- core-3`, then enter `.lab/checkpoints/core-3`.
 Do not copy runtime data, approvals, progress or lesson history from a solved
-checkpoint. A solved copy helps catch up; it does not prove authored work.
+checkpoint. `core-2` is an intermediate tool-solved, gate-unfinished catch-up
+point within Core 2. `core-3` is the solved reference. Neither proves
+participant-authored work.
 
 The numbered steps below are deterministic offline reference material. Every
 investigation command explicitly selects `--model offline`; they are not model

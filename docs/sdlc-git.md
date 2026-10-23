@@ -33,9 +33,9 @@ Only the repaired branch is a release candidate.
 
 ## Review and commit the repaired change
 
-After Core 3 checks pass, review `git diff workshop-base` against `intent.md`,
-`docs/plan.md` and `REVIEW.md`. Ask Claude for findings, then verify them
-yourself. Record your decision and actual check results in
+After the complete Core 2 checks pass, review `git diff workshop-base` against
+`intent.md`, `docs/plan.md` and `REVIEW.md`. Ask Claude for findings, then
+verify them yourself. Record your decision and actual check results in
 `docs/verify/sdlc.md`. Do not commit credentials or live customer data.
 
 First run `git status --short`. Untracked files do not appear in the diff.

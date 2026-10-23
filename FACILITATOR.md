@@ -53,8 +53,8 @@ to the steps under **Before you act**.
 | Task | Why now | Explain at first use | Evidence to collect |
 | --- | --- | --- | --- |
 | Core 1: specify from evidence | A plausible diagnosis is not permission to change software. | Telemetry, references and data gaps before drafting an intent; human acceptance before planning. | `docs/diagnosis-live.md` plus a human-accepted `intent.md` with observable checks. |
-| Core 2: design and build | Core 1 defines the outcome; the code change must be reviewable. | Human starter baseline and reviewed plan before edits; MCP registration beside its handler; test, typecheck, bench and trace as proof. | Reviewed `docs/plan.md`, meaningful diff, passing focused checks and actual trace evidence. |
-| Core 3: review, release and learn | Tests do not accept or release their own change. | Fail-closed gate, full checks, actual diff review, human PR/merge decision, then runtime evidence and next-task review. | `docs/verify/sdlc.md` records checks, review, release or `RELEASE BLOCKED`, runtime result and next task. |
+| Core 2: design, build and verify | Core 1 defines the outcome; each repair needs a reviewed plan. | Human starter baseline; review a plan before repairing `list_deploys`, then review a gate plan before repairing `checkApproval`; check the same incident and run full verification. | `docs/plan.md`, a meaningful diff, the actual trace, focused checks and full verification results. |
+| Core 3: review, release and learn | Tests do not accept or release their own change. | Start with actual diff review, then human PR/release decision, runtime observation and next-task review. | `docs/verify/sdlc.md` records review, release or `RELEASE BLOCKED`, runtime result and next task. |
 
 Do not insert optional skills, hooks, subagents or extra bench-case work
 between these tasks. The human baseline, code review, release decision and
@@ -82,10 +82,10 @@ is reference material or a separate follow-up, not another required session.
 | 11:40–12:00 | Core 1: accept intent | Draft and human review of observable outcome | accepted `intent.md` and decision recorded |
 | 12:00–13:00 | Lunch | Lunch | — |
 | 13:00–13:20 | Core 2: baseline and plan review | Human-owned baseline; smallest plan against intent | meaningful repair diff is possible; reviewed `docs/plan.md` |
-| 13:20–14:10 | Core 2: repair and check | **Core 2** | focused tool test, typecheck and bench pass; A8 remains intentionally red |
-| 14:10–14:40 | Trace and gate repair | Same-incident trace, then Core 3 gate plan and repair | actual tool trace recorded; focused executor test passes |
+| 13:20–14:10 | Core 2: repair the tool | Review the small plan, restore the registered handler, then check the same incident | focused tool test, typecheck, bench and actual trace recorded |
+| 14:10–14:40 | Core 2: repair the gate and verify | Review the gate plan, repair `checkApproval`, then run the complete checks | executor test, full verification, workshop and hook checks pass; results recorded |
 | 14:40–14:55 | Break | Break | — |
-| 14:55–15:15 | Full checks and diff review | Verify, inspect actual diff against intent and review checklist | full checks recorded; findings verified by a human |
+| 14:55–15:15 | Core 3: review the actual diff | Inspect the staged and untracked files against intent and `REVIEW.md` | findings verified by a human |
 | 15:15–15:35 | PR and release decision | Human-owned learner-repo PR, current-head checks and review | merge decision recorded, or `RELEASE BLOCKED` with exact reason |
 | 15:35–15:50 | Runtime observation | Briefly inspect actual model label, trace and recovery; avoid a long button demo | observed result or blocker recorded; NOT LANDED stays open |
 | 15:50–16:00 | Next task and SDLC evidence | Propose and review one evidence-based next task; show the full record | `docs/verify/sdlc.md` shows artifacts, checks, human decisions, runtime and next task |
@@ -130,8 +130,10 @@ teach the verified trace, missing evidence and gaps, not exact sentences.
   Allow about two minutes for recovery checks; keep the lab running.
 - **Catch-up** — `npm run checkpoint -- core-2` makes a separate copy in
   `.lab/checkpoints/core-2`. It never changes the participant's files. They
-  compare and copy one file themselves. Never `git checkout <tag> -- <files>`
-  over participant work.
+  compare and copy one file themselves. Core 2 is an intermediate catch-up
+  point with the read-only tool solved and the A8 gate still cut. Core 3 is
+  the solved reference. Neither proves participant-authored work. Never
+  `git checkout <tag> -- <files>` over participant work.
 
 ## If recovery says NOT LANDED
 

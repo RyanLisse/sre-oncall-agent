@@ -69,8 +69,8 @@ starter; do not type into the active launcher terminal. Never use both.
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
 | **1 · Specify from evidence** | Verify the actual diagnosis, citations, trace and gaps. Draft `intent.md` from those observations and accept it as a human. | `docs/diagnosis-live.md` and a human-accepted `intent.md` with observable checks and an open question | A1, A6 |
-| **2 · Design and build** | Create the human-owned starter baseline; review `docs/plan.md` against the accepted intent before code edits. Repair the read-only `list_deploys` handler and re-investigate the same incident. | Focused tools test, typecheck and bench pass; actual trace and code diff are recorded; A8 remains intentionally red | A5, A7 |
-| **3 · Review, release and learn** | Repair the fail-closed approval gate, run full checks, review the actual diff, and let a human decide whether to open/merge a learner-repo PR or record `RELEASE BLOCKED`. Observe runtime evidence and propose a reviewed next task. | `docs/verify/sdlc.md` records real checks, human review/release decision, runtime result and next task | A8, A9 |
+| **2 · Design, build and verify** | Create the human-owned starter baseline. Review a plan before each repair. Restore the read-only `list_deploys` handler, re-investigate the same incident, then repair the `checkApproval` gate. | `docs/plan.md` records both reviewed plans; the same-incident trace, focused checks and full verification are recorded | A5, A7, A8 |
+| **3 · Review, release and learn** | Start with the actual diff review. Let a human decide whether to open and merge a learner-repo PR or record `RELEASE BLOCKED`. Observe runtime evidence, recovery outcome and propose a reviewed next task. | `docs/verify/sdlc.md` records diff review, human release decision, runtime result and next task | A9 |
 
 The card gives each core a reason and proof, with **Before you act**
 explanations next to the steps. The human baseline and release exercise are
@@ -96,18 +96,20 @@ it with notes. Approval and closure always need your name.
 
 ```bash
 npm run checkpoint                # list: start · core-2 · core-3
-npm run checkpoint -- core-2      # current-HEAD copy with only the fail-closed A8 cut
-npm run checkpoint -- core-3      # current solved source, unchanged
+npm run checkpoint -- core-2      # tool-solved, A8 gate still cut; intermediate Core 2 catch-up
+npm run checkpoint -- core-3      # solved reference; does not prove participant-authored work
 git diff --no-index .lab/checkpoints/core-2/src/tools.ts src/tools.ts
 ```
 
 The command never changes your branch or your files. Compare, then copy one
 file yourself if you choose. Do not copy approvals or lessons from a solved
-state. Make your own records.
+state. `core-2` is a tool-solved, gate-unfinished catch-up point within Core 2.
+`core-3` is the solved reference. Neither proves that you authored, tested or
+reviewed a change. Make your own records.
 
 `npm run progress` checks for files and code patterns. It does not run tests
 or prove that the UI works. Record the commands and results yourself, after
-you ran them: `npm run progress:note -- "Core 2: tools test green, bench PASS"`.
+you ran them: `npm run progress:note -- "Core 2: both repairs checked, full verify PASS"`.
 
 ## Go deeper (optional)
 
@@ -134,7 +136,7 @@ you ran them: `npm run progress:note -- "Core 2: tools test green, bench PASS"`.
 | Checkpoint | Contains |
 | --- | --- |
 | `start` | The current-HEAD starter: bounded `TODO(A5)` and fail-closed `TODO(A8)`. |
-| `core-2` | Current-HEAD source with only the fail-closed A8 cut. |
-| `core-3` | Current committed solved source, unchanged. |
+| `core-2` | Tool-solved source with the A8 gate still cut; intermediate Core 2 catch-up, not proof of authored work. |
+| `core-3` | Solved reference with no exercise cuts; not proof of authored work. |
 
 Historical `w5-core-*` tags are archived references, not the current safety-tested starter.

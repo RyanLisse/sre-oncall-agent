@@ -7,9 +7,10 @@ installer and separate SDK configuration.
 
 Claude Code is your development assistant. The runtime SRE agent is the
 application you will change. The three required cores produce an evidence-based
-and accepted intent, a human-reviewed plan and tested repair, then a reviewed
-diff, human release decision (or `RELEASE BLOCKED`), runtime observation and a
-reviewed next task. These are required work, not optional extensions.
+and human-accepted intent; two human-reviewed plans, both repairs and complete
+verification; then an actual diff review, a human release decision (or
+`RELEASE BLOCKED`), runtime observation and a reviewed next task. These are
+required work, not optional extensions.
 
 **Terminal 1 — create the starter and start Claude Code**
 
@@ -44,7 +45,9 @@ model evidence.
 Catch up using `npm run checkpoint -- core-2` or
 `npm run checkpoint -- core-3`. These create separate copies from committed
 `HEAD` and refuse to overwrite. Never copy runtime, approvals, progress, or
-lesson history. Follow the human-only Git steps in
+lesson history. `core-2` is an intermediate catch-up point with the tool solved
+and the A8 gate still cut. `core-3` is the solved reference. Neither proves
+participant-authored work. Follow the human-only Git steps in
 [docs/sdlc-git.md](docs/sdlc-git.md); use a learner repository, not upstream.
 Skills, hooks, subagents and new bench cases are optional depth.
 

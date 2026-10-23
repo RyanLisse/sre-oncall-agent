@@ -59,7 +59,7 @@ npm start -- --fast
 
 **What proves it:** docs/diagnosis-live.md contains checked observations. intent.md states the user, outcome, acceptance checks, boundary, open question and your acceptance decision.
 
-Slides: Core 1: Specify from evidence · Core 1: Check the claims · Core 1: Specify the change. Replaces A1 + A2 + A6.
+Slides: Specify: start with an observed problem · Create one fault and observe detection · Check the diagnosis against the evidence · Turn the finding into an intent · Accept the assignment before building. Replaces A1 + A2 + A6.
 
 ### 1.1 Break the shop once: click `Bad deploy v2.15.0` in the shop. The CLI alternative is `npm run chaos -- deploy v2.15.0 --mode bad-deploy` in a separate shell, never the occupied launcher terminal. Do not use both.
 
@@ -82,8 +82,8 @@ Slides: Core 1: Specify from evidence · Core 1: Check the claims · Core 1: Spe
 **Before you act:** Free-text chat is not checked by the structured verdict contract. Verify its claims manually against telemetry and trace; use Investigate for a contract-validated diagnosis.
 
 - **See:** Real output may vary. With the explicit offline fallback, the agent returns a scripted summary; that is not a new model investigation.
-- **Check:** Compare the answer with `ruled_out`, the trace and the data gap. If it fabricates a deploy citation or fails the contract, preserve the output and stop; do not call it success or weaken the contract.
-- **Stuck?** Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.
+- **Check:** Compare the answer with `ruled_out`, the trace and the data gap.
+- **Stuck?** If it fabricates a deploy citation or fails the contract, preserve the output and stop; do not call it success or weaken the contract.
 
 ### 1.4 Save the diagnosis in `docs/diagnosis-live.md`. Then record what you checked: `npm run progress:note -- "Core 1: <what you verified>"`
 
@@ -103,13 +103,13 @@ Slides: Core 1: Specify from evidence · Core 1: Check the claims · Core 1: Spe
 
 ## Core 2 · Design, build and verify the change
 
-**What you do:** Review a small plan, repair the read-only handler with Claude Code, and compare the implementation with the accepted intent.
+**What you do:** Review a human plan before each repair. Restore the read-only tool and the approval gate, then verify the complete change.
 
 **Why:** A bounded plan limits accidental changes. A failing test, a passing test and a real diff show what the repair changed.
 
-**What proves it:** docs/plan.md records your design review. The tool repair has a visible diff, passing focused tests, typecheck and bench results, plus the actual live model trace or a clearly recorded runtime blocker.
+**What proves it:** docs/plan.md records the reviewed plans. Both repairs have a visible diff, the same-incident trace is checked, and the complete checks pass before release review.
 
-Slides: Before code: a small plan · Keep a reviewable baseline · Core 2: Build a change safely · Core 2: Prove it on the live incident. Replaces A5 + A7.
+Slides: Establish a reviewable starting point · Ask for a small plan, then review it · Understand the tool before repair · Repair the tool: red → green · Check the change on the same incident · Understand the human approval gate · Repair the gate: refuse unsafe actions · Verify the complete change. Replaces A5 + A7 + A8.
 
 ### 2.1 Before code edits, follow the human-only baseline commands in `docs/sdlc-git.md`. In the isolated starter, create `workshop-base`, commit only the two exercise cuts, then create `fix/w5-core`.
 
@@ -131,8 +131,8 @@ Slides: Before code: a small plan · Keep a reviewable baseline · Core 2: Build
 
 **Before you act:** MCP exposes named tools. The existing registration points to a handler that reads data; restore that binding only after the human reviews the small plan.
 
-- **See:** `test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.
-- **Check:** After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until Core 3 restores the approval gate. Save the actual commands, results and any untested paths in `docs/verify/sdlc.md`. A8 remains expected red here, so this is not yet release-ready.
+- **See:** `test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until the gate repair later in Core 2.
+- **Check:** After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until the gate repair later in Core 2. Save the actual commands, results and any untested paths in `docs/verify/sdlc.md`. A8 remains expected red here, so this intermediate state is not yet release-ready.
 - **Stuck?** The tool still returns `[]`: inspect the handler binding and the preserved registration; do not add a second registration.
 
 ### 2.4 Save. In the same incident, ask in chat: `Investigate: customers report checkout errors`
@@ -143,25 +143,33 @@ Slides: Before code: a small plan · Keep a reviewable baseline · Core 2: Build
 - **Check:** Verify the actual trace and references against `demo/data/telemetry.json`. If the citation is fabricated or the contract fails, preserve the output and stop. Record what you verified: `npm run progress:note -- "Core 2: ..."`
 - **Stuck?** Incident gone? Incident history persists in SQLite, while the shop resets on restart. Do not restart the launcher to reload code; saving auto-reloads the console. For a fresh repeat, use a new disposable checkpoint copy; do not rebreak a stale incident.
 
-## Core 3 · Review, release and learn from the result
-
-**What you do:** Repair and test the human gate. Review the complete code change, prepare its PR and record a human release decision. Observe the local runtime and propose the next improvement.
-
-**Why:** The authoring agent cannot accept its own work. Code release and runtime recovery are different decisions, with different evidence.
-
-**What proves it:** docs/verify/sdlc.md records actual checks, human diff review, a PR and release decision or RELEASE BLOCKED, the runtime result and one reviewed next task.
-
-Slides: Core 3: Review, release and observe · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change. Replaces A8 + A9.
-
-### 3.1 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Ask Claude for a fail-closed plan for `checkApproval` in `src/executor.ts`. Review that plan before allowing the `TODO(A8)` repair.
+### 2.5 Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Ask Claude for a fail-closed plan for `checkApproval` in `src/executor.ts`. Review that plan before allowing the `TODO(A8)` repair.
 
 **Before you act:** The approval gate validates a named human decision for this incident and proposal. The starter fails closed until you rebuild it.
 
 - **See:** The test is green. The executor now refuses to act without a named approval for this incident and this proposal.
-- **Check:** Run `npx tsx --test test/workshop/executor.test.ts`, `npm run verify`, `npm run test:workshop` and `npm run test:hooks`. Record actual results in `docs/verify/sdlc.md`. All must pass before the code release decision.
-- **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.
+- **Check:** Run `npx tsx --test test/workshop/executor.test.ts`.
+- **Stuck?** Read `test/workshop/executor.test.ts`. It names every case the gate must refuse. Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.
 
-### 3.2 Ask Claude Code: "Review git diff workshop-base against intent.md, docs/plan.md and REVIEW.md. Identify functional defects, missing checks and unsupported claims. Cite files and lines. Do not edit, approve, commit, push or merge. Wait for my decision."
+### 2.6 Run `npx tsx --test test/workshop/executor.test.ts`, `npm run verify`, `npm run test:workshop` and `npm run test:hooks`.
+
+**Before you act:** Run the complete checks after both repairs so the results cover the full change.
+
+- **See:** All must pass before the code release decision.
+- **Check:** Record actual results in `docs/verify/sdlc.md`.
+- **Stuck?** If a check fails, preserve its output and do not mark the change ready for release.
+
+## Core 3 · Review, release and learn from the result
+
+**What you do:** Review the complete code change, prepare its PR and record a human release decision. Observe the local runtime and propose the next improvement.
+
+**Why:** The authoring agent cannot accept its own work. Code release and runtime recovery are different decisions, with different evidence.
+
+**What proves it:** docs/verify/sdlc.md records actual diff review, a human PR and release decision or RELEASE BLOCKED, the runtime result and one reviewed next task.
+
+Slides: Review the actual diff · Prepare the PR and make a release decision · Observe runtime with separate permission · Recovery: confirmed or not confirmed? · Turn the observation into the next task. Replaces A9.
+
+### 3.1 Ask Claude Code: "Review git diff workshop-base against intent.md, docs/plan.md and REVIEW.md. Identify functional defects, missing checks and unsupported claims. Cite files and lines. Do not edit, approve, commit, push or merge. Wait for my decision."
 
 **Before you act:** First run git status --short. Untracked files are absent from the diff: inspect them and stage only intended files by exact path yourself before requesting review. Never stage secrets. Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.
 
@@ -169,7 +177,7 @@ Slides: Core 3: Review, release and observe · Review the diff, not the explanat
 - **Check:** Verify every finding yourself. Request fixes and rerun affected checks when needed. Record your name, decision, residual risks and untested paths in `docs/verify/sdlc.md`.
 - **Stuck?** When working solo, review your own diff in a separate pass and record that limitation. If repository policy requires another reviewer, wait for one.
 
-### 3.3 Prepare the PR text with Claude Code, then follow `docs/sdlc-git.md` in your own terminal. A human commits, signs the Git gate, pushes to the learner repo and opens a PR from `fix/w5-core` into `workshop-base`.
+### 3.2 Prepare the PR text with Claude Code, then follow `docs/sdlc-git.md` in your own terminal. A human commits, signs the Git gate, pushes to the learner repo and opens a PR from `fix/w5-core` into `workshop-base`.
 
 **Before you act:** A Git approval authorizes publication of a code change. It does not approve a shop rollback. Never push the training baseline to the upstream project.
 
@@ -177,7 +185,7 @@ Slides: Core 3: Review, release and observe · Review the diff, not the explanat
 - **Check:** A human checks the current head, CI and required review before merging. Record the PR and merge commit, or the exact blocker. A local reload is a development check, not a production deployment.
 - **Stuck?** No publication access: prepare the PR text and document the blocker. You may continue local runtime observation as a test, but must not claim a release or bypass branch protection.
 
-### 3.4 After code review, inspect the current incident and its actual proposal. Only if the evidence supports an allowed action, a named human clicks Approve and then the separate Execute control. Otherwise record the safe stop.
+### 3.3 After code review, inspect the current incident and its actual proposal. Only if the evidence supports an allowed action, a named human clicks Approve and then the separate Execute control. Otherwise record the safe stop.
 
 **Before you act:** Rollback restores the prior deployment. Recovery checks capture measured values against a frozen limit; execution success alone is insufficient.
 
@@ -185,7 +193,7 @@ Slides: Core 3: Review, release and observe · Review the diff, not the explanat
 - **Check:** The half check may fail. The full and double checks must both pass. On NOT LANDED the banner names the failed check, its value and the limit.
 - **Stuck?** A button is grey: the banner says which step is allowed now. The server refuses every other button.
 
-### 3.5 LANDED: click Mark mitigated, then Resolve with notes. NOT LANDED: do not close. Read the failed check, then investigate in chat or escalate.
+### 3.4 LANDED: click Mark mitigated, then Resolve with notes. NOT LANDED: do not close. Read the failed check, then investigate in chat or escalate.
 
 **Before you act:** LANDED means the full and double checks passed. Mitigated and resolved are separate human decisions. NOT LANDED or unknown means stop.
 
@@ -193,7 +201,7 @@ Slides: Core 3: Review, release and observe · Review the diff, not the explanat
 - **Check:** If resolved, `lessons/lessons.md` has your name and the incident id. If NOT LANDED, confirm the incident remains open and retain the failed check. Record your actual outcome: `npm run progress:note -- "Core 3: …"`
 - **Stuck?** Never execute again to get a green result. NOT LANDED is a correct, safe stop.
 
-### 3.6 Ask Claude Code: "Read the actual observations in docs/verify/sdlc.md. Propose one next change and the acceptance check or regression test that would prove it. Distinguish observed facts from hypotheses. Do not edit code or close the incident. Wait for my review."
+### 3.5 Ask Claude Code: "Read the actual observations in docs/verify/sdlc.md. Propose one next change and the acceptance check or regression test that would prove it. Distinguish observed facts from hypotheses. Do not edit code or close the incident. Wait for my review."
 
 **Before you act:** Maintenance feeds the next planning cycle. A closed incident or a model-generated lesson is not automatically a reviewed software improvement.
 
@@ -212,13 +220,13 @@ Slides: Core 3: Review, release and observe · Review the diff, not the explanat
 
 ## Behind? Catch up without losing your work
 
-Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from the ORIGINAL, unchanged clone root, not from a modified starter. Each creates a separate current-HEAD worktree and refuses overwrite. Compare files yourself. Never copy runtime data, approvals, progress or lesson history. A solved checkpoint helps catch up; it does not prove you authored, tested or reviewed a change.
+Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from the ORIGINAL, unchanged clone root, not from a modified starter. Each creates a separate current-HEAD worktree and refuses overwrite. Core 2 is an intermediate tool-solved, gate-unfinished catch-up point; Core 3 is the solved reference. Neither proves you authored, tested or reviewed a change. Compare files yourself. Never copy runtime data, approvals, progress or lesson history.
 
 | Checkpoint | Contains |
 | --- | --- |
 | `start` | The committed-HEAD starter has the A5 tool exercise and a fail-closed A8 approval gate. |
-| `core-2` | Core 2 retains the solved read-only tool and the fail-closed A8 approval gate. |
-| `core-3` | Core 3 is the solved committed HEAD with no exercise cuts. |
+| `core-2` | Core 2 is an intermediate catch-up point: the read-only tool is solved, but the A8 approval gate remains cut. This checkpoint does not prove participant-authored work. |
+| `core-3` | Core 3 is the solved reference with no exercise cuts. This checkpoint does not prove participant-authored work. |
 
 ## Where everything is
 
