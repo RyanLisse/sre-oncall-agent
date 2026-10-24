@@ -40,6 +40,13 @@ The slides: run `python3 serve.py` in the slides repo, then open
 
 ## Teach from the task
 
+Welcome the group with the AI-SDLC learning goal. Keep welcome and W4 recap
+within five minutes. Ask for one useful lesson or surprise from W4 and the
+check that would catch it next time. Take two or three short answers.
+Connect structured output, tool evidence and human decisions to today's full
+delivery cycle; do not repeat W4 demonstrations. W4 attendance is not a
+prerequisite for the solo route.
+
 Start with the AI SDLC: why code alone is not enough, the lifecycle stages,
 the evidence participants will produce, and the decisions humans keep.
 Then introduce Claude Code as the development assistant and the shop as the
@@ -70,13 +77,13 @@ published upstream `workshop/start` branch and Actions enabled; a main-only
 fork is not enough. Keep the inherited CI and review gates intact. Missing
 repository access is a release blocker, not a reason to simulate a merge.
 
-Use the 31-slide core route through **Show the completed lifecycle**. The 7
+Use the 32-slide core route through **Show the completed lifecycle**. The 7
 slides after it are reference only. The rest
 is reference material or a separate follow-up, not another required session.
 
 | Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
-| 10:00–10:30 | AI-SDLC introduction, then Claude Code | Purpose, lifecycle, outputs and human decisions first; then assistant and practice system | participants can state the required artifacts and why evidence comes first |
+| 10:00–10:30 | Welcome, W4 recap, AI-SDLC introduction, then Claude Code | Welcome and recap: five minutes maximum. Purpose, lifecycle, outputs and human decisions first; then assistant and practice system | participants can state the required artifacts and choose one delivery skill to improve |
 | 10:30–11:00 | Start the lab and check your starting point | Setup and preflight | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
 | 11:00–11:15 | Break | Break | — |
 | 11:15–11:40 | Core 1: observe the evidence | Detection, one fault, references and data gaps | diagnosis checked against telemetry; `docs/diagnosis-live.md` |
@@ -89,7 +96,11 @@ is reference material or a separate follow-up, not another required session.
 | 14:55–15:15 | Core 3: review the actual diff | Inspect the staged and untracked files against intent and `REVIEW.md` | findings verified by a human |
 | 15:15–15:35 | PR and release decision | Human-owned learner-repo PR, current-head checks and review | merge decision recorded, or `RELEASE BLOCKED` with exact reason |
 | 15:35–15:50 | Runtime observation | Briefly inspect actual model label, trace and recovery; avoid a long button demo | observed result or blocker recorded; NOT LANDED stays open |
-| 15:50–16:00 | Next task and SDLC evidence | Propose and review one evidence-based next task; show the full record | `docs/verify/sdlc.md` shows artifacts, checks, human decisions, runtime and next task |
+| 15:50–16:00 | Next task and SDLC evidence | Review one next task; show the record; revisit the chosen delivery skill and bridge to W6–W7 | `docs/verify/sdlc.md` shows artifacts, checks, human decisions, runtime and next task |
+
+Close by connecting this cycle to the next workshops. W6 starts one small
+part of the participant's existing personal or team use case. W7 reviews,
+finishes and presents the same scope. The shop is not a required project.
 
 Protect the delivery and review blocks; timebox the runtime button
 demonstration. Use practice time for catch-up, not more definitions.
