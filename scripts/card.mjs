@@ -18,6 +18,11 @@ const cmd = (s) => s;
 // ── CARD.md ──────────────────────────────────────────────────────────────
 const md = [];
 md.push(`# Participant card · ${w.title}`, "");
+const referenceMarkdown = refs => (refs ?? []).flatMap(r => [
+  `**Example: ${r.title}.** ${r.caption}`, "",
+  `**Scenario:** ${r.scenario}`, "", `**Start:** ${r.start}`, "", `**Stop:** ${r.stop}`, "",
+  `![${r.title}](${r.image})`, "",
+]);
 md.push("> Generated from `workshop.json` by `npm run card`. Do not edit by hand.", "");
 md.push("Start with the task and its reason. Read each concept just before you use it. Then act, check the result, and record your evidence. The slides follow this same route.", "");
 md.push(`## ${w.opening.title}`, "", w.opening.why, "", w.opening.loop, "", w.opening.proof, "", w.opening.practice, "");
@@ -29,10 +34,12 @@ if (w.start.launcher) md.push("In terminal 2, from the original clone root, conf
 md.push(`- **See:** ${w.start.see}`, `- **Check:** ${cmd(w.start.check)}`, "- **Stuck?**");
 for (const [p, f] of w.start.stuck) md.push(`  - ${p}: ${cmd(f)}`);
 md.push("");
+md.push(...referenceMarkdown(w.start.references));
 w.cores.forEach((c, i) => {
   md.push(`## Core ${i + 1} · ${c.name}`, "", `**What you do:** ${c.goal}`, "", `**Why:** ${c.why}`, "", `**What proves it:** ${c.proof}`, "", `Slides: ${c.slides}. Replaces ${c.replaces.join(" + ")}.`, "");
   c.steps.forEach((s, j) => {
     md.push(`### ${i + 1}.${j + 1} ${cmd(s.do)}`, "", `**Before you act:** ${cmd(s.before)}`, "", `- **See:** ${cmd(s.see)}`, `- **Check:** ${cmd(s.check)}`, `- **Stuck?** ${cmd(s.stuck)}`, "");
+    md.push(...referenceMarkdown(s.references));
   });
 });
 md.push("## Go deeper (optional)", "", "| # | Task | Do |", "| --- | --- | --- |");
@@ -46,8 +53,9 @@ md.push("");
 // ── hub/index.html ───────────────────────────────────────────────────────
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const code = (s) => esc(cmd(s)).replace(/`([^`]+)`/g, "<code>$1</code>");
+const references = refs => (refs ?? []).map(r => `<details class="reference"><summary>Expected reference: ${esc(r.title)}</summary><p><b>Scenario:</b> ${esc(r.scenario)}</p><p><b>Start:</b> ${esc(r.start)}</p><p><b>Stop:</b> ${esc(r.stop)}</p><figure><img src="../${esc(r.image)}" alt="${esc(r.title)}" loading="lazy"><figcaption>${esc(r.caption)}</figcaption></figure></details>`).join("");
 const link = ([n, h]) => (h.startsWith("http") || h.startsWith("course/") ? `<a href="${esc(h.startsWith("course/") ? "/" + h : h)}">${esc(n)}</a>` : `${esc(n)} <code>${esc(h)}</code>`);
-const step = (s, n) => `<li class="step"><div class="n">${n}</div><div><p class="do">${code(s.do)}</p><p><b>Before you act:</b> ${code(s.before)}</p><dl><dt>See</dt><dd>${code(s.see)}</dd><dt>Check</dt><dd>${code(s.check)}</dd><dt>Stuck?</dt><dd>${code(s.stuck)}</dd></dl></div></li>`;
+const step = (s, n) => `<li class="step"><div class="n">${n}</div><div><p class="do">${code(s.do)}</p><p><b>Before you act:</b> ${code(s.before)}</p><dl><dt>See</dt><dd>${code(s.see)}</dd><dt>Check</dt><dd>${code(s.check)}</dd><dt>Stuck?</dt><dd>${code(s.stuck)}</dd></dl>${references(s.references)}</div></li>`;
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -74,6 +82,7 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;paddin
 table{border-collapse:collapse;width:100%;font-size:15px}td,th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.roles ul{margin:6px 0 0;padding-left:18px}
 a{color:var(--accent)}
+.reference{margin:14px 0;border:1px solid var(--line);border-radius:8px;padding:12px}.reference summary{cursor:pointer;font-weight:600}.reference figure{margin:12px 0 0}.reference img{display:block;width:100%;height:auto}.reference figcaption{font-size:13px;margin-top:8px;color:var(--muted)}
 @media (max-width:600px){.step{grid-template-columns:28px 1fr}dl{grid-template-columns:1fr}dt{margin-top:4px}h2{scroll-margin-top:220px}}
 </style>
 </head>
@@ -89,7 +98,7 @@ a{color:var(--accent)}
 <div class="card"><p class="goal">${esc(w.start.say)}</p><p><b>Why:</b> ${code(w.start.why)}</p><pre>${w.start.do.map(esc).join("\n")}</pre>
 ${w.start.assistant ? `<p><b>${esc(w.start.assistant.title)}:</b> In terminal 1, run <code>${esc(w.start.assistant.command)}</code> in the starter after the lifecycle introduction and before code edits.</p><blockquote>${esc(w.start.assistant.prompt)}</blockquote>` : ""}
 ${w.start.launcher ? `<p>In terminal 2, from the original clone root, configure supported SDK access as described in the setup guide, then run:</p><pre>${w.start.launcher.map(esc).join("\n")}</pre>` : ""}
-<dl><dt>See</dt><dd>${code(w.start.see)}</dd><dt>Check</dt><dd>${code(w.start.check)}</dd><dt>Stuck?</dt><dd>${w.start.stuck.map(([p, f]) => `<b>${esc(p)}.</b> ${code(f)}`).join("<br>")}</dd></dl></div>
+<dl><dt>See</dt><dd>${code(w.start.see)}</dd><dt>Check</dt><dd>${code(w.start.check)}</dd><dt>Stuck?</dt><dd>${w.start.stuck.map(([p, f]) => `<b>${esc(p)}.</b> ${code(f)}`).join("<br>")}</dd></dl>${references(w.start.references)}</div>
 ${w.cores.map((c, i) => `<h2 id="${c.id}">Core ${i + 1} · ${esc(c.name)}</h2>
 <div class="card"><p class="goal"><b>What you do:</b> ${code(c.goal)}</p><p><b>Why:</b> ${code(c.why)}</p><p><b>What proves it:</b> ${code(c.proof)}</p><p class="meta">Slides: ${esc(c.slides)} · replaces ${c.replaces.join(" + ")}</p>
 <ol class="steps">${c.steps.map((s, j) => step(s, `${i + 1}.${j + 1}`)).join("")}</ol></div>`).join("\n")}

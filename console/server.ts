@@ -24,7 +24,7 @@
  * the live telemetry — deterministic, no model — and opens an incident when
  * they trip. "Claude is never the detector."
  */
-import { readFile, readFileSync, writeFile } from "node:fs";
+import { existsSync, readFile, readFileSync, writeFile } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { dirname, join, resolve } from "node:path";
@@ -172,6 +172,12 @@ return createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname === "/") { res.writeHead(200, { "content-type": "text/html" }); return res.end(readFileSync(join(here, "index.html"))); }
   if (req.method === "GET" && (url.pathname === "/hub" || url.pathname === "/hub/")) { res.writeHead(200, { "content-type": "text/html" }); return res.end(readFileSync(join(here, "..", "hub", "index.html"))); }
+  if (req.method === "GET" && /^\/docs\/assignment-examples\/[a-z-]+\.png$/.test(url.pathname)) {
+    const image = join(here, "..", url.pathname);
+    if (!existsSync(image)) return json(res, 404, { error: "Reference image not found" });
+    res.writeHead(200, { "content-type": "image/png" });
+    return res.end(readFileSync(image));
+  }
   const courseFile = { "/course/index.html": "text/html", "/course/styles.css": "text/css", "/course/main.js": "text/javascript" }[url.pathname] as string | undefined;
   if (req.method === "GET" && courseFile) { res.writeHead(200, { "content-type": courseFile }); return res.end(readFileSync(join(here, "..", url.pathname))); }
   if (req.method === "GET" && url.pathname === "/api/health") {

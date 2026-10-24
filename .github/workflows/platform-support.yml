@@ -1,0 +1,37 @@
+name: Platform support
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  participant-route:
+    name: Participant route (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: windows-latest
+            shell: pwsh
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run fixtures
+      - run: npm run typecheck
+      - run: node --test test/workshop-launcher.test.mjs test/checkpoint.test.mjs
+      - run: node --test test/platform-smoke.test.mjs
+      - run: npx tsx --test test/workshop/tools.test.ts test/workshop/executor.test.ts
+      - run: npm run card:check

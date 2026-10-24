@@ -69,6 +69,8 @@ test("the model receives the rollback evidence boundary and missing-deploy polic
   let called = false;
   const query: QueryFn = async function* (args) {
     called = true;
+    assert.deepEqual(args.options.settingSources, ["user"]);
+    assert.equal(args.options.permissionMode, "dontAsk");
     const prompt = args.options?.systemPrompt;
     assert.ok(typeof prompt === "string");
     assert.match(prompt, /rollback proposal requires a deploys evidence entry from a non-empty list_deploys result/);
