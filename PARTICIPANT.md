@@ -1,5 +1,9 @@
 # Participant quickstart
 
+Working without a facilitator? Start with [SOLO.md](SOLO.md). It covers the
+same three cores, self-review, pauses and release blockers. No slides or
+facilitator demonstration are required.
+
 Use the generated [CARD.md](CARD.md) or the live
 [hub](http://127.0.0.1:4320/hub); both are generated from `workshop.json`.
 Follow [Claude Code and Agent SDK setup](docs/claude-code.md) for the official

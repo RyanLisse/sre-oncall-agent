@@ -4,6 +4,8 @@ This is the workshop overview. Its goal is to practise AI-assisted software
 delivery while improving a small local SRE agent. Claude Code is the coding
 assistant; the separate runtime SRE agent is the application being changed.
 For the facilitator run sheet and timing, see [FACILITATOR.md](FACILITATOR.md).
+For the same assignment without a facilitator, start with [SOLO.md](SOLO.md).
+The card includes the explanations and checks needed to work independently.
 
 The required route has **three core tasks**. Start with the AI SDLC: its
 purpose, stages, evidence and human decisions. Then open Claude Code before

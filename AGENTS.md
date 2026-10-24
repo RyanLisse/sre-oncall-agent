@@ -59,6 +59,9 @@ fallback output, never model evidence. If a model response fabricates a
 citation or fails the contract, preserve it and stop.
 When guiding a participant, state the current task, why it is needed, and
 what will prove it. Explain only the concept needed for the next card step.
+For an unaided participant, use [SOLO.md](SOLO.md). Do not require a
+facilitator demonstration. Help record blockers and self-review limitations;
+never substitute agent approval for a required human reviewer.
 Do not lead with a glossary or turn optional depth into prerequisites.
 NOT LANDED or unknown recovery means stop, keep the incident open, and escalate.
 Never use approval, execution, mitigation, or resolution endpoints on a human's

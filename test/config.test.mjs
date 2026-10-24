@@ -5,6 +5,45 @@ import { readFileSync, existsSync } from "node:fs";
 
 const settings = JSON.parse(readFileSync(".claude/settings.json", "utf8"));
 
+test("solo participants have a complete route without a facilitator", () => {
+  const solo = readFileSync("SOLO.md", "utf8");
+  const route = solo.split("## Optional legacy offline reference")[0];
+  for (const section of ["Before you start", "Core 1", "Core 2", "Core 3", "Completion checklist", "Review when you are the only participant", "Pause, resume or get unstuck"]) {
+    assert.ok(route.includes(section), section);
+  }
+  assert.match(route, /without a facilitator or a presentation/);
+  assert.match(route, /self-review; no independent\s+reviewer/);
+  assert.match(route, /RELEASE BLOCKED/);
+  assert.match(route, /restart archives old telemetry/);
+  assert.match(solo, /Step 0 expects solved code/);
+  for (const file of ["PARTICIPANT.md", "WORKSHOP.md", "AGENTS.md", "CLAUDE.md", "CARD.md", "hub/index.html"]) {
+    assert.ok(readFileSync(file, "utf8").includes("SOLO.md"), file);
+  }
+  const git = readFileSync("docs/sdlc-git.md", "utf8");
+  assert.doesNotMatch(git, /stop and ask the facilitator|ask the facilitator\s+to confirm/);
+  assert.match(git, /git worktree list/);
+  assert.match(git, /git ls-remote --exit-code https:\/\/github.com\/RyanLisse\/sre-oncall-agent.git refs\/heads\/workshop\/start/);
+});
+
+test("release skill hands Git actions to the participant on the learner remote", () => {
+  const skill = readFileSync(".claude/skills/review-and-ship/SKILL.md", "utf8");
+  assert.match(skill, /git diff workshop-base/);
+  assert.match(skill, /Do not commit, approve, push, open a PR or MR, or merge/);
+  assert.match(skill, /verified `learner` remote/);
+  assert.match(skill, /RELEASE BLOCKED/);
+  assert.doesNotMatch(skill, /Try the push once|git push -u origin|git diff main/);
+});
+
+test("optional concepts name the current tools and point back to the assignment", () => {
+  const course = readFileSync("course/index.html", "utf8");
+  assert.match(course, /Optional concepts, not the assignment/);
+  assert.match(course, /Four read-only tools/);
+  assert.match(course, /get_diff/);
+  assert.match(course, /https:\/\/github.com\/RyanLisse\/sre-oncall-agent\/blob\/main\/SOLO.md/);
+  assert.doesNotMatch(course, /Three Tools, No Levers|has three read-only tools|forbids adding a fourth/);
+  assert.match(readFileSync("docs/video/README.md", "utf8"), /archived reference, not the current Workshop 5 instructions/);
+});
+
 test("every configured hook is an exec-form node command on a committed file", () => {
   const groups = ["PreToolUse", "PostToolUse", "SessionStart", "Stop"];
   const seen = new Set();

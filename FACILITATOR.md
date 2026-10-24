@@ -70,13 +70,14 @@ published upstream `workshop/start` branch and Actions enabled; a main-only
 fork is not enough. Keep the inherited CI and review gates intact. Missing
 repository access is a release blocker, not a reason to simulate a merge.
 
-Use the main route through **Close: show what you can now prove**. The rest
+Use the 31-slide core route through **Show the completed lifecycle**. The 7
+slides after it are reference only. The rest
 is reference material or a separate follow-up, not another required session.
 
 | Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
 | 10:00–10:30 | AI-SDLC introduction, then Claude Code | Purpose, lifecycle, outputs and human decisions first; then assistant and practice system | participants can state the required artifacts and why evidence comes first |
-| 10:30–11:00 | Start the lab | **Start the lab** | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
+| 10:30–11:00 | Start the lab and check your starting point | Setup and preflight | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
 | 11:00–11:15 | Break | Break | — |
 | 11:15–11:40 | Core 1: observe the evidence | Detection, one fault, references and data gaps | diagnosis checked against telemetry; `docs/diagnosis-live.md` |
 | 11:40–12:00 | Core 1: accept intent | Draft and human review of observable outcome | accepted `intent.md` and decision recorded |
@@ -91,12 +92,16 @@ is reference material or a separate follow-up, not another required session.
 | 15:50–16:00 | Next task and SDLC evidence | Propose and review one evidence-based next task; show the full record | `docs/verify/sdlc.md` shows artifacts, checks, human decisions, runtime and next task |
 
 Protect the delivery and review blocks; timebox the runtime button
-demonstration. Use practice time for catch-up, not more definitions. In the scenario slide,
+demonstration. Use practice time for catch-up, not more definitions.
 INC-1001 is a fixture ID; live incidents have their own IDs. Offline output
 is scripted and is not model-quality evidence. Real model wording varies:
 teach the verified trace, missing evidence and gaps, not exact sentences.
 
 ## Top failure + fix per block
+
+Participants working independently follow [SOLO.md](SOLO.md) and the same
+card. They record self-review as a limitation and never bypass a required
+external reviewer. Missing access or review becomes `RELEASE BLOCKED`.
 
 - **Start** — `npm start` stops with a port message: another copy runs. Stop
   only your own workshop launcher; never kill an unknown process. Node too old:

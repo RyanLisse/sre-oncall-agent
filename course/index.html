@@ -44,19 +44,19 @@
 
           <button class="nav-dot" data-target="module-1" data-tooltip="4 a.m." role="tab" aria-label="Module 1: 4 a.m."></button>
         <button class="nav-dot" data-target="module-2" data-tooltip="The Division of Labour" role="tab" aria-label="Module 2: The Division of Labour"></button>
-        <button class="nav-dot" data-target="module-3" data-tooltip="Three Tools, No Levers" role="tab" aria-label="Module 3: Three Tools, No Levers"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="Four read-only tools" role="tab" aria-label="Module 3: Four read-only tools"></button>
         <button class="nav-dot" data-target="module-4" data-tooltip="The Contract Checks the Model" role="tab" aria-label="Module 4: The Contract Checks the Model"></button>
         <button class="nav-dot" data-target="module-5" data-tooltip="Sign, Watch, Learn, Ratchet" role="tab" aria-label="Module 5: Sign, Watch, Learn, Ratchet"></button>
           <button class="nav-dot" data-target="module-1" data-tooltip="4 a.m." role="tab" aria-label="Module 1: 4 a.m."></button>
         <button class="nav-dot" data-target="module-2" data-tooltip="The Division of Labour" role="tab" aria-label="Module 2: The Division of Labour"></button>
-        <button class="nav-dot" data-target="module-3" data-tooltip="Three Tools, No Levers" role="tab" aria-label="Module 3: Three Tools, No Levers"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="Four read-only tools" role="tab" aria-label="Module 3: Four read-only tools"></button>
         <button class="nav-dot" data-target="module-4" data-tooltip="The Contract Checks the Model" role="tab" aria-label="Module 4: The Contract Checks the Model"></button>
         <button class="nav-dot" data-target="module-5" data-tooltip="Sign, Watch, Learn, Ratchet" role="tab" aria-label="Module 5: Sign, Watch, Learn, Ratchet"></button>
           ...
         -->
         <button class="nav-dot" data-target="module-1" data-tooltip="4 a.m." role="tab" aria-label="Module 1: 4 a.m."></button>
         <button class="nav-dot" data-target="module-2" data-tooltip="The Division of Labour" role="tab" aria-label="Module 2: The Division of Labour"></button>
-        <button class="nav-dot" data-target="module-3" data-tooltip="Three Tools, No Levers" role="tab" aria-label="Module 3: Three Tools, No Levers"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="Four read-only tools" role="tab" aria-label="Module 3: Four read-only tools"></button>
         <button class="nav-dot" data-target="module-4" data-tooltip="The Contract Checks the Model" role="tab" aria-label="Module 4: The Contract Checks the Model"></button>
         <button class="nav-dot" data-target="module-5" data-tooltip="Sign, Watch, Learn, Ratchet" role="tab" aria-label="Module 5: Sign, Watch, Learn, Ratchet"></button>
       </div>
@@ -74,6 +74,12 @@
     </header>
 
     <div class="module-body">
+
+      <section class="screen">
+        <h2 class="screen-heading">Optional concepts, not the assignment</h2>
+        <p>Workshop 5 teaches the AI-native SDLC: Plan → Design → Build → Test → Release → Observe → Plan again. The SRE agent and shop are practice systems. This course explains runtime concepts; it does not replace the required delivery work.</p>
+        <p>Working alone? Start with <a href="https://github.com/RyanLisse/sre-oncall-agent/blob/main/SOLO.md">the solo route</a> and follow <a href="https://github.com/RyanLisse/sre-oncall-agent/blob/main/CARD.md">the participant card</a>. Core 1 produces accepted intent from evidence. Core 2 includes both reviewed repairs and verification. Core 3 starts with diff review, then a human release decision, runtime observation and a reviewed next task. No facilitator or slides are required.</p>
+      </section>
 
       <section class="screen animate-in">
         <h2 class="screen-heading">Meet INC-1001</h2>
@@ -180,7 +186,7 @@
         <h2 class="screen-heading">Six rules, six places in the code</h2>
         <div class="step-cards">
           <div class="step-card"><div class="step-num">1</div><div><strong>Never the detector.</strong> Alerting stays deterministic and pages humans directly. The agent triages what fired. <code>fixtures/incidents/*.json</code> are alerts, not metrics the agent watches.</div></div>
-          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has three read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a fourth.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has four read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a mutation tool.</div></div>
           <div class="step-card"><div class="step-num">3</div><div><strong>Every claim carries a reference.</strong> <code>parseVerdict</code> rejects a verdict without evidence; each line is <code>logs:</code>, <code>metrics:</code>, <code>deploys:</code> or <code>lessons:</code>.</div></div>
           <div class="step-card"><div class="step-num">4</div><div><strong>Data before theory.</strong> The system prompt orders metrics → deploys → logs. <code>checkTrace</code> fails a verdict whose tools were never called.</div></div>
           <div class="step-card"><div class="step-num">5</div><div><strong>No unreviewed memory.</strong> The agent writes <code>lessons/proposed/</code>. A human promotes into <code>lessons.md</code> by PR.</div></div>
@@ -252,19 +258,19 @@
   <div class="module-content">
     <header class="module-header animate-in">
       <span class="module-number">03</span>
-      <h1 class="module-title">Three Tools, No Levers</h1>
+      <h1 class="module-title">Four read-only tools</h1>
       <p class="module-subtitle">The quality of an agent is the quality of its tools. Ours are deliberately few, deliberately read-only, and exposed through an in-process MCP server.</p>
     </header>
 
     <div class="module-body">
 
       <section class="screen animate-in">
-        <h2 class="screen-heading">search_logs · summarize_metrics · list_deploys</h2>
+        <h2 class="screen-heading">search_logs · summarize_metrics · list_deploys · get_diff</h2>
         <p>Each tool is a <span class="term" data-definition="A pure function returns the same output for the same input and changes nothing outside itself.">pure function</span> over a JSON fixture in <code>src/telemetry.ts</code>. <code>src/tools.ts</code> wraps them with <code>zod</code> schemas and <code>createSdkMcpServer</code>. Swapping the fixture for Grafana and a real log store changes <code>telemetry.ts</code> only. The kit calls that a <strong>capability binding</strong>.</p>
         <div class="translation-block animate-in">
           <div class="translation-code">
             <span class="translation-label">src/tools.ts</span>
-            <pre><code><span class="code-line"><span class="code-keyword">export const</span> TOOL_NAMES = [<span class="code-string">"search_logs"</span>, <span class="code-string">"summarize_metrics"</span>, <span class="code-string">"list_deploys"</span>] <span class="code-keyword">as const</span>;</span>
+            <pre><code><span class="code-line"><span class="code-keyword">export const</span> TOOL_NAMES = [<span class="code-string">"search_logs"</span>, <span class="code-string">"summarize_metrics"</span>, <span class="code-string">"list_deploys"</span>, <span class="code-string">"get_diff"</span>] <span class="code-keyword">as const</span>;</span>
 <span class="code-line"></span>
 <span class="code-line"><span class="code-comment">// There is deliberately no rollback, scale or set_flag tool.</span></span>
 <span class="code-line"><span class="code-comment">// If you ever add a mutating tool, build it as its own agent</span></span>
@@ -272,7 +278,7 @@
           </div>
           <div class="translation-english">
             <span class="translation-label">In plain words</span>
-            <p>The agent may only ask three questions: what did the metrics do, what shipped, what do the logs say. The SDK's <code>allowedTools</code> lists exactly these, and <code>permissionMode: "dontAsk"</code> denies everything else. The ban is configuration, not a request in the prompt.</p>
+            <p>The agent reads metrics, deployments, logs and deployment diffs. <code>get_diff</code> returns the recorded change for a deployment; it does not read arbitrary files. The SDK's <code>allowedTools</code> lists these four tools, and <code>permissionMode: "dontAsk"</code> denies other tools. No tool can mutate the shop.</p>
           </div>
         </div>
       </section>
@@ -377,7 +383,7 @@
 
       <section class="screen animate-in">
         <h2 class="screen-heading">The loop budget</h2>
-        <p>One turn is one model round-trip. The method needs three tool turns and one answer. <code>maxTurns</code> defaults to 10. Set it to 2 and the run ends with <code>maxTurns (2) reached before a verdict</code> — a readable stop, not a guess.</p>
+        <p>One turn is one model round-trip. Tool calls and turn counts depend on the runtime and the investigation. <code>maxTurns</code> defaults to 10. The offline budget example with 2 turns stops with <code>maxTurns (2) reached before a verdict</code>, not a guessed diagnosis.</p>
       </section>
 
       <section class="screen animate-in">

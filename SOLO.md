@@ -1,4 +1,4 @@
-# Tutorial: build an AI SRE first responder
+# Practise the AI-native SDLC on your own
 
 For the shorter classroom route, use [WORKSHOP.md](WORKSHOP.md) and
 [PARTICIPANT.md](PARTICIPANT.md). This recommended self-paced route teaches
@@ -15,6 +15,26 @@ is an explicit scripted fallback, not model evidence. For canonical actions,
 prompts and proof, follow [CARD.md](CARD.md).
 
 ## Recommended self-paced route
+
+You can complete this route without a facilitator or a presentation. Use
+this page to navigate; [CARD.md](CARD.md) contains the exact prompts,
+commands, expected results and stop conditions. Read its **Before you act**
+text before each step. The course and numbered offline examples below are
+optional reference, not a second assignment.
+
+### Before you start
+
+1. Check `node --version` (22 or newer), `npm --version` and `git --version`.
+2. Follow [the setup guide](docs/claude-code.md) to install Claude Code and
+   configure separate SDK access. Use your own approved accounts and synthetic
+   data only. Real model requests may cost money.
+3. Prepare your own learner repository using
+   [the publishing prerequisites](docs/sdlc-git.md#publish-only-to-your-learner-repository).
+   Check repository access, Actions and any required reviewer before Core 1.
+   You may continue locally if these are blocked, but record `RELEASE BLOCKED`.
+4. Reserve a focused session for Core 1 through the same-incident check in
+   Core 2. Keep the launcher running across those steps so the before/after
+   evidence describes the same incident.
 
 First read **Start with the AI SDLC** in [CARD.md](CARD.md). Name the stages,
 the evidence you will produce and the decisions you keep. Then use the SRE
@@ -69,8 +89,8 @@ type shell commands into the active assistant prompt.
   incident trace shows whether the tool repair changes the evidence.
 - **Action:** Follow the baseline steps in
   [docs/sdlc-git.md](docs/sdlc-git.md). Follow the Core 2 prompts and checks
-  in [CARD.md](CARD.md). Record the actual plans, checks and trace in
-  `docs/verify/sdlc.md`.
+  in [CARD.md](CARD.md). Record both plans and your decisions in
+  `docs/plan.md`; record checks and trace in `docs/verify/sdlc.md`.
 - **Proof:** The tool and gate plans were reviewed before edits. Both repairs
   have a visible diff. The same-incident trace and complete check results are
   recorded. The A8 gate remains cut only until its repair within Core 2.
@@ -103,6 +123,43 @@ type shell commands into the active assistant prompt.
 - [ ] No approval, execution, mitigation, resolution, commit, push or merge was
       delegated to the assistant.
 
+### Review when you are the only participant
+
+You are the human reviewer, not Claude. Before each repair, read the plan
+against your accepted intent and record your name and decision. After the
+checks, take a separate review pass through the actual diff using `REVIEW.md`.
+Verify Claude's findings yourself. Record **self-review; no independent
+reviewer** in `docs/verify/sdlc.md`. An agent's review is not independent
+human approval.
+
+If your learner repository permits self-review, you may make the human merge
+decision after current-head CI passes. If policy requires another reviewer,
+request that review and record `RELEASE BLOCKED` until it arrives. Do not
+disable protection. A blocked release is an honest workshop outcome, not a
+merged change. Runtime approval and execution are separate human actions.
+
+### Pause, resume or get unstuck
+
+- Before pausing, save your files and record the current card step, checkpoint
+  path, branch, incident ID and next action with `npm run progress:note --
+  "..."`. Do not put credentials in the note.
+- To resume code work, open the same checkpoint, inspect `git status --short`
+  and `npm run progress`, then open Claude Code. Do not create another starter
+  over your existing work.
+- Keep the launcher running for the same-incident comparison. A launcher
+  restart archives old telemetry and starts a new shop run; it is not a
+  continuation of the original measurement. Preserve the old evidence and
+  mark an interrupted comparison as not completed. Do not copy runtime data
+  or approvals to manufacture continuity.
+- If setup fails, use the card's troubleshooting steps. If a test fails,
+  keep its output and ask Claude to explain that failure before changing code.
+  Do not lower contracts, tests or the bench floor to continue.
+- If you cannot proceed, record the failed command or card step, expected
+  result, actual result and missing access in `docs/verify/sdlc.md`. Ask your
+  course contact or repository maintainer with that sanitized evidence.
+  You can stop with a documented blocker; a facilitator is not required to
+  make up a successful result.
+
 ### Catch up without overwriting your starter
 
 Run catch-up commands from the original clone root, not a modified starter.
@@ -121,6 +178,12 @@ Do not copy runtime data, approvals, progress or lesson history from a solved
 checkpoint. `core-2` is an intermediate tool-solved, gate-unfinished catch-up
 point within Core 2. `core-3` is the solved reference. Neither proves
 participant-authored work.
+
+## Optional legacy offline reference — not the assignment
+
+Use a separate, unchanged clone for these examples, not your starter or repair
+branch. Step 0 expects solved code and cannot pass on the unfinished starter.
+These examples do not replace Core 1–3 or its delivery artifacts.
 
 The numbered steps below are deterministic offline reference material. Every
 investigation command explicitly selects `--model offline`; they are not model

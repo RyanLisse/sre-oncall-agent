@@ -275,7 +275,7 @@
       ],
       [
         "Slides (separate repo)",
-        "aetherlink-classroom-slides-w5/workshop5.html"
+        "https://github.com/RyanLisse/aetherlink-classroom-slides/blob/main/workshop5.html"
       ]
     ],
     "agent": [
@@ -302,6 +302,6 @@
     "why": "Faster code is not enough. A useful change needs a clear outcome, checked evidence and a human release decision.",
     "loop": "Plan → Design → Build → Test → Release → Observe → Plan again.",
     "proof": "Produce an accepted intent, a reviewed plan, a tested diff, a human release decision and one reviewed next task.",
-    "practice": "We change the SRE agent and observe a local shop. These are practice systems, not the learning goal."
+    "practice": "We change the SRE agent and observe a local shop. These are practice systems, not the learning goal. Working without a facilitator? Follow SOLO.md for setup, self-review, pauses and blockers, then complete the same Core 1–3 steps below. Read each Before you act explanation; no presentation is required."
   }
 }

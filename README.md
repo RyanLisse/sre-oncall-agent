@@ -103,6 +103,13 @@ hooks, subagents and adding a bench case are optional extensions. Human-only
 baseline, approval and learner-repository steps are in
 **[docs/sdlc-git.md](docs/sdlc-git.md)**.
 
+The solo route does not require slides or a facilitator. It includes setup,
+self-review, pause/resume guidance and a blocked-release outcome when access
+or independent review is missing. The [concept course](course/index.html)
+is optional background, not a replacement for the three-core assignment.
+The old [runtime explainer](docs/video/README.md) and dated verification
+records are historical evidence, not instructions for the current workshop.
+
 Historical `w5-core-*` tags are archived references only. The current
 safety-tested starter is generated from committed `HEAD` by `npm run checkpoint`.
 

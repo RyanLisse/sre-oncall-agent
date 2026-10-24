@@ -12,7 +12,7 @@ Plan → Design → Build → Test → Release → Observe → Plan again.
 
 Produce an accepted intent, a reviewed plan, a tested diff, a human release decision and one reviewed next task.
 
-We change the SRE agent and observe a local shop. These are practice systems, not the learning goal.
+We change the SRE agent and observe a local shop. These are practice systems, not the learning goal. Working without a facilitator? Follow SOLO.md for setup, self-review, pauses and blockers, then complete the same Core 1–3 steps below. Read each Before you act explanation; no presentation is required.
 
 ## Start
 
@@ -231,5 +231,5 @@ Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from the OR
 ## Where everything is
 
 - **Participant:** [Participant card](CARD.md) · [Console](http://127.0.0.1:4320) · [Course (concepts, self-paced)](course/index.html) · [Working alone](SOLO.md) · [Claude Code and SDK setup](https://github.com/RyanLisse/sre-oncall-agent/blob/main/docs/claude-code.md) · [Human Git release steps](docs/sdlc-git.md)
-- **Facilitator:** [Facilitator run sheet](FACILITATOR.md) · [Workshop guide](WORKSHOP.md) · [Slides (separate repo)](aetherlink-classroom-slides-w5/workshop5.html)
+- **Facilitator:** [Facilitator run sheet](FACILITATOR.md) · [Workshop guide](WORKSHOP.md) · [Slides (separate repo)](https://github.com/RyanLisse/aetherlink-classroom-slides/blob/main/workshop5.html)
 - **Agent:** [Agent rules](CLAUDE.md) · [Contract](docs/spec.md) · [Bench cases](bench/cases.json) · [Review checklist](REVIEW.md)

@@ -12,7 +12,7 @@
         <h2 class="screen-heading">Six rules, six places in the code</h2>
         <div class="step-cards">
           <div class="step-card"><div class="step-num">1</div><div><strong>Never the detector.</strong> Alerting stays deterministic and pages humans directly. The agent triages what fired. <code>fixtures/incidents/*.json</code> are alerts, not metrics the agent watches.</div></div>
-          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has three read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a fourth.</div></div>
+          <div class="step-card"><div class="step-num">2</div><div><strong>No auto-mitigation.</strong> There is no rollback tool. <code>src/tools.ts</code> has four read-only tools. <code>CLAUDE.md</code> rule 1 forbids adding a mutation tool.</div></div>
           <div class="step-card"><div class="step-num">3</div><div><strong>Every claim carries a reference.</strong> <code>parseVerdict</code> rejects a verdict without evidence; each line is <code>logs:</code>, <code>metrics:</code>, <code>deploys:</code> or <code>lessons:</code>.</div></div>
           <div class="step-card"><div class="step-num">4</div><div><strong>Data before theory.</strong> The system prompt orders metrics → deploys → logs. <code>checkTrace</code> fails a verdict whose tools were never called.</div></div>
           <div class="step-card"><div class="step-num">5</div><div><strong>No unreviewed memory.</strong> The agent writes <code>lessons/proposed/</code>. A human promotes into <code>lessons.md</code> by PR.</div></div>

@@ -30,6 +30,9 @@ review and release are required; only skills, hooks, subagents and additional
 bench cases are optional. Explain concepts at first use, not in a glossary.
 Use `docs/sdlc-git.md` for human-only Git procedures. Never publish, approve,
 merge or operate the incident on a human's behalf.
+For solo work, follow `SOLO.md` without requiring a facilitator. The participant
+records their self-review limitation and any missing external review as a
+release blocker; another agent is not a human reviewer.
 
 ## Rules
 
