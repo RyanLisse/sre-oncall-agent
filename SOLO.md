@@ -16,6 +16,11 @@ prompts and proof, follow [CARD.md](CARD.md).
 
 ## Recommended self-paced route
 
+Choose [WSL or native PowerShell](docs/platforms.md) before setup. The
+[assignment examples](docs/assignment-examples.md) show each scenario, starting
+state, expected result and stop condition. Use your own evidence; example
+screenshots and solved checkpoints do not complete an assignment for you.
+
 You can complete this route without a facilitator or a presentation. Use
 this page to navigate; [CARD.md](CARD.md) contains the exact prompts,
 commands, expected results and stop conditions. Read its **Before you act**

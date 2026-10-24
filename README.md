@@ -16,6 +16,11 @@ humans decide what to mitigate and when.
 The CLI, launcher, shop and console run locally; SDK model calls use your
 configured provider. All data is fictional.
 
+Choose [WSL or native PowerShell](docs/platforms.md) for setup. Use the
+[assignment scenarios and expected screens](docs/assignment-examples.md)
+beside the participant card. Docker is optional planning material, not a
+packaged route yet.
+
 ![The on-call loop: alert → investigation → recovery](docs/diagrams/01-architecture.svg)
 
 ## The scenario

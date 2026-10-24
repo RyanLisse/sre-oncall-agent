@@ -65,6 +65,14 @@ test("console API enforces resolved, recovery and named-human gates", { timeout:
     child.once("error", reject); child.once("exit", code => reject(new Error(`Console exited ${code}`)));
   });
   const nonLoopback = Object.values(networkInterfaces()).flat().find(info => info && !info.internal && info.family === "IPv4");
+  await t.test("assignment references serve only known PNG images", async () => {
+    const image = await fetch(`http://127.0.0.1:${port}/docs/assignment-examples/intent.png`);
+    assert.equal(image.status, 200);
+    assert.equal(image.headers.get("content-type"), "image/png");
+    assert.deepEqual(Buffer.from(await image.arrayBuffer()).subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    assert.equal((await fetch(`http://127.0.0.1:${port}/docs/assignment-examples/missing.png`)).status, 404);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/docs/assignment-examples/../claude-code.md`)).status, 404);
+  });
   await t.test("console is unreachable via a non-loopback interface", {
     skip: nonLoopback ? false : "no non-loopback IPv4 interface",
   }, async () => {

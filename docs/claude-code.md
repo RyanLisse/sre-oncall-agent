@@ -19,6 +19,9 @@ Official references: [Claude Code setup](https://code.claude.com/docs/en/setup),
 
 ## Requirements and CLI installation
 
+Choose [WSL or native PowerShell](platforms.md) before setup. Keep both
+terminals, dependencies and user settings in that same environment.
+
 Use Node.js 22 or newer and Git. Install Claude Code with the official
 installer for your platform:
 
@@ -62,6 +65,15 @@ lifecycle introduction and before code edits. The generated card is the
 canonical source for the participant route and its prompts.
 
 ## Configure the SDK in terminal 2
+
+The investigation, read-only chat and model preflight use
+`settingSources: ["user"]`. The SDK loads your user-level Claude settings.
+Project and local settings are not loaded by these runtime calls. Review your
+user settings, including hooks and provider settings, before the workshop.
+Do not include credentials or personal settings in screenshots.
+
+The runtime still supplies its tool list and uses `permissionMode: "dontAsk"`.
+Loading user settings is not a human approval or a successful model preflight.
 
 Interactive CLI login does not prove Agent SDK access. Configure a supported
 SDK provider in the shell used for terminal 2. Never put a real key in the
@@ -118,6 +130,5 @@ There is no automatic fallback from a failed real request. Keep the incident
 safe: a variable model response must still cite its trace and evidence, and a
 fabricated citation or failed contract means preserve the output and stop.
 
-Windows native execution has not been tested by this project. The PowerShell
-installation example is documented for convenience, not a cross-platform test
-claim.
+See [platform checks and limits](platforms.md#platform-checks-and-limits) for
+the distinction between automated Windows checks and interactive testing.

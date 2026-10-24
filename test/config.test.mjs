@@ -5,6 +5,22 @@ import { readFileSync, existsSync } from "node:fs";
 
 const settings = JSON.parse(readFileSync(".claude/settings.json", "utf8"));
 
+test("every core assignment has a local expected-result reference", () => {
+  const workshop = JSON.parse(readFileSync("workshop.json", "utf8"));
+  const hub = readFileSync("hub/index.html", "utf8");
+  const card = readFileSync("CARD.md", "utf8");
+  for (const step of [workshop.start, ...workshop.cores.flatMap(c => c.steps)]) {
+    assert.ok(step.references?.length, step.do);
+    for (const ref of step.references) {
+      for (const field of ["title", "scenario", "start", "stop", "caption"]) assert.ok(ref[field], field);
+      assert.match(ref.image, /^docs\/assignment-examples\/[a-z-]+\.png$/);
+      assert.ok(existsSync(ref.image), ref.image);
+      assert.ok(hub.includes(`src="../${ref.image}"`), ref.image);
+      assert.ok(card.includes(`](${ref.image})`), ref.image);
+    }
+  }
+});
+
 test("solo participants have a complete route without a facilitator", () => {
   const solo = readFileSync("SOLO.md", "utf8");
   const route = solo.split("## Optional legacy offline reference")[0];

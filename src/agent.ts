@@ -140,7 +140,7 @@ export const investigate = async (incident: Incident, deps: AgentDeps): Promise<
         allowedTools: [...ALLOWED_TOOLS],
         outputFormat: { type: "json_schema", schema: VERDICT_SCHEMA },
         permissionMode: "dontAsk", // anything not allowed above is denied
-        settingSources: [], // reproducible: ignore local Claude Code settings
+        settingSources: ["user"],
         maxTurns,
         ...(deps.maxBudgetUsd ? { maxBudgetUsd: deps.maxBudgetUsd } : {}),
         ...(deps.model ? { model: deps.model } : {}),

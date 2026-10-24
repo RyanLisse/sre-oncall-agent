@@ -1,6 +1,28 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { routeMessage } from "../src/chat.js";
+import { ask, routeMessage } from "../src/chat.js";
+import { loadTelemetry } from "../src/telemetry.js";
+import { ALLOWED_TOOLS } from "../src/tools.js";
+
+test("questions load user settings and retain the read-only tool boundary", async () => {
+  const telemetry = await loadTelemetry("fixtures/telemetry/bad-deploy.json");
+  assert.ok(telemetry.ok);
+  let called = false;
+  const answer = await ask("What do the metrics show?", {
+    telemetry: telemetry.value,
+    model: "sonnet",
+    query: async function* ({ options }) {
+      called = true;
+      assert.deepEqual(options.settingSources, ["user"]);
+      assert.equal(options.permissionMode, "dontAsk");
+      assert.deepEqual(options.tools, [...ALLOWED_TOOLS]);
+      assert.deepEqual(options.allowedTools, [...ALLOWED_TOOLS]);
+      yield { type: "result", subtype: "success", result: "Test answer" };
+    },
+  });
+  assert.ok(called);
+  assert.equal(answer, "Test answer");
+});
 
 test("watch commands route to the grammar, not the model", () => {
   const r = routeMessage("Watch the next deployment for five minutes.");
