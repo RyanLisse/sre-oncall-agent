@@ -24,11 +24,12 @@ From each clone, create the intended checkpoint, then run its launcher:
 launcher. Run one clone at a time on the default ports; if a port is busy,
 only stop your own workshop launcher.
 
-In the first five minutes, have participants create the starter and run
-`claude` in terminal 1, then submit the read-only assistant prompt in
-[CARD.md](CARD.md) before theory or edits. In terminal
-2, from the original clone root, configure supported SDK access as described
-in that guide, enter the same starter, then run `npm ci`, `npm run fixtures`,
+After the short AI-SDLC introduction, have participants create the starter
+and run `claude` in terminal 1, then submit the read-only assistant prompt in
+[CARD.md](CARD.md) after the lifecycle introduction and before code edits.
+In terminal 2, from the original clone root, configure supported SDK access as
+described in that guide, enter the same starter, then run `npm ci`,
+`npm run fixtures`,
 `npm run model:check` and `npm start -- --fast`. The Agent SDK is separate
 from interactive CLI login; do not promise a subscription login proves SDK
 access.
@@ -39,8 +40,12 @@ The slides: run `python3 serve.py` in the slides repo, then open
 
 ## Teach from the task
 
-Start with the shop and the failing checkout, not a glossary. For each core,
-ask what participants will do, why it is needed, and what will prove it.
+Start with the AI SDLC: why code alone is not enough, the lifecycle stages,
+the evidence participants will produce, and the decisions humans keep.
+Then introduce Claude Code as the development assistant and the shop as the
+practice system. Do not open with installation or a checkout demonstration.
+For each core, name the lifecycle stage, what participants will do, why it
+is needed, and what will prove it.
 Explain only the concept needed for the next action. Show one example,
 then let participants use it. The card and hub put these explanations next
 to the steps under **Before you act**.
@@ -48,14 +53,14 @@ to the steps under **Before you act**.
 | Task | Why now | Explain at first use | Evidence to collect |
 | --- | --- | --- | --- |
 | Core 1: specify from evidence | A plausible diagnosis is not permission to change software. | Telemetry, references and data gaps before drafting an intent; human acceptance before planning. | `docs/diagnosis-live.md` plus a human-accepted `intent.md` with observable checks. |
-| Core 2: design and build | Core 1 defines the outcome; the code change must be reviewable. | Human starter baseline and reviewed plan before edits; MCP registration beside its handler; test, typecheck, bench and trace as proof. | Reviewed `docs/plan.md`, meaningful diff, passing focused checks and actual trace evidence. |
-| Core 3: review, release and learn | Tests do not accept or release their own change. | Fail-closed gate, full checks, actual diff review, human PR/merge decision, then runtime evidence and next-task review. | `docs/verify/sdlc.md` records checks, review, release or `RELEASE BLOCKED`, runtime result and next task. |
+| Core 2: design, build and verify | Core 1 defines the outcome; each repair needs a reviewed plan. | Human starter baseline; review a plan before repairing `list_deploys`, then review a gate plan before repairing `checkApproval`; check the same incident and run full verification. | `docs/plan.md`, a meaningful diff, the actual trace, focused checks and full verification results. |
+| Core 3: review, release and learn | Tests do not accept or release their own change. | Start with actual diff review, then human PR/release decision, runtime observation and next-task review. | `docs/verify/sdlc.md` records review, release or `RELEASE BLOCKED`, runtime result and next task. |
 
 Do not insert optional skills, hooks, subagents or extra bench-case work
 between these tasks. The human baseline, code review, release decision and
 runtime observation are required work, not optional Git-gate material. Explain
-concepts just before their first use. Name the full SDLC loop during the final
-reflection, using the work participants actually did.
+concepts just before their first use. Return to the opening SDLC map during
+the final reflection, using the work participants actually did.
 
 ## Time boxes
 
@@ -65,33 +70,38 @@ published upstream `workshop/start` branch and Actions enabled; a main-only
 fork is not enough. Keep the inherited CI and review gates intact. Missing
 repository access is a release blocker, not a reason to simulate a merge.
 
-Use the main route through **Close: show what you can now prove**. The rest
+Use the 31-slide core route through **Show the completed lifecycle**. The 7
+slides after it are reference only. The rest
 is reference material or a separate follow-up, not another required session.
 
 | Time | Slide title / section | Block | Expected output |
 | --- | --- | --- | --- |
-| 10:00–10:30 | Claude orientation and lifecycle map | Coding assistant vs runtime SRE agent; goal, outputs and human boundaries | participants can state the required artifacts and why evidence comes first |
-| 10:30–11:00 | Start the lab | **Start the lab** | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
+| 10:00–10:30 | AI-SDLC introduction, then Claude Code | Purpose, lifecycle, outputs and human decisions first; then assistant and practice system | participants can state the required artifacts and why evidence comes first |
+| 10:30–11:00 | Start the lab and check your starting point | Setup and preflight | starter and Claude Code ready; SDK preflight passes or access blocker is recorded |
 | 11:00–11:15 | Break | Break | — |
 | 11:15–11:40 | Core 1: observe the evidence | Detection, one fault, references and data gaps | diagnosis checked against telemetry; `docs/diagnosis-live.md` |
 | 11:40–12:00 | Core 1: accept intent | Draft and human review of observable outcome | accepted `intent.md` and decision recorded |
 | 12:00–13:00 | Lunch | Lunch | — |
 | 13:00–13:20 | Core 2: baseline and plan review | Human-owned baseline; smallest plan against intent | meaningful repair diff is possible; reviewed `docs/plan.md` |
-| 13:20–14:10 | Core 2: repair and check | **Core 2** | focused tool test, typecheck and bench pass; A8 remains intentionally red |
-| 14:10–14:40 | Trace and gate repair | Same-incident trace, then Core 3 gate plan and repair | actual tool trace recorded; focused executor test passes |
+| 13:20–14:10 | Core 2: repair the tool | Review the small plan, restore the registered handler, then check the same incident | focused tool test, typecheck, bench and actual trace recorded |
+| 14:10–14:40 | Core 2: repair the gate and verify | Review the gate plan, repair `checkApproval`, then run the complete checks | executor test, full verification, workshop and hook checks pass; results recorded |
 | 14:40–14:55 | Break | Break | — |
-| 14:55–15:15 | Full checks and diff review | Verify, inspect actual diff against intent and review checklist | full checks recorded; findings verified by a human |
+| 14:55–15:15 | Core 3: review the actual diff | Inspect the staged and untracked files against intent and `REVIEW.md` | findings verified by a human |
 | 15:15–15:35 | PR and release decision | Human-owned learner-repo PR, current-head checks and review | merge decision recorded, or `RELEASE BLOCKED` with exact reason |
 | 15:35–15:50 | Runtime observation | Briefly inspect actual model label, trace and recovery; avoid a long button demo | observed result or blocker recorded; NOT LANDED stays open |
 | 15:50–16:00 | Next task and SDLC evidence | Propose and review one evidence-based next task; show the full record | `docs/verify/sdlc.md` shows artifacts, checks, human decisions, runtime and next task |
 
 Protect the delivery and review blocks; timebox the runtime button
-demonstration. Use practice time for catch-up, not more definitions. In the scenario slide,
+demonstration. Use practice time for catch-up, not more definitions.
 INC-1001 is a fixture ID; live incidents have their own IDs. Offline output
 is scripted and is not model-quality evidence. Real model wording varies:
 teach the verified trace, missing evidence and gaps, not exact sentences.
 
 ## Top failure + fix per block
+
+Participants working independently follow [SOLO.md](SOLO.md) and the same
+card. They record self-review as a limitation and never bypass a required
+external reviewer. Missing access or review becomes `RELEASE BLOCKED`.
 
 - **Start** — `npm start` stops with a port message: another copy runs. Stop
   only your own workshop launcher; never kill an unknown process. Node too old:
@@ -125,8 +135,10 @@ teach the verified trace, missing evidence and gaps, not exact sentences.
   Allow about two minutes for recovery checks; keep the lab running.
 - **Catch-up** — `npm run checkpoint -- core-2` makes a separate copy in
   `.lab/checkpoints/core-2`. It never changes the participant's files. They
-  compare and copy one file themselves. Never `git checkout <tag> -- <files>`
-  over participant work.
+  compare and copy one file themselves. Core 2 is an intermediate catch-up
+  point with the read-only tool solved and the A8 gate still cut. Core 3 is
+  the solved reference. Neither proves participant-authored work. Never
+  `git checkout <tag> -- <files>` over participant work.
 
 ## If recovery says NOT LANDED
 

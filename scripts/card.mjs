@@ -20,9 +20,10 @@ const md = [];
 md.push(`# Participant card · ${w.title}`, "");
 md.push("> Generated from `workshop.json` by `npm run card`. Do not edit by hand.", "");
 md.push("Start with the task and its reason. Read each concept just before you use it. Then act, check the result, and record your evidence. The slides follow this same route.", "");
+md.push(`## ${w.opening.title}`, "", w.opening.why, "", w.opening.loop, "", w.opening.proof, "", w.opening.practice, "");
 md.push("## Start", "", w.start.say, "", `**Why:** ${w.start.why}`, "", "```bash", ...w.start.do, "```", "");
 if (w.start.assistant) {
-  md.push(`### ${w.start.assistant.title}`, "", `In terminal 1, run \`${w.start.assistant.command}\` in the starter before theory or edits.`, "", `> ${w.start.assistant.prompt}`, "");
+  md.push(`### ${w.start.assistant.title}`, "", `In terminal 1, run \`${w.start.assistant.command}\` in the starter after the lifecycle introduction and before code edits.`, "", `> ${w.start.assistant.prompt}`, "");
 }
 if (w.start.launcher) md.push("In terminal 2, from the original clone root, configure supported SDK access as described in the setup guide, then run:", "", "```bash", ...w.start.launcher, "```", "");
 md.push(`- **See:** ${w.start.see}`, `- **Check:** ${cmd(w.start.check)}`, "- **Stuck?**");
@@ -80,11 +81,13 @@ a{color:var(--accent)}
 <main>
 <h1>${esc(w.title)}</h1>
 <p class="sub">Start with the task and its reason. Read each concept just before you use it. Then act, check the result, and record your evidence. The slides follow this same route.</p>
+<h2>${esc(w.opening.title)}</h2>
+<div class="card"><p>${esc(w.opening.why)}</p><p>${esc(w.opening.loop)}</p><p>${esc(w.opening.proof)}</p><p>${esc(w.opening.practice)}</p></div>
 <nav><a href="#start">Start</a>${w.cores.map((c, i) => `<a href="#${c.id}">Core ${i + 1} · ${esc(c.name)}</a>`).join("")}<a href="#deeper">Go deeper</a><a href="#catchup">Catch up</a><a href="#where">Where is what</a></nav>
 <div class="live" id="live"><h3>Lab status</h3><p>Open this page from the console (<code>http://127.0.0.1:4320/hub</code>) to see the live next step.</p></div>
 <h2 id="start">Start</h2>
 <div class="card"><p class="goal">${esc(w.start.say)}</p><p><b>Why:</b> ${code(w.start.why)}</p><pre>${w.start.do.map(esc).join("\n")}</pre>
-${w.start.assistant ? `<p><b>${esc(w.start.assistant.title)}:</b> In terminal 1, run <code>${esc(w.start.assistant.command)}</code> in the starter before theory or edits.</p><blockquote>${esc(w.start.assistant.prompt)}</blockquote>` : ""}
+${w.start.assistant ? `<p><b>${esc(w.start.assistant.title)}:</b> In terminal 1, run <code>${esc(w.start.assistant.command)}</code> in the starter after the lifecycle introduction and before code edits.</p><blockquote>${esc(w.start.assistant.prompt)}</blockquote>` : ""}
 ${w.start.launcher ? `<p>In terminal 2, from the original clone root, configure supported SDK access as described in the setup guide, then run:</p><pre>${w.start.launcher.map(esc).join("\n")}</pre>` : ""}
 <dl><dt>See</dt><dd>${code(w.start.see)}</dd><dt>Check</dt><dd>${code(w.start.check)}</dd><dt>Stuck?</dt><dd>${w.start.stuck.map(([p, f]) => `<b>${esc(p)}.</b> ${code(f)}`).join("<br>")}</dd></dl></div>
 ${w.cores.map((c, i) => `<h2 id="${c.id}">Core ${i + 1} · ${esc(c.name)}</h2>

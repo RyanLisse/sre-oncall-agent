@@ -27,15 +27,19 @@ git switch -c fix/w5-core
 git show --stat workshop-base
 ```
 
-If either branch already exists, stop and ask the facilitator. Do not reset
-or overwrite it. The baseline intentionally has failing exercise tests.
+If either branch already exists, inspect `git worktree list`,
+`git log -1 workshop-base` and `git status --short`. Resume the original
+checkpoint only if it is your matching exercise. If you cannot establish
+that, preserve this clone and start in a fresh clone directory. Do not reset
+or overwrite an existing branch. This also works without a facilitator.
+The baseline intentionally has failing exercise tests.
 Only the repaired branch is a release candidate.
 
 ## Review and commit the repaired change
 
-After Core 3 checks pass, review `git diff workshop-base` against `intent.md`,
-`docs/plan.md` and `REVIEW.md`. Ask Claude for findings, then verify them
-yourself. Record your decision and actual check results in
+After the complete Core 2 checks pass, review `git diff workshop-base` against
+`intent.md`, `docs/plan.md` and `REVIEW.md`. Ask Claude for findings, then
+verify them yourself. Record your decision and actual check results in
 `docs/verify/sdlc.md`. Do not commit credentials or live customer data.
 
 First run `git status --short`. Untracked files do not appear in the diff.
@@ -110,8 +114,16 @@ Check the learner repository first:
 git ls-remote --exit-code learner refs/heads/workshop/start
 ```
 
-If this prints a commit and branch, do not overwrite it; ask the facilitator
-to confirm it is the intended starter. No matching branch returns exit code
+If this prints a commit and branch, compare its commit ID with the published
+upstream starter:
+
+```bash
+git ls-remote --exit-code https://github.com/RyanLisse/sre-oncall-agent.git refs/heads/workshop/start
+```
+
+Matching IDs confirm the copy. If they differ, preserve the branch and ask
+the learner repository owner to confirm the intended version; while solo,
+record `RELEASE BLOCKED` rather than replacing it. No matching branch returns exit code
 2. An authentication or network failure is not proof that the branch is absent.
 Only when the branch is absent, a human copies the upstream starter:
 

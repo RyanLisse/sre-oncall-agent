@@ -3,6 +3,11 @@
 What was actually tested, on which date, and what remains unmeasured. A
 scripted happy path is not an evaluation; this file says which is which.
 
+This is a historical record from 2026-10-06, not the current participant
+procedure. Do not rerun the legacy auto-approval demo scripts from this
+record. Follow [SOLO.md](../SOLO.md) and [CARD.md](../CARD.md), and record your
+own current results in [docs/verify/sdlc.md](verify/sdlc.md).
+
 ## Verified locally — 2026-10-06
 
 - `npm run verify`: typecheck clean, **57 tests**, bench 100 % / 0 harmful. Tests use fixtures and test doubles; they prove the contract and the plumbing, **not** model accuracy.

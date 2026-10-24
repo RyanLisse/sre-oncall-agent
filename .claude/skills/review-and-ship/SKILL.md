@@ -1,6 +1,6 @@
 ---
 name: review-and-ship
-description: Review the current branch for bugs and intent fit, run or add tests, commit focused work, then hand over to the human gate for push and PR (GitHub) or MR (GitLab).
+description: Review the workshop diff and checks, then prepare a release handoff. Only the human commits, approves, pushes, opens a PR or MR, and merges.
 disable-model-invocation: true
 allowed-tools: Bash(gh *) Bash(glab *) Bash(git *)
 ---
@@ -13,20 +13,17 @@ allowed-tools: Bash(gh *) Bash(glab *) Bash(git *)
 ## Context
 
 - Status: !`git status --short`
-- Diff vs main: !`git diff main...HEAD --stat 2>/dev/null || true`
+- Diff vs the exercise baseline: !`git diff workshop-base --stat`
 
 ## Workflow
 
-1. Gather context: base diff, uncommitted changes, recent commits, user intent, `REVIEW.md`.
+1. Read `intent.md`, `docs/plan.md`, `docs/verify/sdlc.md`, `REVIEW.md` and `docs/sdlc-git.md`. Inspect `git diff workshop-base`, staged changes and untracked files. If the baseline is absent, stop and ask the participant to follow the human baseline procedure; do not substitute solved `main`.
 2. Run targeted tests for changed behavior (`npm test`, `npm run bench`, `npm run test:workshop`); add tests or document the gap.
 3. Review for correctness, regressions, security, intent fit (the three passes in `REVIEW.md`).
 4. Fix critical issues; re-run affected tests.
-5. Commit selective files with a concise message (the human confirms the commit).
-6. Hand over to the gate. Try the push once: without a named approval the hook denies it. Then STOP and tell the
-   human the exact next commands for their remote:
-   - GitHub: `git push -u origin <branch>` then `gh pr create --fill`
-   - GitLab: `git push -u origin <branch>` then `glab mr create --fill`
-   Never merge, never approve a PR/MR, never write to `approvals/`.
+5. Prepare findings and a PR or MR description with actual checks, risks and limitations. Do not commit, approve, push, open a PR or MR, or merge. Do not try a push to test the guard.
+6. Hand over to the participant's shell procedure in `docs/sdlc-git.md`. Only the human stages and commits reviewed files, records Git approval, and publishes to the verified `learner` remote. The PR or MR base is `workshop-base`, with head `fix/w5-core`, not upstream `main`.
+7. Ask the human to record the current-head CI and required review before deciding to merge. For solo work, record self-review as a limitation. Missing access or a required reviewer means `RELEASE BLOCKED`; never bypass protection or write to `approvals/`.
 
 ## Guardrails
 
@@ -39,4 +36,4 @@ allowed-tools: Bash(gh *) Bash(glab *) Bash(git *)
 
 - Findings (critical / warning / note)
 - Tests run and outcomes
-- The gate status (denied / approved by <name>) and the exact push + PR/MR commands for the human
+- The observed checks and blockers, plus the human-only next step in `docs/sdlc-git.md`

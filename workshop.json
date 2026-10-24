@@ -2,7 +2,7 @@
   "$comment": "Single source for the participant card (CARD.md) and the hub (hub/index.html). Edit this file, then run npm run card. npm run card:check fails when the generated files are out of date. Plain English, one idea per sentence.",
   "title": "Workshop 5 · AI-native SDLC with Claude Code",
   "start": {
-    "say": "Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code before theory or edits; terminal 2 configures the SDK and runs the lab.",
+    "say": "Install Claude Code with the official instructions at https://code.claude.com/docs/en/setup, then create this isolated starter. Terminal 1 starts Claude Code after the lifecycle introduction and before code edits; terminal 2 configures the SDK and runs the lab.",
     "do": [
       "git clone https://github.com/RyanLisse/sre-oncall-agent.git",
       "cd sre-oncall-agent",
@@ -48,7 +48,7 @@
       "id": "core-1",
       "name": "Specify a change from evidence",
       "goal": "Observe the failing checkout and verify the diagnosis. Turn the missing deployment evidence into an accepted software requirement.",
-      "slides": "Core 1: Investigate the evidence · Core 1: Check the claims · Core 1: Specify the change",
+      "slides": "Specify: start with an observed problem · Create one fault and observe detection · Check the diagnosis against the evidence · Turn the finding into an intent · Accept the assignment before building",
       "replaces": [
         "A1",
         "A2",
@@ -72,8 +72,8 @@
         {
           "do": "Challenge the agent in chat: Could this be something other than the deployment?",
           "see": "Real output may vary. With the explicit offline fallback, the agent returns a scripted summary; that is not a new model investigation.",
-          "check": "Compare the answer with `ruled_out`, the trace and the data gap. If it fabricates a deploy citation or fails the contract, preserve the output and stop; do not call it success or weaken the contract.",
-          "stuck": "Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.",
+          "check": "Compare the answer with `ruled_out`, the trace and the data gap.",
+          "stuck": "If it fabricates a deploy citation or fails the contract, preserve the output and stop; do not call it success or weaken the contract.",
           "before": "Free-text chat is not checked by the structured verdict contract. Verify its claims manually against telemetry and trace; use Investigate for a contract-validated diagnosis."
         },
         {
@@ -97,11 +97,12 @@
     {
       "id": "core-2",
       "name": "Design, build and verify the change",
-      "goal": "Review a small plan, repair the read-only handler with Claude Code, and compare the implementation with the accepted intent.",
-      "slides": "Before code: a small plan · Keep a reviewable baseline · Core 2: Build a change safely · Core 2: Prove it on the live incident",
+      "goal": "Review a human plan before each repair. Restore the read-only tool and the approval gate, then verify the complete change.",
+      "slides": "Establish a reviewable starting point · Ask for a small plan, then review it · Understand the tool before repair · Repair the tool: red → green · Check the change on the same incident · Understand the human approval gate · Repair the gate: refuse unsafe actions · Verify the complete change",
       "replaces": [
         "A5",
-        "A7"
+        "A7",
+        "A8"
       ],
       "steps": [
         {
@@ -120,8 +121,8 @@
         },
         {
           "do": "Build the `list_deploys` handler in `src/tools.ts` with Claude Code or by hand. Keep the existing MCP registration intact.",
-          "see": "`test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until Core 3.",
-          "check": "After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until Core 3 restores the approval gate. Save the actual commands, results and any untested paths in `docs/verify/sdlc.md`. A8 remains expected red here, so this is not yet release-ready.",
+          "see": "`test/workshop/tools.test.ts` is green. The A8 valid-approval executor assertion remains red until the gate repair later in Core 2.",
+          "check": "After plan review, implement and run `npx tsx --test test/workshop/tools.test.ts`, then `npm run typecheck` and `npm run bench`. The bench prints `PASS bench`; executor tests remain intentionally red until the gate repair later in Core 2. Save the actual commands, results and any untested paths in `docs/verify/sdlc.md`. A8 remains expected red here, so this intermediate state is not yet release-ready.",
           "stuck": "The tool still returns `[]`: inspect the handler binding and the preserved registration; do not add a second registration.",
           "before": "MCP exposes named tools. The existing registration points to a handler that reads data; restore that binding only after the human reviews the small plan."
         },
@@ -131,28 +132,34 @@
           "check": "Verify the actual trace and references against `demo/data/telemetry.json`. If the citation is fabricated or the contract fails, preserve the output and stop. Record what you verified: `npm run progress:note -- \"Core 2: ...\"`",
           "stuck": "Incident gone? Incident history persists in SQLite, while the shop resets on restart. Do not restart the launcher to reload code; saving auto-reloads the console. For a fresh repeat, use a new disposable checkpoint copy; do not rebreak a stale incident.",
           "before": "A trace records the tools used for a diagnosis. Re-investigation lets you compare the same incident before and after the repair."
+        },
+        {
+          "do": "Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Ask Claude for a fail-closed plan for `checkApproval` in `src/executor.ts`. Review that plan before allowing the `TODO(A8)` repair.",
+          "see": "The test is green. The executor now refuses to act without a named approval for this incident and this proposal.",
+          "check": "Run `npx tsx --test test/workshop/executor.test.ts`.",
+          "stuck": "Read `test/workshop/executor.test.ts`. It names every case the gate must refuse. Chat refuses your sentence: that is correct for anything that changes the system. Approve, execute and resolve are buttons.",
+          "before": "The approval gate validates a named human decision for this incident and proposal. The starter fails closed until you rebuild it."
+        },
+        {
+          "do": "Run `npx tsx --test test/workshop/executor.test.ts`, `npm run verify`, `npm run test:workshop` and `npm run test:hooks`.",
+          "see": "All must pass before the code release decision.",
+          "check": "Record actual results in `docs/verify/sdlc.md`.",
+          "stuck": "If a check fails, preserve its output and do not mark the change ready for release.",
+          "before": "Run the complete checks after both repairs so the results cover the full change."
         }
       ],
       "why": "A bounded plan limits accidental changes. A failing test, a passing test and a real diff show what the repair changed.",
-      "proof": "docs/plan.md records your design review. The tool repair has a visible diff, passing focused tests, typecheck and bench results, plus the actual live model trace or a clearly recorded runtime blocker."
+      "proof": "docs/plan.md records the reviewed plans. Both repairs have a visible diff, the same-incident trace is checked, and the complete checks pass before release review."
     },
     {
       "id": "core-3",
       "name": "Review, release and learn from the result",
-      "goal": "Repair and test the human gate. Review the complete code change, prepare its PR and record a human release decision. Observe the local runtime and propose the next improvement.",
-      "slides": "Core 3: Judge the recovery · Review the diff, not the explanation · Prepare the PR and release decision · Observe, then plan the next change",
+      "goal": "Review the complete code change, prepare its PR and record a human release decision. Observe the local runtime and propose the next improvement.",
+      "slides": "Review the actual diff · Prepare the PR and make a release decision · Observe runtime with separate permission · Recovery: confirmed or not confirmed? · Turn the observation into the next task",
       "replaces": [
-        "A8",
         "A9"
       ],
       "steps": [
-        {
-          "do": "Run the red test: `npx tsx --test test/workshop/executor.test.ts`. Ask Claude for a fail-closed plan for `checkApproval` in `src/executor.ts`. Review that plan before allowing the `TODO(A8)` repair.",
-          "see": "The test is green. The executor now refuses to act without a named approval for this incident and this proposal.",
-          "check": "Run `npx tsx --test test/workshop/executor.test.ts`, `npm run verify`, `npm run test:workshop` and `npm run test:hooks`. Record actual results in `docs/verify/sdlc.md`. All must pass before the code release decision.",
-          "stuck": "Read `test/workshop/executor.test.ts`. It names every case the gate must refuse.",
-          "before": "The approval gate validates a named human decision for this incident and proposal. The starter fails closed until you rebuild it."
-        },
         {
           "do": "Ask Claude Code: \"Review git diff workshop-base against intent.md, docs/plan.md and REVIEW.md. Identify functional defects, missing checks and unsupported claims. Cite files and lines. Do not edit, approve, commit, push or merge. Wait for my decision.\"",
           "before": "First run git status --short. Untracked files are absent from the diff: inspect them and stage only intended files by exact path yourself before requesting review. Never stage secrets. Review checks whether the change meets the intent, not whether its explanation sounds convincing. Passing tests do not approve a change.",
@@ -190,7 +197,7 @@
         }
       ],
       "why": "The authoring agent cannot accept its own work. Code release and runtime recovery are different decisions, with different evidence.",
-      "proof": "docs/verify/sdlc.md records actual checks, human diff review, a PR and release decision or RELEASE BLOCKED, the runtime result and one reviewed next task."
+      "proof": "docs/verify/sdlc.md records actual diff review, a human PR and release decision or RELEASE BLOCKED, the runtime result and one reviewed next task."
     }
   ],
   "deeper": [
@@ -222,14 +229,14 @@
     },
     {
       "id": "core-2",
-      "say": "Core 2 retains the solved read-only tool and the fail-closed A8 approval gate."
+      "say": "Core 2 is an intermediate catch-up point: the read-only tool is solved, but the A8 approval gate remains cut. This checkpoint does not prove participant-authored work."
     },
     {
       "id": "core-3",
-      "say": "Core 3 is the solved committed HEAD with no exercise cuts."
+      "say": "Core 3 is the solved reference with no exercise cuts. This checkpoint does not prove participant-authored work."
     }
   ],
-  "catchUp": "Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from the ORIGINAL, unchanged clone root, not from a modified starter. Each creates a separate current-HEAD worktree and refuses overwrite. Compare files yourself. Never copy runtime data, approvals, progress or lesson history. A solved checkpoint helps catch up; it does not prove you authored, tested or reviewed a change.",
+  "catchUp": "Run `npm run checkpoint -- core-2` or `npm run checkpoint -- core-3` from the ORIGINAL, unchanged clone root, not from a modified starter. Each creates a separate current-HEAD worktree and refuses overwrite. Core 2 is an intermediate tool-solved, gate-unfinished catch-up point; Core 3 is the solved reference. Neither proves you authored, tested or reviewed a change. Compare files yourself. Never copy runtime data, approvals, progress or lesson history.",
   "links": {
     "participant": [
       [
@@ -268,7 +275,7 @@
       ],
       [
         "Slides (separate repo)",
-        "aetherlink-classroom-slides-w5/workshop5.html"
+        "https://github.com/RyanLisse/aetherlink-classroom-slides/blob/main/workshop5.html"
       ]
     ],
     "agent": [
@@ -289,5 +296,12 @@
         "REVIEW.md"
       ]
     ]
+  },
+  "opening": {
+    "title": "Start with the AI SDLC",
+    "why": "Faster code is not enough. A useful change needs a clear outcome, checked evidence and a human release decision.",
+    "loop": "Plan → Design → Build → Test → Release → Observe → Plan again.",
+    "proof": "Produce an accepted intent, a reviewed plan, a tested diff, a human release decision and one reviewed next task.",
+    "practice": "We change the SRE agent and observe a local shop. These are practice systems, not the learning goal. Working without a facilitator? Follow SOLO.md for setup, self-review, pauses and blockers, then complete the same Core 1–3 steps below. Read each Before you act explanation; no presentation is required."
   }
 }

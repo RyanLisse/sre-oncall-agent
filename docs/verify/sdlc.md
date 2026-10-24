@@ -6,7 +6,8 @@ or template is not completion. Do not copy evidence from a solved checkpoint.
 ## Intent and plan
 
 - Accepted intent: <checks in intent.md and your decision>
-- Reviewed plan: <design choice in docs/plan.md and your decision>
+- Reviewed tool plan: <design choice in docs/plan.md, reviewer and decision before the first repair>
+- Reviewed gate plan: <design choice in docs/plan.md, reviewer and decision before the second repair>
 - Baseline commit: <workshop-base commit>
 
 ## Checks actually run
@@ -23,6 +24,7 @@ or template is not completion. Do not copy evidence from a solved checkpoint.
 - Reviewed diff: <baseline and change commit or working diff>
 - Findings and your response: <verified findings, fixes or no findings>
 - Human reviewer and decision: <name, accepted or changes required, reason>
+- Review mode: <independent reviewer, or self-review; no independent reviewer>
 - Risks and untested paths: <what remains unknown>
 
 ## Release decision
@@ -30,6 +32,7 @@ or template is not completion. Do not copy evidence from a solved checkpoint.
 - PR in your learner repo: <URL or RELEASE BLOCKED with reason>
 - Current-head CI and required review: <observed status>
 - Human merge decision and commit: <actual result or blocker>
+- Blocker follow-up: <missing access or reviewer, who can help and next action>
 - Production deployment: not part of this local workshop.
 
 ## Runtime observation and next iteration

@@ -54,8 +54,8 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the read-only assistant prompt in [CARD.md](CARD.md) before theory or
-edits.
+Submit the read-only assistant prompt in [CARD.md](CARD.md) after the
+lifecycle introduction and before code edits.
 
 **Terminal 2 — configure SDK access and start the lab**
 
@@ -78,8 +78,8 @@ only for the interactive CLI if needed; inspect
 | --- | --- |
 | `npm run hub` | open the participant card (live when the lab runs) |
 | `npm run chaos -- deploy v2.15.0 --mode bad-deploy` | break the shop on purpose |
-| `npm run checkpoint -- core-2` | current-HEAD copy with the fail-closed A8 gate; your files untouched |
-| `npm run checkpoint -- core-3` | solved current source in `.lab/checkpoints/`, your files untouched |
+| `npm run checkpoint -- core-2` | tool-solved copy with the A8 gate still cut; intermediate Core 2 catch-up |
+| `npm run checkpoint -- core-3` | solved reference with no exercise cuts |
 | `npm run doctor` | preflight check |
 | `npm run demo` | legacy auto-approving script; do not use for the human-gated route |
 | `npm run progress` | which assignments already have file evidence |
@@ -89,17 +89,26 @@ only for the interactive CLI if needed; inspect
 | Core | You do |
 | --- | --- |
 | **1 · Specify from evidence** | Verify the diagnosis and its references, then draft and human-accept an intent from the observed data. |
-| **2 · Design and build** | Create a human-owned starter baseline, review the plan before editing, repair the read-only `list_deploys` handler, and prove the change with tests, bench and trace. |
-| **3 · Review, release and learn** | Repair the human gate, run full checks, review the actual diff, make a human PR/merge decision or record `RELEASE BLOCKED`, observe runtime evidence, and propose a reviewed next task. |
+| **2 · Design, build and verify** | Create a human-owned baseline. Review a plan before each repair, restore `list_deploys`, check the same incident, repair `checkApproval`, then run full verification. |
+| **3 · Review, release and learn** | Review the actual diff first. Make a human PR/release decision or record `RELEASE BLOCKED`, observe runtime evidence and recovery, then review one next task. |
 
-The canonical actions, prompts and proof for each core are on
-**[CARD.md](CARD.md)**. The facilitator run sheet is
+Neither checkpoint proves participant-authored work. `core-2` is an
+intermediate catch-up point with the tool solved and the A8 gate still cut;
+`core-3` is the solved reference. The canonical actions, prompts and proof for
+each core are on **[CARD.md](CARD.md)**. The facilitator run sheet is
 **[FACILITATOR.md](FACILITATOR.md)**; **[WORKSHOP.md](WORKSHOP.md)** is the
 overview. Working alone? Follow **[SOLO.md](SOLO.md)**. Intent, planning,
 diff review and release decisions are required, not optional depth. Skills,
 hooks, subagents and adding a bench case are optional extensions. Human-only
 baseline, approval and learner-repository steps are in
 **[docs/sdlc-git.md](docs/sdlc-git.md)**.
+
+The solo route does not require slides or a facilitator. It includes setup,
+self-review, pause/resume guidance and a blocked-release outcome when access
+or independent review is missing. The [concept course](course/index.html)
+is optional background, not a replacement for the three-core assignment.
+The old [runtime explainer](docs/video/README.md) and dated verification
+records are historical evidence, not instructions for the current workshop.
 
 Historical `w5-core-*` tags are archived references only. The current
 safety-tested starter is generated from committed `HEAD` by `npm run checkpoint`.

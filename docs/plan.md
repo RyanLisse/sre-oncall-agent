@@ -1,7 +1,8 @@
 # Plan — <fill in: the change you are building>
 
 Complete this in Core 2 before code edits. Keep the existing diagnosis
-contract in `docs/spec.md`. Extend the plan for the human gate in Core 3.
+contract in `docs/spec.md`. Review a separate plan for the human gate before
+the second repair.
 
 ## Accepted intent and boundary
 
@@ -12,8 +13,8 @@ contract in `docs/spec.md`. Extend the plan for the human gate in Core 3.
 1. <fill in — smallest first, each ends in a verifiable state>
 
 ## Checks
-- Core 2: the focused tools test, typecheck and bench pass. A8 stays red.
-- Core 3: the focused executor test, `npm run verify`,
+- Core 2: the focused tools test, typecheck and bench pass after the tool
+  repair. After the gate repair, the focused executor test, `npm run verify`,
   `npm run test:workshop` and `npm run test:hooks` pass.
 - Record actual commands and outcomes in `docs/verify/sdlc.md`.
 

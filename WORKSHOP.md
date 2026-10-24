@@ -1,12 +1,15 @@
-# Workshop 5 — build the AI SRE agent (AI-native SDLC)
+# Workshop 5 — practise the AI-native SDLC
 
 This is the workshop overview. Its goal is to practise AI-assisted software
 delivery while improving a small local SRE agent. Claude Code is the coding
 assistant; the separate runtime SRE agent is the application being changed.
 For the facilitator run sheet and timing, see [FACILITATOR.md](FACILITATOR.md).
+For the same assignment without a facilitator, start with [SOLO.md](SOLO.md).
+The card includes the explanations and checks needed to work independently.
 
-The required route has **three core tasks**. Start Claude Code before theory
-or code edits. For each task, explain what you will do, why it is needed, and
+The required route has **three core tasks**. Start with the AI SDLC: its
+purpose, stages, evidence and human decisions. Then open Claude Code before
+code edits. For each task, explain what you will do, why it is needed, and
 what will prove it. Read a concept just before the step that uses it. The
 generated [CARD.md](CARD.md) is the canonical source for actions, prompts and
 proof. Optional depth does not replace intent, review, or release work.
@@ -17,15 +20,16 @@ proof. Optional depth does not replace intent, review, or release work.
   what you do, what you should see, how you check it, and what to do when you
   are stuck.
 
-Use Claude Code as the default assistant in the first five minutes. The real
-Agent SDK defaults to `sonnet` and needs separate API/provider configuration;
+After the short lifecycle introduction, open Claude Code as the default
+assistant. The real Agent SDK defaults to `sonnet` and needs separate
+API/provider configuration;
 run `npm run model:check` before fault injection. If that access is unavailable,
 use `npm start -- --fast --offline` only as an explicit fallback. Offline
 output is scripted integration evidence, not model evidence.
 
 ## Set up once
 
-**Terminal 1 — start Claude Code before theory or edits**
+**Terminal 1 — start Claude Code**
 
 ```bash
 git clone https://github.com/RyanLisse/sre-oncall-agent.git
@@ -35,8 +39,9 @@ cd .lab/checkpoints/start
 claude
 ```
 
-Submit the read-only assistant prompt in [CARD.md](CARD.md) before theory or
-edits. See [docs/claude-code.md](docs/claude-code.md) for installation and
+Submit the read-only assistant prompt in [CARD.md](CARD.md) after the
+lifecycle introduction and before code edits. See
+[docs/claude-code.md](docs/claude-code.md) for installation and
 separate SDK configuration.
 
 **Terminal 2 — from the original clone root**
@@ -66,8 +71,8 @@ starter; do not type into the active launcher terminal. Never use both.
 | Core | You do | Proof | Replaces |
 | --- | --- | --- | --- |
 | **1 · Specify from evidence** | Verify the actual diagnosis, citations, trace and gaps. Draft `intent.md` from those observations and accept it as a human. | `docs/diagnosis-live.md` and a human-accepted `intent.md` with observable checks and an open question | A1, A6 |
-| **2 · Design and build** | Create the human-owned starter baseline; review `docs/plan.md` against the accepted intent before code edits. Repair the read-only `list_deploys` handler and re-investigate the same incident. | Focused tools test, typecheck and bench pass; actual trace and code diff are recorded; A8 remains intentionally red | A5, A7 |
-| **3 · Review, release and learn** | Repair the fail-closed approval gate, run full checks, review the actual diff, and let a human decide whether to open/merge a learner-repo PR or record `RELEASE BLOCKED`. Observe runtime evidence and propose a reviewed next task. | `docs/verify/sdlc.md` records real checks, human review/release decision, runtime result and next task | A8, A9 |
+| **2 · Design, build and verify** | Create the human-owned starter baseline. Review a plan before each repair. Restore the read-only `list_deploys` handler, re-investigate the same incident, then repair the `checkApproval` gate. | `docs/plan.md` records both reviewed plans; the same-incident trace, focused checks and full verification are recorded | A5, A7, A8 |
+| **3 · Review, release and learn** | Start with the actual diff review. Let a human decide whether to open and merge a learner-repo PR or record `RELEASE BLOCKED`. Observe runtime evidence, recovery outcome and propose a reviewed next task. | `docs/verify/sdlc.md` records diff review, human release decision, runtime result and next task | A9 |
 
 The card gives each core a reason and proof, with **Before you act**
 explanations next to the steps. The human baseline and release exercise are
@@ -93,18 +98,20 @@ it with notes. Approval and closure always need your name.
 
 ```bash
 npm run checkpoint                # list: start · core-2 · core-3
-npm run checkpoint -- core-2      # current-HEAD copy with only the fail-closed A8 cut
-npm run checkpoint -- core-3      # current solved source, unchanged
+npm run checkpoint -- core-2      # tool-solved, A8 gate still cut; intermediate Core 2 catch-up
+npm run checkpoint -- core-3      # solved reference; does not prove participant-authored work
 git diff --no-index .lab/checkpoints/core-2/src/tools.ts src/tools.ts
 ```
 
 The command never changes your branch or your files. Compare, then copy one
 file yourself if you choose. Do not copy approvals or lessons from a solved
-state. Make your own records.
+state. `core-2` is a tool-solved, gate-unfinished catch-up point within Core 2.
+`core-3` is the solved reference. Neither proves that you authored, tested or
+reviewed a change. Make your own records.
 
 `npm run progress` checks for files and code patterns. It does not run tests
 or prove that the UI works. Record the commands and results yourself, after
-you ran them: `npm run progress:note -- "Core 2: tools test green, bench PASS"`.
+you ran them: `npm run progress:note -- "Core 2: both repairs checked, full verify PASS"`.
 
 ## Go deeper (optional)
 
@@ -131,7 +138,7 @@ you ran them: `npm run progress:note -- "Core 2: tools test green, bench PASS"`.
 | Checkpoint | Contains |
 | --- | --- |
 | `start` | The current-HEAD starter: bounded `TODO(A5)` and fail-closed `TODO(A8)`. |
-| `core-2` | Current-HEAD source with only the fail-closed A8 cut. |
-| `core-3` | Current committed solved source, unchanged. |
+| `core-2` | Tool-solved source with the A8 gate still cut; intermediate Core 2 catch-up, not proof of authored work. |
+| `core-3` | Solved reference with no exercise cuts; not proof of authored work. |
 
 Historical `w5-core-*` tags are archived references, not the current safety-tested starter.
